@@ -8,4 +8,5 @@ bin/*
 img_examples/*
 *.cpp~
 .gitignore~
-
+*.h~
+*.tpp~

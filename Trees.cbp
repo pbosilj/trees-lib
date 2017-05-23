@@ -64,6 +64,7 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="misc/commontreedetail.cpp" />
 		<Unit filename="misc/commontreedetail.h" />
+		<Unit filename="misc/commontreedetail.tpp" />
 		<Unit filename="misc/distance.h" />
 		<Unit filename="misc/distance.tpp" />
 		<Unit filename="misc/ellipse.cpp" />
