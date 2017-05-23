@@ -1,0 +1,391 @@
+#ifndef TPP_MAXTREENISTER
+#define TPP_MAXTREENISTER
+
+#include "../maxtreenister.h"
+#include "../../misc/pixels.h"
+
+#include <stack>
+#include <set>
+#include <vector>
+#include <algorithm>
+
+
+#include <queue>
+
+#include <opencv2/highgui/highgui.hpp>
+
+#define Q_ENTRY std::pair <pxCoord, int>
+#define direction second
+#define qxCoord first.first
+#define qyCoord first.second
+
+
+namespace fl{
+
+    template <typename Compare>
+    class pqcomparison{
+        private:
+        Compare myComp;
+        public:
+        pqcomparison(Compare &cmp){
+            myComp = cmp;
+        }
+        bool operator() (const std::pair<int, pxDirected> &lhs, const std::pair<int,pxDirected> &rhs){
+            return myComp(rhs.first, lhs.first);
+        }
+    };
+
+
+
+    template <typename Compare>
+    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType){
+
+        std::vector <std::vector <char> > accessible(img.rows, std::vector<char> (img.cols, false));
+//        std::multimap <int, pxDirected, Compare > boundary(pxOrder); // buondary pixels sorted by pxOrder
+
+        std::priority_queue<std::pair<int, pxDirected>,
+                            std::vector<std::pair<int, pxDirected> >,
+                            pqcomparison<Compare> > boundary((pqcomparison<Compare>(pxOrder)));
+
+        std::stack<InclusionNode *> components;
+
+        int dummyElem = *std::max_element(img.begin<uchar>(), img.end<uchar>(), pxOrder);
+
+//        FIXME
+        if (pxOrder(dummyElem, dummyElem+1))
+            ++dummyElem;
+        else
+            --dummyElem;
+
+        components.push(&InclusionNode::dummy(dummyElem));
+
+        int currentLevel;
+        pxDirected current = make_pxDirected(make_pxCoord(0,1), 0, curType);
+        accessible[current.coord.X][current.coord.Y] = true;
+
+        for (bool setPass = true;;){
+
+            if (setPass){ // set up in another step
+                setPass = false;
+            }
+            else{ // pop the heap of boundary pixels
+                current = boundary.top().second;
+                boundary.pop();
+            }
+
+            currentLevel = img.at<uchar>(current.coord.X, current.coord.Y);
+            if (current.pxdir < 1){
+                InclusionNode *ctop = components.top();
+                if (ctop->attribute() == currentLevel)
+                    ctop->addElement(current.coord);
+                else{
+                    InclusionNode *tmp = new InclusionNode(std::vector<pxCoord>(1, current.coord));
+                    tmp->assignAttribute(currentLevel);
+                    components.push(tmp);
+                }
+            }
+
+            for (; nextDir(current); ){
+                pxCoord nextPx;
+                for (nextPx = nextCoord(current); !coordOk(nextPx, img.cols, img.rows); nextPx = nextCoord(current));
+                if (!accessible[nextPx.first][nextPx.second]){
+                    accessible[nextPx.first][nextPx.second] = true;
+                    int nextLevel = img.at<uchar>(nextPx.first, nextPx.second);
+
+                    if (!pxOrder(nextLevel, currentLevel) ){
+                        boundary.push(std::make_pair(nextLevel, make_pxDirected(nextPx,0,curType)));
+                    }
+                    else{
+                        boundary.push(std::make_pair(currentLevel, current));
+                        current = make_pxDirected(nextPx,0,curType);
+                        setPass = true;
+                        break;
+                    }
+                }
+            }
+
+            if (setPass)
+                continue;
+            if (boundary.empty())
+                break;
+
+//             if next pixel gray level is at hihger gray level than current
+            int nLvl = img.at<uchar>(boundary.top().second.coord.X, boundary.top().second.coord.Y);
+
+
+
+//            if (pxOrder(currentLevel, nLvl)){
+//                for (;;){
+//                    InclusionNode *stackTop = components.top();
+//                    components.pop();
+//                    InclusionNode *ctop = components.top();
+//                    if (pxOrder(nLvl, ctop->attribute())){
+//                        InclusionNode *newNode = new InclusionNode(std::vector<pxCoord>(1, boundary.begin()->second.coord), std::vector <InclusionNode *> (1, stackTop));
+//                        newNode->assignAttribute(nLvl);
+//                        components.push(newNode);
+//                        if (boundary.begin()->second.pxdir == 0)
+//                            boundary.begin()->second.pxdir = 1;
+//                        else
+//                            std::cout << "panick!" << std::endl;
+//                    }
+//                    else
+//                       ctop->addChild(stackTop);
+//                    if (components.top()->attribute() == nLvl)
+//                        break;
+//                }
+//            }
+//
+
+            if (pxOrder(currentLevel, nLvl)){
+                for (;;){
+                    InclusionNode *stackTop = components.top();
+                    components.pop();
+                    InclusionNode *ctop = components.top();
+                    if (pxOrder(nLvl, ctop->attribute())){
+                        InclusionNode *newNode = new InclusionNode(std::vector<pxCoord>(1, boundary.top().second.coord), std::vector <InclusionNode *> (1, stackTop));
+                        newNode->assignAttribute(nLvl);
+                        components.push(newNode);
+
+                        std::pair<int, pxDirected> tmp = boundary.top();
+                        boundary.pop();
+                        tmp.second.pxdir = 1;
+                        boundary.push(tmp);
+
+//                        boundary.top().second.pxdir = 1;
+                        break;
+                    }
+                    else{
+                        ctop->addChild(stackTop);
+                        if (ctop->attribute() == nLvl)
+                            break;
+                    }
+                }
+            }
+        }
+
+        components.top()->setParent(NULL);
+        return components.top();
+    }
+
+
+
+//    template <typename Compare>
+//    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType){
+//
+//        std::vector <std::vector <char> > accessible(img.rows, std::vector<char> (img.cols, false));
+//        std::multimap <int, pxDirected, Compare > boundary(pxOrder); // buondary pixels sorted by pxOrder
+//        std::stack<InclusionNode *> components;
+//
+//        int dummyElem = *std::max_element(img.begin<uchar>(), img.end<uchar>(), pxOrder);
+//
+//        //FIXME
+//        if (pxOrder(dummyElem, dummyElem+1))
+//            ++dummyElem;
+//        else
+//            --dummyElem;
+//
+//        components.push(&InclusionNode::dummy(dummyElem));
+//
+//        int currentLevel;
+//        pxDirected current = make_pxDirected(make_pxCoord(0,1), 0, curType);
+//        accessible[current.coord.X][current.coord.Y] = true;
+//
+//        for (bool setPass = true;;){
+//
+//            if (setPass){ // set up in another step
+//                setPass = false;
+//            }
+//            else{ // pop the heap of boundary pixels
+//                current = boundary.begin()->second;
+//                boundary.erase(boundary.begin());
+//            }
+//
+//            currentLevel = img.at<uchar>(current.coord.X, current.coord.Y);
+//            if (current.pxdir < 1){
+//                InclusionNode *ctop = components.top();
+//                if (ctop->attribute() == currentLevel)
+//                    ctop->addElement(current.coord);
+//                else{
+//                    InclusionNode *tmp = new InclusionNode(std::vector<pxCoord>(1, current.coord));
+//                    tmp->assignAttribute(currentLevel);
+//                    components.push(tmp);
+//                }
+//            }
+//
+//            for (; nextDir(current); ){
+//                pxCoord nextPx;
+//                for (nextPx = nextCoord(current); !coordOk(nextPx, img.cols, img.rows); nextPx = nextCoord(current));
+//                if (!accessible[nextPx.first][nextPx.second]){
+//                    accessible[nextPx.first][nextPx.second] = true;
+//                    int nextLevel = img.at<uchar>(nextPx.first, nextPx.second);
+//
+//                    if (!pxOrder(nextLevel, currentLevel) ){
+//                        boundary.insert(std::make_pair(nextLevel, make_pxDirected(nextPx,0,curType)));
+//                    }
+//                    else{
+//                        boundary.insert(std::make_pair(currentLevel, current));
+//                        current = make_pxDirected(nextPx,0,curType);
+//                        setPass = true;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if (setPass)
+//                continue;
+//            if (boundary.empty())
+//                break;
+//
+//            // if next pixel gray level is at hihger gray level than current
+//            int nLvl = img.at<uchar>(boundary.begin()->second.coord.X, boundary.begin()->second.coord.Y);
+//
+//
+////            if (pxOrder(currentLevel, nLvl)){
+////                for (;;){
+////                    InclusionNode *stackTop = components.top();
+////                    components.pop();
+////                    InclusionNode *ctop = components.top();
+////                    if (pxOrder(nLvl, ctop->attribute())){
+////                        InclusionNode *newNode = new InclusionNode(std::vector<pxCoord>(1, boundary.begin()->second.coord), std::vector <InclusionNode *> (1, stackTop));
+////                        newNode->assignAttribute(nLvl);
+////                        components.push(newNode);
+////                        if (boundary.begin()->second.pxdir == 0)
+////                            boundary.begin()->second.pxdir = 1;
+////                        else
+////                            std::cout << "panick!" << std::endl;
+////                    }
+////                    else
+////                       ctop->addChild(stackTop);
+////                    if (components.top()->attribute() == nLvl)
+////                        break;
+////                }
+////            }
+//
+//
+//            if (pxOrder(currentLevel, nLvl)){
+//                for (;;){
+//                    InclusionNode *stackTop = components.top();
+//                    components.pop();
+//                    InclusionNode *ctop = components.top();
+//                    if (pxOrder(nLvl, ctop->attribute())){
+//                        InclusionNode *newNode = new InclusionNode(std::vector<pxCoord>(1, boundary.begin()->second.coord), std::vector <InclusionNode *> (1, stackTop));
+//                        newNode->assignAttribute(nLvl);
+//                        components.push(newNode);
+//                        boundary.begin()->second.pxdir = 1;
+//                        break;
+//                    }
+//                    else{
+//                        ctop->addChild(stackTop);
+//                        if (ctop->attribute() == nLvl)
+//                            break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        components.top()->setParent(NULL);
+//        return components.top();
+//    }
+
+/*
+    template <typename Compare>
+    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType){
+
+        std::vector <std::vector <char> > accessible(img.rows, std::vector<char> (img.cols, false));
+        std::multimap <int, Q_ENTRY, Compare > boundary(pxOrder); // buondary pixels sorted by pxOrder
+        std::stack<InclusionNode *> components;
+
+        int dummyElem = *std::max_element(img.begin<uchar>(), img.end<uchar>(), pxOrder);
+
+        //FIXME
+        if (pxOrder(dummyElem, dummyElem+1))
+            ++dummyElem;
+        else
+            --dummyElem;
+
+        components.push(&InclusionNode::dummy(dummyElem));
+
+
+        pxCoord current = std::make_pair(0,0);
+        int dir = 0, currentLevel;
+        accessible[current.first][current.second] = true;
+
+        for (bool setPass = true;;){
+
+            if (setPass){ // set up in another step
+                setPass = false;
+            }
+            else{ // pop the heap of boundary pixels
+                current = boundary.begin()->second.first;
+                dir = boundary.begin()->second.direction;
+                boundary.erase(boundary.begin());
+            }
+
+            currentLevel = img.at<uchar>(current.first, current.second);
+            if (dir < 1){
+                if (components.top()->attribute() == currentLevel)
+                    components.top()->addElement(current);
+                else{
+                    InclusionNode *tmp = new InclusionNode(std::vector<pxCoord>(1, current));
+                    tmp->assignAttribute(currentLevel);
+                    components.push(tmp);
+                }
+            }
+
+            for (; dir <= 8; dir = nextDir(dir)){
+                pxCoord nextPx;
+                for (nextPx = nextCoord(current, dir); !coordOk(nextPx, img.cols, img.rows); dir = nextDir(dir), nextPx = nextCoord(current, dir));
+                if (!accessible[nextPx.first][nextPx.second]){
+                    accessible[nextPx.first][nextPx.second] = true;
+                    int nextLevel = img.at<uchar>(nextPx.first, nextPx.second);
+
+                    if (!pxOrder(nextLevel, currentLevel) ){
+                        boundary.insert(std::make_pair(nextLevel, std::make_pair(nextPx, 0)));
+                    }
+                    else{
+                        boundary.insert(std::make_pair(currentLevel, std::make_pair(current, nextDir(dir))));
+                        current = nextPx;
+                        dir = 0;
+                        setPass = true;
+                        break;
+                    }
+                }
+            }
+
+            if (setPass)
+                continue;
+            if (boundary.empty())
+                break;
+
+            // if next pixel gray level is at hihger gray level than current
+            int nLvl = img.at<uchar>(boundary.begin()->second.qxCoord, boundary.begin()->second.qyCoord);
+
+            if (pxOrder(currentLevel, nLvl)){
+                for (;;){
+                    InclusionNode *stackTop = components.top();
+                    components.pop();
+                    if (pxOrder(nLvl, components.top()->attribute())){
+                        InclusionNode *newNode = new InclusionNode(std::vector<pxCoord>(1, boundary.begin()->second.first), std::vector <InclusionNode *> (1, stackTop));
+                        newNode->assignAttribute(nLvl);
+                        components.push(newNode);
+                        if (boundary.begin()->second.second == 0)
+                            boundary.begin()->second.second = 1;
+                        else
+                            std::cout << "panick!" << std::endl;
+                    }
+                    else
+                        components.top()->addChild(stackTop);
+                    if (components.top()->attribute() == nLvl)
+                        break;
+                }
+            }
+        }
+
+        components.top()->setParent(NULL);
+        return components.top();
+    }
+    */
+}
+
+#endif
+

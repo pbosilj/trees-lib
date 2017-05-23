@@ -1,0 +1,38 @@
+#ifndef MOMENTSATTRIBUTE_H
+#define MOMENTSATTRIBUTE_H
+
+#include "attribute.h"
+
+#include "momentsholder.h"
+
+#include <string>
+#include <vector>
+
+namespace fl{
+    class MomentsSettings : public AttributeSettings {
+        public:
+            MomentsSettings(int numMoments, int dcv, int dp=-1, int dq=-1)
+                : numMoments(numMoments), defaultCastValue(dcv), dp(dp), dq(dq) {}
+            ~MomentsSettings() { }
+
+            virtual MomentsSettings* clone() const{
+                return new MomentsSettings(*this);
+            }
+            int numMoments;
+            int defaultCastValue;
+            int dp, dq;
+    };
+
+    class MomentsAttribute : public TypedAttribute<MomentsHolder>{
+        public:
+            static const std::string name;
+            MomentsAttribute(const Node *baseNode, const ImageTree *baseTree, AttributeSettings *settings, bool deleteSettings = true);
+            virtual ~MomentsAttribute();
+            virtual void calculateAttribute();
+
+        protected:
+        private:
+
+    };
+}
+#endif // MOMENTSATTRIBUTE_H

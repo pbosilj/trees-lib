@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Trees" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Trees" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="/home/pbosilj/Programming/Trees/bin/Release/100000.pgm -1" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="`pkg-config opencv --cflags`" />
+					<Add directory="structures" />
+				</Compiler>
+				<Linker>
+					<Add option="`pkg-config opencv --libs`" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Trees" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="/home/pbosilj/Programming/Trees/bin/Release/100000.pgm -1" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="`pkg-config opencv --cflags`" />
+					<Add directory="structures" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="`pkg-config opencv --libs`" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="algorithms/alphatreedualmax.cpp" />
+		<Unit filename="algorithms/alphatreedualmax.h" />
+		<Unit filename="algorithms/alphatreedualmax.tpp" />
+		<Unit filename="algorithms/maxtreeberger.cpp" />
+		<Unit filename="algorithms/maxtreeberger.h" />
+		<Unit filename="algorithms/maxtreeberger.tpp" />
+		<Unit filename="algorithms/maxtreenister.cpp" />
+		<Unit filename="algorithms/maxtreenister.h" />
+		<Unit filename="algorithms/maxtreenister.tpp" />
+		<Unit filename="algorithms/msernister.cpp" />
+		<Unit filename="algorithms/msernister.h" />
+		<Unit filename="algorithms/omegatreealphafilter.cpp" />
+		<Unit filename="algorithms/omegatreealphafilter.h" />
+		<Unit filename="algorithms/omegatreealphafilter.tpp" />
+		<Unit filename="algorithms/predicate.h" />
+		<Unit filename="algorithms/predicate.tpp" />
+		<Unit filename="algorithms/tosgeraud.cpp" />
+		<Unit filename="algorithms/tosgeraud.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="misc/commontreedetail.cpp" />
+		<Unit filename="misc/commontreedetail.h" />
+		<Unit filename="misc/distance.h" />
+		<Unit filename="misc/distance.tpp" />
+		<Unit filename="misc/ellipse.cpp" />
+		<Unit filename="misc/ellipse.h" />
+		<Unit filename="misc/pixels.cpp" />
+		<Unit filename="misc/pixels.h" />
+		<Unit filename="misc/vecmaker.h" />
+		<Unit filename="structures/areaattribute.cpp" />
+		<Unit filename="structures/areaattribute.h" />
+		<Unit filename="structures/attribute.cpp" />
+		<Unit filename="structures/attribute.h" />
+		<Unit filename="structures/attribute.tpp" />
+		<Unit filename="structures/boundingspherediameterapprox.cpp" />
+		<Unit filename="structures/boundingspherediameterapprox.h" />
+		<Unit filename="structures/diagonalminimumattribute.cpp" />
+		<Unit filename="structures/diagonalminimumattribute.h" />
+		<Unit filename="structures/entropyattribute.cpp" />
+		<Unit filename="structures/entropyattribute.h" />
+		<Unit filename="structures/imagetree.cpp" />
+		<Unit filename="structures/imagetree.h" />
+		<Unit filename="structures/imagetree.tpp" />
+		<Unit filename="structures/inclusionnode.cpp" />
+		<Unit filename="structures/inclusionnode.h" />
+		<Unit filename="structures/momentsattribute.cpp" />
+		<Unit filename="structures/momentsattribute.h" />
+		<Unit filename="structures/momentsholder.cpp" />
+		<Unit filename="structures/momentsholder.h" />
+		<Unit filename="structures/node.cpp" />
+		<Unit filename="structures/node.h" />
+		<Unit filename="structures/node.tpp" />
+		<Unit filename="structures/noncompactnessattribute.cpp" />
+		<Unit filename="structures/noncompactnessattribute.h" />
+		<Unit filename="structures/partitioningnode.cpp" />
+		<Unit filename="structures/partitioningnode.h" />
+		<Unit filename="structures/patternspectra2d.cpp" />
+		<Unit filename="structures/patternspectra2d.h" />
+		<Unit filename="structures/patternspectra2d.tpp" />
+		<Unit filename="structures/rangeattribute.cpp" />
+		<Unit filename="structures/rangeattribute.h" />
+		<Unit filename="structures/regiondynamicsattribute.cpp" />
+		<Unit filename="structures/regiondynamicsattribute.h" />
+		<Unit filename="structures/valuedeviationattribute.cpp" />
+		<Unit filename="structures/valuedeviationattribute.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+			<DoxyBlocks>
+				<comment_style block="2" line="2" />
+				<doxyfile_project />
+				<doxyfile_build extract_all="1" />
+				<doxyfile_warnings warn_if_undocumented="1" />
+				<doxyfile_output />
+				<doxyfile_dot class_diagrams="1" />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

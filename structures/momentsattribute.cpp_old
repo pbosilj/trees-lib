@@ -1,0 +1,72 @@
+#include "momentsattribute.h"
+#include "../misc/pixels.h"
+
+#include "node.h"
+#include "imagetree.h"
+
+//#include "opencv2/core/core.hpp"
+
+#include <string>
+
+/* MOMENTS SEQUENCES with different NUM_MOMENTSORDER values  <array pos>-<moment of order xy>
+ * ========================================================================================================
+ * 0-00 1-10 2-20 3-30 4-40 5-01 6-11 7-21 8-31 9-02 10-12 11-22 12-03 13-13 14-04, with NUM_MOMENTSORDER=5.
+ * 0-00 1-10 2-20 3-30 4-01 5-11 6-21 7-02 8-12 9-03, with NUM_MOMENTSORDER=4
+ * 0-00 1-10 2-20 3-01 4-11 5-02, with NUM_MOMENTSORDER=3
+ * 0-00 1-10 2-01, with NUM_MOMENTSORDER=2
+ */
+
+const std::string fl::MomentsAttribute::name = "moments";
+
+fl::MomentsAttribute::MomentsAttribute(const Node *baseNode, const ImageTree *baseTree, AttributeSettings *settings, bool deleteSettings)
+    : TypedAttribute<MomentsHolder>(baseNode, baseTree, settings, deleteSettings){
+        /*
+        MomentsSettings *mys = (MomentsSettings *)(this->getSettings());
+        this->attValue.init(mys->numMoments);
+        this->attValue.setDefaultCastValue(mys->defaultCastValue, mys->dp, mys->dq);
+        */
+}
+
+fl::MomentsAttribute::~MomentsAttribute() { }
+
+void fl::MomentsAttribute::calculateAttribute(){
+    /*
+    const std::vector <pxCoord> &coords = this->myNode->getOwnElements();
+    int numMoments = ((MomentsSettings *)(this->getSettings()))->numMoments;
+    std::vector <int> &myRawMoments = this->attValue.rawMoments;
+    std::vector <int> &myBinaryMoments = this->attValue.binaryMoments;
+
+    std::fill(myRawMoments.begin(), myRawMoments.end(), 0);
+    std::fill(myBinaryMoments.begin(), myBinaryMoments.end(), 0);
+
+    for (int i=0, szi = coords.size(); i < szi; ++i){
+        int value = 1;
+        //int gValue = this->myTree->image().at<uchar>(coords[i].Y, coords[i].X);
+        int gValue = 0;
+        for (int q_idx = 0; q_idx < numMoments; ++q_idx){
+            int h = value;
+            for (int p_idx = 0; p_idx < numMoments-q_idx; ++p_idx){
+                myRawMoments[this->attValue.momIndex(p_idx,q_idx)] += h*gValue;
+                myBinaryMoments[this->attValue.momIndex(p_idx, q_idx)] += h;
+                h *= coords[i].X;
+            }
+            value *= coords[i].Y;
+        }
+    }
+
+
+    std::vector <Attribute *> childAttributes = this->myNode->getChildrenAttributes(MomentsAttribute::name);
+
+    for (int i=0, szi = childAttributes.size(); i < szi; ++i){
+        const std::vector<int> &childBMoments = ((MomentsAttribute *)childAttributes[i])->value().binaryMoments;
+        const std::vector<int> &childGMoments = ((MomentsAttribute *)childAttributes[i])->value().rawMoments;
+        for (int j=0, szj = myRawMoments.size(); j < szj; ++j){
+            myRawMoments[j] += childGMoments[j];
+            myBinaryMoments[j] += childBMoments[j];
+        }
+    }
+    this->value().calculateDefaultCastValue();
+    TypedAttribute<MomentsHolder>::calculateAttribute();
+    */
+}
+
