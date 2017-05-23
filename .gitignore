@@ -1,0 +1,11 @@
+Trees.depend
+Trees.layout
+Trees.cbp.mak
+cbp2make
+cbp2make.linux-x86
+obj/*
+bin/*
+img_examples/*
+*.cpp~
+.gitignore~
+

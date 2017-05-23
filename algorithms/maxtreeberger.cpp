@@ -33,6 +33,29 @@ namespace fl{
             return zpar[px.X][px.Y];
         }
 
+        //pxCoord findRoot(const pxCoord &px, std::vector<std::vector<pxCoord> > &zpar){
+        //    std::stack<std::pair<pxCoord, bool > > coordStack;
+        //    coordStack.emplace(px, false);
+        //    //for (const std::pair<pxCoord, pxCoord> &cur = coordStack.back(); !coordStack.empty(); coordStack.pop() ){
+        //    do{
+        //        const std::pair<pxCoord, bool> &cur = coordStack.top();
+        //        if (cur.second == false){
+        //            coordStack.top().second = true;
+        //            if (zpar[cur.first.X][cur.first.Y] != cur.first){
+        //                coordStack.emplace(zpar[cur.first.X][cur.first.Y], false);
+        //            }
+        //        }
+        //        else{
+        //            pxCoord par = zpar[cur.first.X][cur.first.Y];
+        //            coordStack.pop();
+        //            if (!coordStack.empty())
+        //                zpar[coordStack.top().first.X][coordStack.top().first.Y] = par;
+        //        }
+        //    }while(!coordStack.empty());
+        //
+        //    return zpar[px.X][px.Y];
+        //}
+
         void maxTreeCore(const std::vector<pxCoord> &sorted, pxType curType, std::vector<std::vector<pxCoord> > &parent){
             std::vector <std::vector<pxCoord> > zpar(parent.size(), std::vector<pxCoord>(parent.back().size(), make_pxCoord(-1,-1)));
             //for (int i=0, szi = sorted.size(); i < szi; ++i){
@@ -71,16 +94,16 @@ namespace fl{
         }
 
         Node* makeNodeTree(const std::vector<std::vector<pxCoord> > &parent, const cv::Mat &img){
-            //cv::MatIterator_<uchar> it, end;
             int counter = 0;
             std::vector <Node *> nodes;
             int rootIndex = -1;
+
             std::vector <std::vector <int> > nodeIndices(img.cols, std::vector<int>(img.rows, -1));
-            for(cv::MatConstIterator_<uchar> it = img.begin<uchar>(), end = img.end<uchar>(); it != end; ++it, ++counter){
+            for(cv::MatConstIterator it = detail::getCvMatBegin(img), end = detail::getCvMatEnd(img); it != end; ++it, ++counter){
                 const pxCoord &curCoord = make_pxCoord(counter % img.cols, counter / img.cols);
                 const pxCoord &parCoord = parent[curCoord.X][curCoord.Y];
-                const int &curValue = (int)*it;
-                const int &parValue = (int)img.at<uchar>(parCoord.Y, parCoord.X);
+                const int &curValue = detail::getDerefCvMatConstIterator(it, img.type());
+                const int &parValue = detail::getCvMatElem(img, parCoord);
                 if (nodeIndices[parCoord.X][parCoord.Y] == -1)
                     assignNewNode(nodes, nodeIndices, parCoord, parValue);
                 if (curValue == parValue){

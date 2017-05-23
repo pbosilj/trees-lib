@@ -101,6 +101,9 @@ namespace fl{
         return minV;
     }
 
+        double detail::getCvMatElem(const cv::Mat &img, const std::pair<int, int> &coord){
+        return getCvMatElem(img, coord.first, coord.second);
+    }
     double detail::getCvMatElem(const cv::Mat &img, int X, int Y){
         if (img.type() == CV_8U)
             return img.at<uchar>(Y, X);
@@ -115,7 +118,6 @@ namespace fl{
 
         return img.at<uchar>(Y, X);
     }
-
     double detail::getCvMatMax(const cv::Mat &img){
         if (img.type() == CV_8U)
             return *std::max_element(img.begin<uchar>(), img.end<uchar>());
@@ -142,5 +144,34 @@ namespace fl{
         else if (img.type() == CV_16U)
             return *std::min_element(img.begin<unsigned short>(), img.end<unsigned short>());
         return *std::min_element(img.begin<uchar>(), img.end<uchar>());
+    }
+    cv::MatConstIterator detail::getCvMatBegin(const cv::Mat &img){
+        if (img.type() == CV_8U)
+            return img.begin<uchar>();
+        else if (img.type() == CV_16U)
+            return img.begin<ushort>();
+        else // if (img.type() == CV_32S)
+            return img.begin<int32_t>();
+    }
+    cv::MatConstIterator detail::getCvMatEnd(const cv::Mat &img){
+        if (img.type() == CV_8U)
+            return img.end<uchar>();
+        else if (img.type() == CV_16U)
+            return img.end<ushort>();
+        else // if (img.type() == CV_32S)
+            return img.end<int32_t>();
+    }
+    double detail::getDerefCvMatConstIterator(cv::MatConstIterator &it, int matType){
+        if (matType == CV_8U)
+            return (double)(*(uchar *)(*it));
+        else if (matType == CV_32S)
+            return (double)(*(int32_t *)(*it));
+        else if (matType == CV_32F)
+            return (double)(*(float *)(*it));
+        else if (matType == CV_16S)
+            return (double)(*(short *)(*it));
+        else if (matType == CV_16U)
+            return (double)(*(ushort *)(*it));
+        return *std::max_element(img.begin<uchar>(), img.end<uchar>());
     }
 }

@@ -65,9 +65,14 @@ namespace fl{
                 const std::vector<cv::Mat> &imgs;
         };
 
+        double getCvMatElem(const cv::Mat &img, const std::pair<int, int> &coord);
         double getCvMatElem(const cv::Mat &img, int X, int Y);
         double getCvMatMax(const cv::Mat &img);
         double getCvMatMin(const cv::Mat &img);
+        cv::MatConstIterator getCvMatBegin(const cv::Mat &img);
+        cv::MatConstIterator getCvMatEnd(const cv::Mat &img);
+        double getDerefCvMatConstIterator (cv::MatConstIterator &it, int matType);
+
     }
 }
 
