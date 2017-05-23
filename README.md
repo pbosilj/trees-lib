@@ -14,3 +14,6 @@ Documenting the code is on-going (about 70% of the code is documented - most of 
 
 # main.cpp
 Currently the main file is a complete mess and contains bits of code under developement, or procedures to test certain concepts. Any concepts that will finally be kept will be eventually re-implemented within the correct structure.
+
+# other requirements
+The project compiles following C++11 standard (the CodeBlocks should correctly handle this). It also relies on OpenCV for providing basic structures (e.g. Point, Mat (matrix) etc)
