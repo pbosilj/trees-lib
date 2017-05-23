@@ -46,13 +46,7 @@ namespace fl{
 
         std::stack<InclusionNode *> components;
 
-        double dummyElem;
-        if (img.type() == CV_8U)
-            dummyElem = *std::max_element(img.begin<uchar>(), img.end<uchar>(), pxOrder);
-        else if (img.type() == CV_32S)
-            dummyElem = *std::max_element(img.begin<int32_t>(), img.end<int32_t>(), pxOrder);
-        else // if (img.type == CV_32F)
-            dummyElem = *std::max_element(img.begin<float>(), img.end<float>(), pxOrder);
+        double dummyElem = detail::getCvMatMax(img, pxOrder);
 
 //        FIXME -- assuming no overflow
         if (pxOrder(dummyElem, dummyElem+1))

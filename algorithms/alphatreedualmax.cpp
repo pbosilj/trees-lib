@@ -18,12 +18,8 @@
 namespace fl{
     Node *constructRecursively(Node *root, std::vector <std::vector <char> > &seen){
         PartitioningNode *rv;
-        //std::cout << "in here   " << std::endl;
         if (root->level() == 0){
-//            std::cout << "bla?" << std::endl;
             const std::vector < pxCoord > &elems = root->getOwnElements();
-//            if (elems.size() == 0)
-//                std::cout << "in zero level no elements" << std::endl;
             std::vector < pxCoord > newElems;
             for (int i=0, szi = elems.size(); i < szi; ++i){
                 if (elems[i].X % 2){ // vertical (odd, even)
@@ -47,7 +43,6 @@ namespace fl{
                     }
                 }
             }
-//            std::cout << "new elems " << newElems.size() << std::endl;
             rv = new PartitioningNode(newElems);
         }
         else {
@@ -57,22 +52,16 @@ namespace fl{
             }
             const std::vector < pxCoord > &elems = root->getOwnElements();
 
-//            if (children.empty() && elems.empty())
-//                std::cout << "no children and no elements" << std::endl;
-//
             for (int i=0, szi = elems.size(); i < szi; ++i){
 
                 if (elems[i].X % 2){ // vertical
-//                    std::cout << "vertical " << std::endl;
                     if (!seen[(elems[i].X-1)/2][elems[i].Y/2]){
-//                        std::cout << "seen" << std::endl;
                         seen[(elems[i].X-1)/2][elems[i].Y/2] = true;
                         PartitioningNode *zeroKid = new PartitioningNode(std::vector < pxCoord> (1, make_pxCoord((elems[i].X-1)/2,elems[i].Y/2)));
                         zeroKid->assignLevel(0);
                         children.push_back(zeroKid);
                     }
                     if (!seen[(elems[i].X+1)/2][elems[i].Y/2]){
-//                        std::cout << "seen" << std::endl;
                         seen[(elems[i].X+1)/2][elems[i].Y/2] = true;
                         PartitioningNode *zeroKid = new PartitioningNode(std::vector < pxCoord> (1, make_pxCoord((elems[i].X+1)/2,elems[i].Y/2)));
                         zeroKid->assignLevel(0);
@@ -80,17 +69,13 @@ namespace fl{
                     }
                 }
                 else { // horizonal
-////                    std::cout << "horizontal " << std::endl;
-//                    std::cout << elems[i].X/2 << " " << (elems[i].Y-1)/2 << " / " << (elems[i].Y+1)/2 << std::endl;
                     if (!seen[elems[i].X/2][(elems[i].Y-1)/2]){
-//                        std::cout << "seen" << std::endl;
                         seen[elems[i].X/2][(elems[i].Y-1)/2] = true;
                         PartitioningNode *zeroKid = new PartitioningNode(std::vector < pxCoord> (1, make_pxCoord(elems[i].X/2,(elems[i].Y-1)/2)));
                         zeroKid->assignLevel(0);
                         children.push_back(zeroKid);
                     }
                     if (!seen[elems[i].X/2][(elems[i].Y+1)/2]){
-//                        std::cout << "seen" << std::endl;
                         seen[elems[i].X/2][(elems[i].Y+1)/2] = true;
                         PartitioningNode *zeroKid = new PartitioningNode(std::vector < pxCoord> (1, make_pxCoord(elems[i].X/2,(elems[i].Y+1)/2)));
                         zeroKid->assignLevel(0);
@@ -98,10 +83,6 @@ namespace fl{
                     }
                 }
             }
-//            if (children.empty()){
-//                std::cout << "somehow no children " << std::endl;
-//                std::cout << root->children.size() << " " << elems.size() << std::endl;
-//            }
             if (children.size() == 1){
                 return children[0];
             }
@@ -119,7 +100,8 @@ namespace fl{
     /// \return A `PartitioningNode *` (as `Node *) to the root of the alpha-tree.
     Node *alphaTreeDualMax(const cv::Mat &img){
         cv::Mat imgDual(img.rows*2-1, img.cols*2-1, CV_8U, detail::getCvMatMax(img));
-        //cv::Mat imgDual(img.rows*2-1, img.cols*2-1, CV_8U, *std::max_element(img.begin<uchar>(), img.end<uchar>()));
+        
+        //TODO the uchar pointers -- their type should depend on the image type
         for(int row = 0, szrow = img.rows; row < szrow; ++row) {;
             const uchar* pU = img.ptr(row);
             uchar *horiNew = imgDual.ptr(row*2);
@@ -153,8 +135,8 @@ namespace fl{
 
         delete dualTree;
 
-        //return alphaRoot->assignGrayLevelRec(detail::alphaTreeGrayLvlAssign(img));
-        return alphaRoot->assignGrayLevelRec(detail::maxTreeGrayLvlAssign(img));
+        return alphaRoot->assignGrayLevelRec(detail::alphaTreeGrayLvlAssign(img));
+        //return alphaRoot->assignGrayLevelRec(detail::maxTreeGrayLvlAssign(img));
     }
 }
 

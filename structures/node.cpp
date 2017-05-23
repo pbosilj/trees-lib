@@ -203,6 +203,49 @@ const std::vector< std::pair< int, int > >& Node::getOwnElements() const{
     return _S;
 }
 
+/// Check if a pixel element (by coordinates) exists in the
+/// `Node` or any of the child `Node`s.
+///
+/// \param px The pixel coordinates to query.
+///
+/// \return `true` if the `Node` contains \param px. `false`
+/// otherwise
+bool Node::hasElement(const std::pair<int, int> &px) const{
+//    recursive:
+//    if (std::find(this->_S.begin(), this->_S.end(), px) != this->_S.end())
+//        return true;
+//    for (int i=0, szi < this->_children.size(); i < szi; ++i){
+//        if (this->_children[i].hasElement(px))
+//            return true;
+//    }
+
+//  non-recursive
+    std::vector <const Node *> toProcess(1, this);
+    const Node *tmp;
+    do{
+        tmp = toProcess.back();
+        toProcess.pop_back();
+        if (std::find(tmp->_S.begin(), tmp->_S.end(), px) != tmp->_S.end())
+            return true;
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
+    return false;
+}
+
+/// Check if a pixel element (by coordinates) exists in the
+/// `Node` directly (the child `Node`s do not count).
+///
+/// \param px The pixel coordinates to query.
+///
+/// \return `true` if the `Node` contains \param px. `false`
+/// otherwise
+
+bool Node::hasOwnElement(const std::pair<int, int> &px) const{
+    return (std::find(this->_S.begin(), this->_S.end(), px) != this->_S.end());
+}
+
 /// \remark Even though most hierarchies operate with levels of integral
 /// type (i.e. integers), the \p level can be any scalar (double value).
 ///
@@ -240,9 +283,28 @@ const std::vector<int> & Node::hyperGraylevel() const {
 
 /// Colors the elements (pixels) of the provided image which
 /// correspond by coordinates to the current `Node` elements with
-/// the appropriate
-/// gray level (determined by the gray level of the `Node`) and
-/// it's children.
+/// a single color.
+///
+/// \param img The image to be colored.
+/// \param value The RGB value to be used for coloring.
+///
+void Node::colorSolid(cv::Mat &img, const cv::Vec3b &value) const{
+  for (int i=0, szi = this->_S.size(); i < szi; ++i){
+    img.at<cv::Vec3b>(_S[i].second, _S[i].first)[0] = value[0];
+    img.at<cv::Vec3b>(_S[i].second, _S[i].first)[1] = value[1];
+    img.at<cv::Vec3b>(_S[i].second, _S[i].first)[2] = value[2];
+  }
+
+  for (int i=0, szi = this->_children.size(); i < szi; ++i)
+    this->_children[i]->colorSolid(img, value);
+
+  return;
+}
+
+/// Colors the elements (pixels) of the provided image which
+/// correspond by coordinates to the current `Node` elements with
+/// the appropriate gray level (determined by the gray level of
+/// the `Node`) and it's children.
 ///
 /// \param img The image to be colored.
 ///

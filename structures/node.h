@@ -84,6 +84,12 @@ namespace fl{
             /// \brief Get all self-pixels of the `Node`.
             const std::vector <std::pair <int, int> > &getOwnElements() const;
 
+            /// \brief Does the pixel exist in the `Node`.
+            bool hasElement(const std::pair <int, int> &px) const;
+
+            /// \brief Does the pixel exist directly in the `Node`.
+            bool hasOwnElement(const std::pair <int, int> &px) const;
+
             /// \brief Assign a \p level to the `Node`.
             virtual void assignLevel(const double & level);
 
@@ -105,7 +111,11 @@ namespace fl{
             virtual const std::vector<int> &hyperGraylevel() const;
 
             // utility;
-            /// \brief Color the corresponding elements in an image.
+
+            /// \brief Color the corresponding elements in an image with a flat color.
+            void colorSolid(cv::Mat &img, const cv::Vec3b &value) const;
+
+            /// \brief Color the corresponding elements in an image (using the graylevel assigned to the node).
             void colorMe(cv::Mat &img) const;
 
             /// \brief Color the corresponding elements in a multichannel

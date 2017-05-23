@@ -13,14 +13,8 @@ namespace fl{
             return NULL;
         }
 
-//            cv::Mat img(rows,cols,CV_32S);
-//
-//            for (int _i=0; _i < rows; ++_i)
-//                for (int _j=0; _j < cols; ++_j)
-//                    imgIn >> img.at<int32_t>(_i, _j);
 
-
-
+        // TODO construct dual of the correct type
         //cv::Mat imgDual(img[0].rows*2-1, img[0].cols*2-1, CV_32S, *std::max_element(img[0].begin<uchar>(), img[0].end<uchar>()));
         // why max element??
 
@@ -29,6 +23,7 @@ namespace fl{
         cv::Mat imgDual(img[0].rows*2-1, img[0].cols*2-1, CV_32F, 255*255*img.size());
 
 
+        // TODO all uchar * should be of type dependant on the image type
         for(int row = 0, szrow = img[0].rows; row < szrow; ++row) {
             std::vector <const uchar *> pU;
             for (int i=0; i < img.size(); ++i){
@@ -70,20 +65,13 @@ namespace fl{
             }
         }
 
-        std::cout << "calling max tree following: " << std::endl;
-
         Node *dualRoot = maxTreeNister(imgDual, std::less<float>(), dual);
-
-        std::cout << "max tree constructed" << std::endl;
-
         std::vector <std::vector <char> > seen(img[0].cols, std::vector <char>(img[0].rows, false));
         Node *alphaRoot = constructRecursively(dualRoot, seen);
         ImageTree *dualTree = new ImageTree(dualRoot, std::make_pair(img[0].rows, img[0].cols)); // <- to delete it
 
         delete dualTree;
 
-
-        //std::cerr << *std::max_element(imgDual.begin<int32_t>(), imgDual.end<int32_t>()) << std::endl;
         alphaRoot->assignHyperLevelRec(detail::alphaTreeGrayLvlHyperAssign(img));
         return alphaRoot->assignGrayLevelRec(detail::alphaTreeGrayLvlAssign(img[0]));
     }

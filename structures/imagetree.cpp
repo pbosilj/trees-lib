@@ -50,13 +50,32 @@ ImageTree::~ImageTree(){
     }
 }
 
+//void ImageTree::deallocateRoot(const Node *n){
+//    const std::vector <Node *> &ch = n->_children;
+//    for (int i=0, szi = ch.size(); i < szi; ++i){
+//        if (ch[i] != NULL)
+//            this->deallocateRoot(ch[i]);
+//    }
+//    delete n;
+//}
+
+// non-recursive
 void ImageTree::deallocateRoot(const Node *n){
-    const std::vector <Node *> &ch = n->_children;
-    for (int i=0, szi = ch.size(); i < szi; ++i){
-        if (ch[i] != NULL)
-            this->deallocateRoot(ch[i]);
-    }
-    delete n;
+    std::vector <std::pair<const Node *, bool> > toProcess(1, std::make_pair(n, false));
+    std::pair<const Node *, bool> tmp;
+    do{
+        tmp = toProcess.back();
+        if (tmp.second || tmp.first->_children.empty()) { // second time on queue
+            delete tmp.first;
+            toProcess.pop_back();
+        }
+        else{ // first time on queue, children not processed
+            toProcess.back().second = true;
+            for (int i=0, szi = tmp.first->_children.size(); i < szi; ++i){
+                toProcess.push_back(std::make_pair(tmp.first->_children[i], false));
+            }
+        }
+    }while(!toProcess.empty());
 }
 
 /// Flip the settings regarding the destruction of
@@ -222,6 +241,48 @@ Node *ImageTree::randomNode(){
     Node *returnValue = this->allNodes[std::rand() % this->allNodes.size()];
 
     return returnValue;
+}
+
+Node *ImageTree::lowestPixelOf(pxCoord px) const{
+    std::vector <Node *> toProcess(1, this->_root);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        toProcess.pop_back();
+        if (tmp->hasOwnElement(px))
+            return tmp;
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
+    return NULL;
+}
+
+/// \param image The image onto which to draw the regions. Must be an RGB
+/// image.
+/// \param toMark A list of `Node`s corresponding to the set of regions to
+/// draw.
+/// \param value The RGB value of the flat color with which to draw the
+/// regions.
+void ImageTree::markSelectedNodes(cv::Mat &image,
+                                  const std::vector <Node *> &toMark,
+                                  const cv::Vec3b &value) const{
+    for (int i=0, szi = toMark.size(); i < szi; ++i)
+        if (toMark[i] != NULL)
+            toMark[i]->colorSolid(image, value);
+}
+
+/// \param image The image onto which to draw the regions. Must be an RGB
+/// image.
+/// \param value The RGB value of the flat color with which to draw the
+/// regions.
+void ImageTree::markAllPatches(cv::Mat &image, const cv::Vec3b &value) const{
+    const std::vector <Node *> &ch = this->_root->_children;
+    for (int i=0, szi = ch.size(); i < szi; ++i){
+        if (ch[i] != NULL){
+            ch[i]->colorSolid(image, value);
+        }
+    }
 }
 
 /// \param outPath The path to where to save the image. If left empty, the

@@ -101,7 +101,7 @@ namespace fl{
         return minV;
     }
 
-        double detail::getCvMatElem(const cv::Mat &img, const std::pair<int, int> &coord){
+    double detail::getCvMatElem(const cv::Mat &img, const std::pair<int, int> &coord){
         return getCvMatElem(img, coord.first, coord.second);
     }
     double detail::getCvMatElem(const cv::Mat &img, int X, int Y){
@@ -148,18 +148,28 @@ namespace fl{
     cv::MatConstIterator detail::getCvMatBegin(const cv::Mat &img){
         if (img.type() == CV_8U)
             return img.begin<uchar>();
+        else if (img.type() == CV_32S)
+            return img.begin<int32_t>();
+        else if (img.type() == CV_32F)
+            return img.begin<float>();
+        else if (img.type() == CV_16S)
+            return img.begin<short>();
         else if (img.type() == CV_16U)
             return img.begin<ushort>();
-        else // if (img.type() == CV_32S)
-            return img.begin<int32_t>();
+        return img.begin<uchar>();
     }
     cv::MatConstIterator detail::getCvMatEnd(const cv::Mat &img){
         if (img.type() == CV_8U)
             return img.end<uchar>();
+        else if (img.type() == CV_32S)
+            return img.end<int32_t>();
+        else if (img.type() == CV_32F)
+            return img.end<float>();
+        else if (img.type() == CV_16S)
+            return img.end<short>();
         else if (img.type() == CV_16U)
             return img.end<ushort>();
-        else // if (img.type() == CV_32S)
-            return img.end<int32_t>();
+        return img.end<uchar>();
     }
     double detail::getDerefCvMatConstIterator(cv::MatConstIterator &it, int matType){
         if (matType == CV_8U)
@@ -172,6 +182,6 @@ namespace fl{
             return (double)(*(short *)(*it));
         else if (matType == CV_16U)
             return (double)(*(ushort *)(*it));
-        return *std::max_element(img.begin<uchar>(), img.end<uchar>());
+        return (double)(*(uchar *)(*it));
     }
 }

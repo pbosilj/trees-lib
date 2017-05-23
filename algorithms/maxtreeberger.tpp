@@ -63,7 +63,7 @@ namespace fl{
     namespace detail{
         template <typename Compare>
         bool imgIndexComp<Compare>::operator() (const pxCoord &lhs, const pxCoord &rhs){
-            return myComp(detail::getCvMatElem(img, rhs.X, rhs.Y), detail::getCvMatElem(img, lhs.X, lhs.Y));
+            return myComp(detail::getCvMatElem(img, rhs), detail::getCvMatElem(img, lhs));
         }
 
         template <typename Compare>

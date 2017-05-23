@@ -81,6 +81,8 @@ class ImageTree {
         /// \brief Get a random `Node` from the `ImageTree`.
         Node *randomNode();
 
+        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
+        Node *lowestPixelOf(pxCoord px) const;
 
         /// \brief Get the minimal and maximal levels present in the `ImageTree`.
         std::pair <double, double> minMaxLevel() const;
@@ -99,6 +101,12 @@ class ImageTree {
         void printTreeWithAttribute(std::ostream &outStream = std::cout) const;
 
 #endif
+
+        // \brief Mark all patches corresponding to any surviving `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
+        void markAllPatches(cv::Mat &image, const cv::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
+
+        // \brief Mark all patches corresponding the selected `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
+        void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
 
         /// \brief Displays the image obtained by reconstruction from `ImageTree`.
         void displayTree(const std::string &outPath = "/home/pbosilj/Programming/Trees/filtest.png") const;
