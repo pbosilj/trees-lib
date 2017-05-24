@@ -31,6 +31,38 @@ namespace fl{
         private:
     };
 
+    /// \class RelativeIncreaseGreaterThanX
+    ///
+    /// \brief A `Predicate` accepting (the `Node`s) with the parent value more
+    /// than X*100% greater than the `Node` value.
+    template <class valType>
+    class RelativeIncreaseGreaterThanX : Predicate<valType>{
+        public:
+            /// \brief The class constructor.
+            /// \param xp The percentage to be used.
+            RelativeIncreaseGreaterThanX(double xp) : xp(xp) { if (xp < 0) xp = 0.5;}
+            virtual ~RelativeIncreaseGreaterThanX() {}
+            bool operator()(valType myValue, valType parentValue) const;
+        private:
+            double xp;
+    };
+
+    /// \class RelativeIncreaseGreaterThanX
+    ///
+    /// \brief A `Predicate` accepting (the `Node`s) with the parent value more
+    /// than X greater than the `Node` value.
+    template <class valType>
+    class IncreaseGreaterThanX : Predicate<valType>{
+        public:
+            /// \brief The class constructor.
+            /// \param xp The value to be used.
+            IncreaseGreaterThanX(valType x) : x(x) {}
+            virtual ~IncreaseGreaterThanX() {}
+            bool operator()(valType myValue, valType parentValue) const;
+        private:
+            valType x;
+    };
+
     /// \class DifferentThanParent
     ///
     /// \brief A `Predicate` accepting (the `Node`s) with values different than their

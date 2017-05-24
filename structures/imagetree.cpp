@@ -6,12 +6,22 @@
 #include <vector>
 #include <utility>
 #include <iostream>
+#include <stack>
+
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <string>
 #include <cstdlib>
+
+#include "regiondynamicsattribute.h"
+#include "areaattribute.h"
+#include "momentsattribute.h"
+
 
 using namespace fl;
 
@@ -223,6 +233,217 @@ std::pair<double, double> ImageTree::minMaxLevel() const{
 void ImageTree::printTree(std::ostream &outStream) const{
     this->_root->printElements(outStream);
 }
+
+void ImageTree::getLeaves(std::vector <fl::Node *> &leaves){
+    leaves.clear();
+    std::stack<fl::Node *> nodeStack;
+    nodeStack.push(this->_root);
+    for (fl::Node *cur = nodeStack.top(); ; cur = nodeStack.top()){
+        nodeStack.pop();
+        if (cur->_children.empty()){
+            leaves.push_back(cur);
+        }
+        else{
+            for (int i=0, szi = cur->_children.size(); i < szi; nodeStack.push(cur->_children[i++]));
+        }
+        if (nodeStack.empty())
+            break;
+    }
+    return;
+}
+
+void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt){
+    leafExt.clear();
+    std::vector <fl::Node *> leaves;
+    std::cout << "I will be getting leaves." << std::endl;
+    getLeaves(leaves);
+    std::cout << "I have gotten leaves. Have: " << leaves.size() << std::endl;
+    this->addAttributeToTree<fl::RegionDynamicsAttribute>(new fl::RegionDynamicsSettings());
+    int treeHeight = ((fl::RegionDynamicsAttribute*)this->_root->getAttribute(fl::RegionDynamicsAttribute::name))->value();
+    for (int i=0, szi = leaves.size(); i < szi; ++i){
+        //std::cout << "i: " << i << " " << leafExt.size() << std::endl;
+        int extinction = treeHeight;
+        fl::Node *par = leaves[i]->parent();
+        //int parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value();
+        //int levelDiff = (leaves[i]->level() - par->level());
+        for(int parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value(),
+            levelDiff = std::abs(leaves[i]->level() - par->level());
+            parHeight <= levelDiff;
+            par = par->parent(),
+            parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value(),
+            levelDiff = std::abs(leaves[i]->level() - par->level())){
+            if (par->visited && par->_children.size() > 1 && parHeight == levelDiff)
+                break;
+            par->visited = true;
+            if (par->isRoot())
+                break;
+        }
+        extinction = std::abs(leaves[i]->level() - par->level());
+        leafExt.emplace_back(extinction, leaves[i]);
+    }
+
+    //std::cout << "Removing attribute" << std::endl;
+    this->deleteAttributeFromTree<fl::RegionDynamicsAttribute>();
+
+    //std::cout << "Resetting visited" << std::endl;
+    std::stack <fl::Node *> nodeStack;
+    nodeStack.push(this->_root);
+    for (fl::Node *cur; !nodeStack.empty();){
+        cur = nodeStack.top();
+        nodeStack.pop();
+        cur->visited = false;
+        for (int i=0, szi = cur->_children.size(); i < szi; ++i) nodeStack.push(cur->_children[i]);
+    }
+    //std::cout << "And done" << leafExt.size() << std::endl;
+    return;
+}
+
+void ImageTree::printFromLeaves(const std::vector <std::pair <int, fl::Node *> > &leafExt,
+                            int N){
+    std::ofstream out[3];
+    std::stringstream name;
+    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    //this->addAttributeToTree<fl::ValueDeviationAttribute>(new fl::ValueDeviationSettings());
+    this->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::bnormal, 1, 1));
+
+    for (int i=0, szi = std::min(N, (int)leafExt.size()); i < szi; ++i){
+        name << "leaf" << std::setfill('0') << std::setw(3) << i << "Area.txt";
+        out[0].open(name.str());
+        name.str("");
+        name.clear(); // Clear state flags.
+
+        name << "leaf" << std::setfill('0') << std::setw(3) << i << "AL.txt";
+        out[1].open(name.str());
+        name.str("");
+        name.clear(); // Clear state flags.
+
+        name << "leaf" << std::setfill('0') << std::setw(3) << i << "VD.txt";
+        out[2].open(name.str());
+        name.str("");
+        name.clear(); // Clear state flags.
+
+        int area = ((fl::AreaAttribute*)leafExt[i].second->getAttribute(fl::AreaAttribute::name))->value();
+        double mom = ((fl::MomentsAttribute*)leafExt[i].second->getAttribute(fl::MomentsAttribute::name))->value();
+        int plevel = leafExt[i].second->level();
+
+        out[0] << area << std::endl;
+
+        out[1] << plevel << " " << area << std::endl;
+
+        out[2] << plevel << " " << mom << std::endl;
+
+
+        for (Node * cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
+            int area = ((fl::AreaAttribute*)cur->parent()->getAttribute(fl::AreaAttribute::name))->value();
+            double mom = ((fl::MomentsAttribute*)cur->parent()->getAttribute(fl::MomentsAttribute::name))->value();
+            int plevel = cur->parent()->level();
+
+            out[0] << area << std::endl;
+
+            out[1] << plevel << " " << area << std::endl;
+
+            out[2] << plevel << " " << mom << std::endl;
+
+        }
+
+        for (int j=0; j < 3; out[j++].close());
+    }
+    this->deleteAttributeFromTree<fl::AreaAttribute>();
+    this->deleteAttributeFromTree<fl::MomentsAttribute>();
+}
+
+
+void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
+                            const std::vector <std::pair <int, fl::Node *> > &leafExt,
+                            int N){
+    selected.clear();
+    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    for (int i=0, szi = std::min(N, (int)leafExt.size()); i < szi; ++i){
+        std::cout << "Node i=" << i << std::endl;
+        Node *best = NULL, *cur;
+        double bestGrowth = 0;
+        bool last = false;
+        Node *par;
+        for (cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
+            if (!last){
+                par = cur->parent();
+                last = true;
+            }
+            for (; !par->isRoot() && std::abs(cur->level() - par->level()) < 20*255; par = par->parent());
+            //std::cout << "parent value " << par->level() << " " << (int)par->isRoot() << std::endl;
+            int parentArea = ((fl::AreaAttribute*)par->getAttribute(fl::AreaAttribute::name))->value();
+            int selfArea = ((fl::AreaAttribute*)cur->getAttribute(fl::AreaAttribute::name))->value();
+            if (selfArea > 10000)
+                break;
+            double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(par->level() - cur->level())));
+            //if (growth > 5)
+            //    continue;
+//            if (growth > 1.1){
+//                std::cout << cur->parent()->level() << " " << cur->level() << std::endl;
+//                best = cur;
+//                bestGrowth = growth;
+//                break;
+//            }
+//            if (std::abs(cur->parent()->level() - cur->level()) > 30){
+//                std::cout << cur->level() << " " << cur->parent()->level() << " " << selfArea << " " << parentArea << std::endl;
+//                best = cur;
+//                break;
+//            }
+            //std::cout << "\t growth: " << growth << std::endl;
+            //if (growth > 10)
+            //    continue;
+            if (growth > bestGrowth){
+                best = cur;
+                bestGrowth = growth;
+            }
+        }
+        std::cout << "BestGrowth " << bestGrowth << std::endl;
+        if (bestGrowth > 0)
+            selected.push_back(best);
+    }
+    this->deleteAttributeFromTree<fl::AreaAttribute>();
+}
+
+
+//produces markers for onion image
+//void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
+//                            const std::vector <std::pair <int, fl::Node *> > &leafExt,
+//                            int N){
+//    selected.clear();
+//    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+//    for (int i=0, szi = std::min(N, (int)leafExt.size()); i < szi; ++i){
+//        std::cout << "Node i=" << i << std::endl;
+//        Node *best = NULL, *cur;
+//        double bestGrowth = 0;
+//        for (cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
+////            int parentArea = ((fl::AreaAttribute*)cur->parent()->getAttribute(fl::AreaAttribute::name))->value();
+////            int selfArea = ((fl::AreaAttribute*)cur->getAttribute(fl::AreaAttribute::name))->value();
+////            double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(cur->parent()->level() - cur->level())));
+////            if (growth > 1.1){
+////                std::cout << cur->parent()->level() << " " << cur->level() << std::endl;
+////                best = cur;
+////                bestGrowth = growth;
+////                break;
+////            }
+//            if (std::abs(cur->parent()->level() - cur->level()) > 10){
+//                best = cur;
+//                break;
+//            }
+//            //std::cout << "\t growth: " << growth << std::endl;
+//            //if (growth > 10)
+//            //    continue;
+////            if (growth > bestGrowth){
+////                best = cur;
+////                bestGrowth = growth;
+////            }
+//        }
+//        //std::cout << "BestGrowth " << bestGrowth << std::endl;
+//        selected.push_back(best);
+//    }
+//    this->deleteAttributeFromTree<fl::AreaAttribute>();
+//}
+
+
 
 /// \return A pointer to a random `Node` from the `ImageTree`.
 

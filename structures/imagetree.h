@@ -102,10 +102,10 @@ class ImageTree {
 
 #endif
 
-        // \brief Mark all patches corresponding to any surviving `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
+        /// \brief Mark all patches corresponding to any surviving `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
         void markAllPatches(cv::Mat &image, const cv::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
 
-        // \brief Mark all patches corresponding the selected `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
+        /// \brief Mark all patches corresponding the selected `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
         void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
 
         /// \brief Displays the image obtained by reconstruction from `ImageTree`.
@@ -197,6 +197,20 @@ class ImageTree {
 #endif
 
 #endif
+        /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
+        void getLeaves(std::vector <fl::Node *> &leaves);
+        /// \bried Calculate extinction values for all the leaves in the tree.
+        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt);
+        /// \brief Given a list of `Node`s and associated extinction values, select the
+        /// from the `ImageTree` the `Node`s which are on the selected `Node` branches.
+        void selectFromLeaves(std::vector <fl::Node *> &selected,
+                              const std::vector <std::pair <int, fl::Node *> > &leafExt,
+                              int N);
+        /// \brief Debug. Prints some `Attribute` statistics from the selected `Node`s.
+        void printFromLeaves(const std::vector <std::pair <int, fl::Node *> > &leafExt,
+                             int N);
+
+
         friend void markMserInTree(const ImageTree &tree, int deltaLvl, std::vector <Node *> &mser, std::vector <std::pair <double, int> > &div,
             int maxArea, int minArea, double maxVariation, double minDiversity);
 

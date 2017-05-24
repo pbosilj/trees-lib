@@ -71,7 +71,6 @@
 		<Unit filename="misc/ellipse.h" />
 		<Unit filename="misc/pixels.cpp" />
 		<Unit filename="misc/pixels.h" />
-		<Unit filename="misc/vecmaker.h" />
 		<Unit filename="structures/areaattribute.cpp" />
 		<Unit filename="structures/areaattribute.h" />
 		<Unit filename="structures/attribute.cpp" />

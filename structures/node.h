@@ -160,6 +160,9 @@ namespace fl{
 
     protected:
 
+            /// Used for extinction values.
+            bool visited;
+
             /// \brief The list of own elements.
 
             /// The list of the `Node` not belonging to any of its children.

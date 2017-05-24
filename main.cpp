@@ -929,7 +929,12 @@ void globalPSForAll(int argc, char** argv){
 
 void forRomain(int argc, char** argv );
 
+void testObjectDetection(int argc, char **argv);
+
 int main(int argc, char** argv ){
+
+    testObjectDetection(argc, argv);
+    return 0;
 
     //testMser(argc, argv);
 
@@ -994,7 +999,7 @@ int main(int argc, char** argv ){
         //globalPSForAll(argc, argv);
         //return 0;
 
-        {
+         {
 //        cv::Mat test = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
 //        if (test.type() == CV_8U){
 //            std::cerr << "char?" << std::endl;
@@ -1026,7 +1031,7 @@ int main(int argc, char** argv ){
 //                    std::cout << msg << std::endl;
 //                }
 
-                for (int pca=1; pca <= 3; ++pca){
+                for (int pca=1; pca <= 4; ++pca){
                     char outPath[50];
                     //sprintf(outPath, "pca%1dMin%3.1lf.png", pca, thresh[j]);
                     sprintf(outPath, "omegaNCLevel%3.1lfx%3.1lfPCA%1d.png", M[k], thresh[j], pca);
@@ -1038,7 +1043,6 @@ int main(int argc, char** argv ){
         }
         return 0;
         }
-
 //        forRomain(argc, argv);
 //        return 0;
 
@@ -1277,6 +1281,176 @@ int main(int argc, char** argv ){
 
     outF.close();
     return 0;
+}
+
+void testObjectDetection(int argc, char **argv){
+
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+
+    //cv::imshow("Original", image);
+    //cv::waitKey(0);
+
+    cv::Mat display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    fl::Node *root;
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+    std::cout << "constructed tree" << std::endl;
+
+    std::vector <std::pair <int, fl::Node *> > leafExt;
+    tree->getLeafExtinctions(leafExt);
+    std::cout << "Extinction values got " << std::endl;
+    std::sort(leafExt.rbegin(), leafExt.rend());
+    //std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
+    //for (int i=0, szi = leafExt.size(); i < szi; ++i)
+    //    std::cout << leafExt[i].first << std::endl;
+    //std::cout << std::endl;
+
+    std::vector <fl::Node *> selection;
+    std::cout << "Selecting nodes" << std::endl;
+    tree->setImage(image);
+    tree->printFromLeaves(leafExt, 50);
+
+    return;
+    tree->selectFromLeaves(selection, leafExt, 80);
+    tree->markSelectedNodes(display, selection);
+    cv::imshow("Detected patches 2", display);
+    cv::waitKey(0);
+
+    if (argc > 2)
+        cv::imwrite(argv[2], display);
+
+    delete tree;
+    return;
+
+    tree->setImage(image);
+//    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+//    tree->filterTreeByTIAttributePredicate<fl::AreaAttribute>(fl::RelativeIncreaseGreaterThanX<int>(150.0));
+//    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+//
+
+    tree->addAttributeToTree<fl::RangeAttribute>(new fl::RangeSettings());
+    int maxRange = ((fl::RangeAttribute*)root->getAttribute(fl::RangeAttribute::name))->value();
+    tree->deleteAttributeFromTree<fl::RangeAttribute>();
+    tree->unsetImage();
+
+    //std::cout << "max range: " << maxRange << " proposed threshold: " << 60./256*(maxRange+1) << std::endl;
+
+    tree->filterTreeByLevelPredicate(fl::IncreaseGreaterThanX<int>(80./256*(maxRange+1)));
+
+    tree->markAllPatches(display);
+    cv::imshow("Detected patches", display);
+    cv::waitKey(0);
+
+    display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+
+    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::RelativeIncreaseGreaterThanX<int>(2.0));
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<int>(7));
+    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+
+    tree->markAllPatches(display);
+    cv::imshow("Detected patches 2", display);
+    cv::waitKey(0);
+
+    if (argc > 2)
+        cv::imwrite(argv[2], display);
+
+    return;
+
+//    std::vector <fl::Node *> mser;
+//    std::vector <std::vector <cv::Point> > points;
+//    std::vector <std::pair <double, int> > div;
+//
+//    //std::vector <std::pair <double, int> > divTotal;
+//    int firstSize = 0;
+//
+//    for (int i=0; i < 2; ++i){
+//        if (i && (dual == NULL || dual == tree))
+//            continue;
+//
+//        fl::ImageTree *t = (!i)?(tree):(dual);
+//
+//        fl::markMserInTree(*t, mser, div, params);
+//
+//        //divTotal.insert(divTotal.end(), div.begin(), div.end());
+//        firstSize = mser.size();
+//
+//        fl::fillMserPoints(points, mser);
+//
+//    }
+//
+//    outF << "1.0" << std::endl;
+//    int toPrintSize = 0;
+//    for (int i=0, szi = points.size(); i < szi; ++i){
+//        fl::ellipse current(points[i], image.cols, image.rows);
+//        if (current.isOK())
+//            ++toPrintSize;
+//    }
+//    outF << toPrintSize << std::endl;
+//
+//    for (int i=0, szi = points.size(); i < szi; ++i){
+//        fl::ellipse current(points[i], image.cols, image.rows);
+//        if (current.isOK()){
+//            //if (i == 256 || i == 250) outF << "blub " << std::endl;
+//            outF << current << std::endl;
+//            //outF << current << "  " << divTotal[i].first << std::endl;
+//
+//        }
+//    }
+//
+//    if (featPath != ""){
+//
+//        cv::Mat ellipses;
+//        cv::Mat features;
+//
+//        display.copyTo(ellipses);
+//        display.copyTo(features);
+//
+//
+//        for( int i = (int)points.size()-1; i >= 0; i-- ){
+//
+//            fl::ellipse current(points[i], image.cols, image.rows);
+//            if (!(current.isOK()))
+//                continue;
+//
+//            std::sort(points[i].begin(), points[i].end(), comparator);
+//            const std::vector<cv::Point>& r = points[i];
+//
+//            for ( int j = 0; j < (int)r.size(); j++ )
+//            {
+//                cv::Point pt = r[j];
+//                display.at<cv::Vec3b>(pt) = bcolors[(i+r.size())%11];
+//            }
+//
+//            //cv::RotatedRect box = cv::fitEllipse(r);
+//            cv::RotatedRect box = cv::minAreaRect(r);
+//            cv::ellipse(ellipses, box, cv::Scalar(196,255,255), 2);
+//
+////            std::cout << i << std::endl;
+////
+////            imshow("regions", display);
+////            cv::waitKey(0);
+////
+////            imshow("regions", ellipses);
+////            cv::waitKey(0);
+//
+//
+////            if (current.small){
+////            std::cout << "i: " << i << std::endl;
+////            //fl::ellipse current(points[i], image.cols, image.rows);
+////            imshow("regions", display);
+////            cv::waitKey(0);
+////
+////            imshow("regions", ellipses);
+////            cv::waitKey(0);
+////            }
+//
+//        }
+//
+//        cv::imwrite(featPath, display);
+//        cv::imwrite(ellipsePath, ellipses);
+//    }
 }
 
 void testAllRange(const cv::Mat &image, fl::ImageTree *tos, fl::ImageTree *alpha, fl::ImageTree *max, fl::ImageTree *min, int delta){
