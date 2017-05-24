@@ -28,7 +28,7 @@ namespace fl{
     namespace detail{
         void maxTreeCore(const std::vector<fl::pxCoord> &sorted, fl::pxType curType, std::vector<std::vector<fl::pxCoord> > &parent);
         void canonizeTree(const std::vector<fl::pxCoord> &sorted, std::vector<std::vector<fl::pxCoord> > &parent, const cv::Mat &img);
-        fl::Node* makeNodeTree(const std::vector<std::vector<fl::pxCoord> > &parent, const cv::Mat &img);
+        fl::Node* makeNodeTree(const std::vector<std::vector<fl::pxCoord> > &parent, const cv::Mat &img, const cv::Mat &mask = cv::Mat());
     }
 
     /// \brief Constructs the max-tree using the algorithm
@@ -37,9 +37,9 @@ namespace fl{
     /// (2007)
     Node *maxTreeBerger(const cv::Mat &img);
 
-    /// \brief \copybrief maxTreeBerger(const cv::Mat &img)
+    /// \brief \copybrief maxTreeBerger().
     template <typename Compare>
-    Node *maxTreeBerger(const cv::Mat &img, Compare pxOrder, pxType curType = regular);
+    Node *maxTreeBerger(const cv::Mat &img, Compare pxOrder, const cv::Mat &mask = cv::Mat(), pxType curType = regular);
 }
 
 #include "maxtreeberger.tpp"

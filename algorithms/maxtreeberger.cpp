@@ -33,6 +33,7 @@ namespace fl{
             return zpar[px.X][px.Y];
         }
 
+        /// TODO check if the non-recursive re-implementation works
         //pxCoord findRoot(const pxCoord &px, std::vector<std::vector<pxCoord> > &zpar){
         //    std::stack<std::pair<pxCoord, bool > > coordStack;
         //    coordStack.emplace(px, false);
@@ -80,10 +81,9 @@ namespace fl{
             for (int i=0, szi = sorted.size(); i < szi; ++i){
                 const pxCoord &p = sorted[i];
                 const pxCoord &q = parent[p.X][p.Y];
-                if (img.at<uchar>(parent[q.X][q.Y].Y, parent[q.X][q.Y].X) == img.at<uchar>(q.Y, q.X))
+                if (detail::getCvMatElem(img, parent[q.X][q.Y]) == detail::getCvMatElem(img, q))
                     parent[p.X][p.Y] = parent[q.X][q.Y];
             }
-
         }
 
         void assignNewNode(std::vector <Node *> &nodes, std::vector<std::vector<int> > &nodeIndices,
@@ -93,7 +93,7 @@ namespace fl{
             nodeIndices[coord.X][coord.Y] = nodes.size()-1;
         }
 
-        Node* makeNodeTree(const std::vector<std::vector<pxCoord> > &parent, const cv::Mat &img){
+        Node* makeNodeTree(const std::vector<std::vector<pxCoord> > &parent, const cv::Mat &img, const cv::Mat &mask){
             int counter = 0;
             std::vector <Node *> nodes;
             int rootIndex = -1;
@@ -101,8 +101,10 @@ namespace fl{
             std::vector <std::vector <int> > nodeIndices(img.cols, std::vector<int>(img.rows, -1));
             for(cv::MatConstIterator it = detail::getCvMatBegin(img), end = detail::getCvMatEnd(img); it != end; ++it, ++counter){
                 const pxCoord &curCoord = make_pxCoord(counter % img.cols, counter / img.cols);
-                const pxCoord &parCoord = parent[curCoord.X][curCoord.Y];
                 const int &curValue = detail::getDerefCvMatConstIterator(it, img.type());
+                if (curValue < -9000 || (!mask.empty() && detail::getCvMatElem(mask, curCoord.X, curCoord.Y) == 0))
+                    continue;
+                const pxCoord &parCoord = parent[curCoord.X][curCoord.Y];
                 const int &parValue = detail::getCvMatElem(img, parCoord);
                 if (nodeIndices[parCoord.X][parCoord.Y] == -1)
                     assignNewNode(nodes, nodeIndices, parCoord, parValue);
