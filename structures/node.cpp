@@ -373,6 +373,34 @@ int Node::elementCount (void) {
     return this->size;
 }
 
+/// TODO: check non-recursive implementation
+//int Node::elementCount(void){
+//    std::stack<Node *> nodeStack;
+//    if (!this->sizeKnown){
+//        nodeStack.push(this);
+//
+//        do{
+//            fl::Node *cur = nodeStack.top();
+//            if (cur->sizeKnown == false){
+//                cur->sizeKnown = true;
+//                for (int i=0, szi = cur->children.size(); i < szi; ++i){
+//                    nodeStack.push(cur->children[i]);
+//                }
+//            }
+//            else{
+//                nodeStack.pop();
+//                cur->size = cur->S.size();
+//                for (int i=0, szi = cur->children.size(); i < szi; ++i){
+//                    cur->size += cur->children[i]->size;
+//                }
+//            }
+//        }while(!nodeStack.empty());
+//        this->sizeKnown = true;
+//    }
+//    return this->size;
+//}
+
+
 /// \return Number of `Node`s in the subtree.
 ///
 /// \remark The function uses stores the calculation results

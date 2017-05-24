@@ -258,8 +258,6 @@ namespace fl{
 
 #endif
 
-
-
     private:
 
 #if 1
