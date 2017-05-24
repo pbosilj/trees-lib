@@ -77,17 +77,23 @@ void ImageTree::addAttributeToTree(AttributeSettings *settings, bool deleteSetti
 // where AT is Attribute
 template<class AT>
 void ImageTree::addAttributeToNode(Node *cur, AttributeSettings *settings) const{
-    {
-        // TODO check if memory is still lost. If yes, fix leak.
-        AT *nat = new AT(cur, this, settings); // how is memory lost here???
-        AT *oat = (AT *)(cur->addAttribute(nat, AT::name));
-        if (oat != NULL){
-            delete oat;
+    // non-recursive reimplementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            AT *nat = new AT(tmp, this, settings); // how is memory lost here???
+            AT *oat = (AT *)(tmp->addAttribute(nat, AT::name));
+            if (oat != NULL){
+                delete oat;
+            }
         }
-    }
-    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-        this->addAttributeToNode<AT>(cur->_children[i], settings);
-    }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
 }
 
 /// The function will take care of multiple assigned
@@ -114,14 +120,23 @@ void ImageTree::deleteAttributeFromTree() const{
 //where AT is Attribute
 template<class AT>
 void ImageTree::deleteAttributeFromNode(Node *cur) const{
-    {
-        AT *oat = (AT *)(cur->deleteAttribute(AT::name));
-        if (oat != NULL)
-            delete oat;
-    }
-    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-        deleteAttributeFromNode<AT>(cur->_children[i]);
-    }
+    // non-recursive implementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            AT *oat = (AT *)(tmp->deleteAttribute(AT::name));
+            if (oat != NULL)
+                delete oat;
+            else
+                return;
+        }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
 }
 
 /// Checks if the specific `TypedAttribute` requested is assigned to the
@@ -559,16 +574,23 @@ template <typename AT1, typename AT2> class PatternSpectra2D;
 
 template<class AT1, class AT2>
 void ImageTree::addPatternSpectra2DToNode(Node *cur, PatternSpectra2DSettings *settings) const{
-    {
-        PatternSpectra2D<AT1, AT2> *nps = new PatternSpectra2D<AT1, AT2>(cur, this, settings, false);
-        if (!(cur->addPatternSpectra2D(nps, AT1::name+AT2::name))){ // false means it was not assigned
-            delete nps;
-            return; // because if it failed at one `Node` it should at all of them.
+    // non-recursive reimplementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            PatternSpectra2D<AT1, AT2> *nps = new PatternSpectra2D<AT1, AT2>(tmp, this, settings, false);
+            if (!(tmp->addPatternSpectra2D(nps, AT1::name+AT2::name))){ // false means it was not assigned
+                delete nps;
+                return; // because if it failed at one `Node` it should at all of them.
+            }
         }
-    }
-    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-        this->addPatternSpectra2DToNode<AT1,AT2>(cur->_children[i], settings);
-    }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
 }
 
 /// Deletes a `PatternSpectra2D` specified by two concrete `TypedAttribute`s
@@ -594,14 +616,23 @@ void ImageTree::deletePatternSpectra2DFromTree() const{
 
 template<class AT1, class AT2>
 void ImageTree::deletePatternSpectra2DFromNode(Node *cur) const{
-    {
-        PatternSpectra2D<AT1, AT2> *ops = (PatternSpectra2D<AT1, AT2> *)(cur->deletePatternSpectra2D(AT1::name+AT2::name));
-        if (ops != NULL)
-            delete ops;
-    }
-    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-        deletePatternSpectra2DFromNode<AT1,AT2>(cur->_children[i]);
-    }
+    // non-recursive reimplementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            PatternSpectra2D<AT1, AT2> *ops = (PatternSpectra2D<AT1, AT2> *)(tmp->deletePatternSpectra2D(AT1::name+AT2::name));
+            if (ops != NULL)
+                delete ops;
+            else // assuming, if first, root, does not have it, neither do the children
+                return;
+        }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
 }
 
 #endif
