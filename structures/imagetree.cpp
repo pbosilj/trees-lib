@@ -359,23 +359,34 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
     selected.clear();
     this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
     for (int i=0, szi = std::min(N, (int)leafExt.size()); i < szi; ++i){
-        std::cout << "Node i=" << i << std::endl;
+        //std::cout << "Node i=" << i << " stability " << leafExt[i].first << std::endl;
         Node *best = NULL, *cur;
-        double bestGrowth = 0;
+//        double bestGrowth = 0;
         bool last = false;
         Node *par;
+//        int bestArea = 0;
+        std::vector<std::pair<double, std::pair<double, Node *> > > allGrowth;
         for (cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
             if (!last){
                 par = cur->parent();
                 last = true;
             }
-            for (; !par->isRoot() && std::abs(cur->level() - par->level()) < 20*255; par = par->parent());
+            for (; !par->parent()->isRoot() && std::abs(cur->level() - par->parent()->level()) <= 25; par = par->parent());
             //std::cout << "parent value " << par->level() << " " << (int)par->isRoot() << std::endl;
             int parentArea = ((fl::AreaAttribute*)par->getAttribute(fl::AreaAttribute::name))->value();
             int selfArea = ((fl::AreaAttribute*)cur->getAttribute(fl::AreaAttribute::name))->value();
-            if (selfArea > 10000)
-                break;
-            double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(par->level() - cur->level())));
+//            if (selfArea < 40)
+//                continue;
+//            else if (selfArea > 20000)
+//                break;
+//            if (selfArea > 100000)
+//                break;
+//            if (selfArea < 30)
+//                break;
+            //double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(par->level() - cur->level())));
+            double growth = (double)(parentArea - selfArea) / selfArea;
+            allGrowth.emplace_back(std::make_pair(growth, std::make_pair(selfArea, cur)));
+
             //if (growth > 5)
             //    continue;
 //            if (growth > 1.1){
@@ -392,14 +403,47 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
             //std::cout << "\t growth: " << growth << std::endl;
             //if (growth > 10)
             //    continue;
-            if (growth > bestGrowth){
-                best = cur;
-                bestGrowth = growth;
-            }
+//            if (growth > bestGrowth){
+//                best = cur;
+//                bestGrowth = growth;
+//                bestArea = selfArea;
+//            }
         }
-        std::cout << "BestGrowth " << bestGrowth << std::endl;
-        if (bestGrowth > 0)
-            selected.push_back(best);
+//        std::cout << "BestGrowth " << bestGrowth << " area:" << bestArea << std::endl;
+        int bestIndex = 0;
+        bool correction = false;
+        std::sort(allGrowth.rbegin(), allGrowth.rend());
+        for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i && allGrowth[_i].first > 10; ++_i){
+        //for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i; ++_i){
+            if (allGrowth[_i].second.first > 5e5)
+                continue;
+            if (allGrowth[_i].second.first > 20*allGrowth[bestIndex].second.first){
+//            if (allGrowth[_i].second.first > 5*allGrowth[bestIndex].second.first && allGrowth[_i].first > 500){
+                int cnt = 0;
+                std::cout << "trying to replace " << allGrowth[bestIndex].second.first << " with " << allGrowth[_i].second.first << " (growth:" << allGrowth[_i].first << ")" << std::endl;
+                for (; _i + cnt < (int)allGrowth.size() && allGrowth[_i+cnt].second.first > 0.85*allGrowth[_i].second.first
+                    && allGrowth[_i+cnt].second.first < 1.15*allGrowth[_i].second.first;
+                     std::cout << allGrowth[_i+cnt].second.first << " ", ++cnt);
+                std::cout << std::endl;
+                if (cnt >= 6){
+                    std::cout << "Replacing " << allGrowth[bestIndex].second.first << " with " << allGrowth[_i].second.first <<  std::endl;
+                    bestIndex = _i;
+                    correction = true;
+                    _i += cnt-1;
+                }
+            }
+            //std::cout << "Satb: " << allGrowth[_i].first << " Area: " << allGrowth[_i].second << std::endl;
+        }
+        //if (bestGrowth > 0 && bestArea > 50){
+//        if (correction){
+//              selected.push_back(allGrowth[bestIndex].second.second);
+//        }
+        if (!allGrowth.empty() && allGrowth[bestIndex].second.first > 80){
+            selected.push_back(allGrowth[bestIndex].second.second);
+        }
+//        if (bestGrowth > 0 && bestArea > 50){
+//            selected.push_back(best);
+//        }
     }
     this->deleteAttributeFromTree<fl::AreaAttribute>();
 }
@@ -488,9 +532,61 @@ Node *ImageTree::lowestPixelOf(pxCoord px) const{
 void ImageTree::markSelectedNodes(cv::Mat &image,
                                   const std::vector <Node *> &toMark,
                                   const cv::Vec3b &value) const{
+    std::cout << toMark.size() << std::endl;
+    cv::Vec3b colors[14] = { cv::Vec3b(0, 0, 200),
+                            cv::Vec3b(0, 200, 0),
+                            cv::Vec3b(200, 0, 0),
+                            cv::Vec3b(150, 0, 150),
+                            cv::Vec3b(0, 150, 150),
+                            cv::Vec3b(150, 150, 0),
+                            cv::Vec3b(50, 100, 200),
+                            cv::Vec3b(200, 50, 100),
+                            cv::Vec3b(100, 200, 50),
+                            cv::Vec3b(200, 100, 50),
+                            cv::Vec3b(100, 50, 200),
+                            cv::Vec3b(50, 200, 100),
+                            cv::Vec3b(60, 210, 40),
+                            cv::Vec3b(180, 80, 50) };
+//    cv::namedWindow("Patch", cv::WINDOW_NORMAL);
+
     for (int i=0, szi = toMark.size(); i < szi; ++i)
-        if (toMark[i] != NULL)
-            toMark[i]->colorSolid(image, value);
+        if (toMark[i] != NULL){
+            //toMark[i]->colorSolid(image, value);
+
+            toMark[i]->colorSolid(image, colors[i%14]);
+//            cv::resizeWindow("Patch", image.cols/2, image.rows/2);
+//            cv::imshow("Patch", image);
+//            cv::waitKey(0);
+        }
+}
+
+void ImageTree::markAroundNodes(cv::Mat &image,
+                     const std::vector <Node *> &toMark,
+                     const cv::Vec3b &value) const{
+    std::stringstream outfilename;
+    for (int i=0, szi = toMark.size(); i < szi; ++i){
+        std::vector <pxCoord> elems;
+        toMark[i]->getElements(elems);
+        std::sort(elems.begin(), elems.end());
+        pxCoord ll, ur, center;
+        ll.X = std::max(elems[0].X-75, 0);
+        ur.X = std::min(elems.back().X+75, image.cols);
+        std::sort(elems.begin(), elems.end(), [](const pxCoord &left, const pxCoord &right) {
+                return (left.Y < right.Y) || (left.Y == right.Y && left.X < right.X);
+            });
+        ll.Y = std::max(elems[0].Y-75, 0);
+        ur.Y = std::min(elems.back().Y+75, image.rows);
+        center.X = (ll.X + ur.X)/2;
+        center.Y = (ll.Y + ur.Y)/2;
+        int radius = (std::max(std::abs(center.X - ll.X), std::abs(center.Y - ll.Y))+60)*120/100;
+//        cv::circle(image, cv::Point(center.X, center.Y), radius, value, 2);
+        cv::rectangle(image, cv::Point(ll.X, ll.Y), cv::Point(ur.X, ur.Y), value, 2);
+//        outfilename << "output" << i << ".png";
+//        cv::Mat imcrop = image(cv::Rect(cv::Point(ll.X, ll.Y), cv::Point(ur.X, ur.Y)));
+//        cv::imwrite(outfilename.str().c_str(), imcrop);
+//        outfilename.clear();
+//        outfilename.str(std::string());
+    }
 }
 
 /// \param image The image onto which to draw the regions. Must be an RGB

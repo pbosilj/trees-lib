@@ -1301,21 +1301,51 @@ void testObjectDetection(int argc, char **argv){
     tree->getLeafExtinctions(leafExt);
     std::cout << "Extinction values got " << std::endl;
     std::sort(leafExt.rbegin(), leafExt.rend());
-    //std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
-    //for (int i=0, szi = leafExt.size(); i < szi; ++i)
-    //    std::cout << leafExt[i].first << std::endl;
-    //std::cout << std::endl;
+    std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
+//    for (int i=0, szi = 500; i < szi; ++i)
+//        std::cout << leafExt[i].first << " ";
+//    std::cout << std::endl;
+    std::cout << "Before I have: " << leafExt.size() << std::endl;
+    for (std::vector<std::pair <int, fl::Node *> >::iterator it = leafExt.begin(); it != leafExt.end(); ++it){
+        if (it->first < 10){
+            leafExt.erase(it, leafExt.end());
+            break;
+        }
+    }
+    std::cout << "After I have: " << leafExt.size() << std::endl;
+
+//    std::vector <fl::Node *> onlyNodes;
+//    std::transform(leafExt.begin(),
+//               leafExt.end(),
+//               std::back_inserter(onlyNodes),
+//               [](const std::pair<int, fl::Node *>& p) { return p.second; });
+//
+//    tree->markAroundNodes(display, onlyNodes);
+//
+//    //cv::imshow("Detected patches 2", display);
+//    if (argc > 3)
+//        cv::imwrite(argv[3], display);
+//    //cv::waitKey(0);
+//    display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+//
+//    return;
 
     std::vector <fl::Node *> selection;
     std::cout << "Selecting nodes" << std::endl;
-    tree->setImage(image);
-    tree->printFromLeaves(leafExt, 50);
+//    tree->setImage(image);
+//    tree->printFromLeaves(leafExt, 50);
 
-    return;
-    tree->selectFromLeaves(selection, leafExt, 80);
+//    return;
+    tree->selectFromLeaves(selection, leafExt, leafExt.size());
+
+    std::cout << "Marking" << std::endl;
+
     tree->markSelectedNodes(display, selection);
-    cv::imshow("Detected patches 2", display);
-    cv::waitKey(0);
+
+    std::cout << "done marking" << std::endl;
+    //cv::imshow("Detected patches 2", display);
+    //cv::waitKey(0);
+
 
     if (argc > 2)
         cv::imwrite(argv[2], display);
