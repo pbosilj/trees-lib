@@ -288,6 +288,7 @@ const std::vector<int> & Node::hyperGraylevel() const {
 /// \param img The image to be colored.
 /// \param value The RGB value to be used for coloring.
 ///
+//void Node::colorSolid(cv::Mat &img, const cv::Scalar &value) const{
 void Node::colorSolid(cv::Mat &img, const cv::Vec3b &value) const{
   for (int i=0, szi = this->_S.size(); i < szi; ++i){
     img.at<cv::Vec3b>(_S[i].second, _S[i].first)[0] = value[0];
@@ -300,6 +301,40 @@ void Node::colorSolid(cv::Mat &img, const cv::Vec3b &value) const{
 
   return;
 }
+
+/// Colors the elements (pixels) of the provided image which
+/// correspond by coordinates to the current `Node` elements with
+/// a single color.
+///
+/// \param img The image to be colored.
+/// \param value The RGB value to be used for coloring.
+///
+//void Node::colorSolid(cv::Mat &img, const cv::Scalar &value) const{
+void Node::colorSolid(cv::Mat &img, const cv::Scalar &value) const{
+  for (int i=0, szi = this->_S.size(); i < szi; ++i){
+    img.at<uchar>(_S[i].second, _S[i].first) = std::min((int)value.val[0]+img.at<uchar>(_S[i].second, _S[i].first), 255);
+  }
+
+  for (int i=0, szi = this->_children.size(); i < szi; ++i)
+    this->_children[i]->colorSolid(img, value);
+
+  return;
+}
+
+std::string Node::getIDString(fl::Node *child){
+    std::stringstream ss;
+    if (!this->isRoot())
+        ss << this->_parent->getIDString(this);
+    if (child == NULL)
+        ss << "0";
+    for (int i=0, szi = this->_children.size(); i < szi; ++i){
+        if (this->_children[i] == child){
+            ss << i+1 << ",";
+        }
+    }
+    return ss.str();
+}
+
 
 /// Colors the elements (pixels) of the provided image which
 /// correspond by coordinates to the current `Node` elements with

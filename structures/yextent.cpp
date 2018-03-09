@@ -1,3 +1,4 @@
+
 /// \file structures/diagonalminimumattribute.cpp
 /// \author Petra Bosilj
 
@@ -16,7 +17,7 @@ fl::DiagonalMinimumAttribute::DiagonalMinimumAttribute(const Node *baseNode, con
 
 fl::DiagonalMinimumAttribute::~DiagonalMinimumAttribute(){ }
 
-/// Calculation of the `DiagonalMinimumAttribute`. The calculation is done efficiently, by the maximal
+/// Calculation of the `AreaAttribute`. The calculation is done efficiently, by the maximal
 /// and minimal x and y coordinated contained in the child `Node`s.
 /// Any image element (pixel) position in the `ImageTree` is retrieved at most once.
 void fl::DiagonalMinimumAttribute::calculateAttribute(){
@@ -43,10 +44,10 @@ void fl::DiagonalMinimumAttribute::calculateAttribute(){
         this->miny = std::min(this->miny, chat->miny);
     }
 
-    //++this->maxx;
-    //++this->maxy;
+    ++this->maxx;
+    ++this->maxy;
 
-    this->attValue = std::sqrt((this->maxx-this->minx +1)*(this->maxx-this->minx +1) + (this->maxy-this->miny +1)*(this->maxy-this->miny +1));
+    this->attValue = std::sqrt((this->maxx-this->minx)*(this->maxx-this->minx) + (this->maxy-this->miny)*(this->maxy-this->miny));
     TypedAttribute<double>::calculateAttribute();
 }
 

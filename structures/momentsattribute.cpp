@@ -120,7 +120,7 @@ void fl::MomentsAttribute::calculateAttribute(){
         long long value = 1;
         long long gValue = 0;
         if (this->grayCalc)
-            gValue = fl::detail::getCvMatElem(this->myTree->image(), coords[i].X, coords[i].Y);
+            gValue = fl::detail::getCvMatElem(this->myTree->image(), coords[i]);
         for (int q_idx = 0; q_idx < order; ++q_idx){
             long long h = value;
             for (int p_idx = 0; p_idx < order-q_idx; ++p_idx){

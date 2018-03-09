@@ -112,6 +112,12 @@ namespace fl{
 
             // utility;
 
+
+            std::string getIDString(fl::Node *child = NULL);
+
+            /// \brief Color the corresponding elements in an image with a flat color.
+            void colorSolid(cv::Mat &img, const cv::Scalar &value) const;
+
             /// \brief Color the corresponding elements in an image with a flat color.
             void colorSolid(cv::Mat &img, const cv::Vec3b &value) const;
 

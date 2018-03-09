@@ -88,7 +88,7 @@ namespace fl{
 
         void assignNewNode(std::vector <Node *> &nodes, std::vector<std::vector<int> > &nodeIndices,
                            const pxCoord &coord, const int &value){
-            nodes.push_back(new InclusionNode(std::vector<pxCoord> (1, coord)));
+            nodes.emplace_back(new InclusionNode(std::vector<pxCoord> (1, coord)));
             nodes.back()->assignLevel(value);
             nodeIndices[coord.X][coord.Y] = nodes.size()-1;
         }

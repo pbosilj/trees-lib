@@ -241,7 +241,7 @@ double fl::MomentsHolder::getKurtosisNoCheck() const{
 }
 
 double fl::MomentsHolder::roundnessCalc(long long bm00, double bcm20, double bcm02){
-    return (double)bm00 / (2 * M_PI * (bcm20 + bcm02));
+    return (double)bm00*bm00 / (2 * M_PI * (bcm20 + bcm02));
 }
 
 /// Return the roundness of the region.

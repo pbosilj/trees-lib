@@ -81,44 +81,71 @@ class ImageTree {
         /// \brief Get a random `Node` from the `ImageTree`.
         Node *randomNode();
 
-        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
-        Node *lowestPixelOf(pxCoord px) const;
-
         /// \brief Get the minimal and maximal levels present in the `ImageTree`.
         std::pair <double, double> minMaxLevel() const;
 
         /// \brief Print the whole `ImageTree`.
         void printTree(std::ostream &outStream = std::cout) const;
 
-#if 1
-        /// \brief Get the minimal and maximal `Attribute` value present in the `ImageTree`.
-        template <typename TAT>
-        std::pair<typename TAT::attribute_type, typename TAT::attribute_type> minMaxAttribute() const;
-
-        /// \brief Print the all the `Node`s of the `ImageTree`, and their value of an `Attribute`.
-        //where AT is Attribute
-        template <typename AT>
-        void printTreeWithAttribute(std::ostream &outStream = std::cout) const;
-
-#endif
-
-        /// \brief Mark all patches corresponding to any surviving `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
-        void markAllPatches(cv::Mat &image, const cv::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
-
-        /// \brief Mark all patches corresponding the selected `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
-        void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv ::Vec3b &value = cv::Vec3b(0, 0, 200)) const;
-
-        /// \brief Mark a whole area around the `Node`s. Useful for displaying the neighborhood around small `Node`s.
-        void markAroundNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Vec3b &value = cv::Vec3b(200, 200, 0)) const;
-
         /// \brief Displays the image obtained by reconstruction from `ImageTree`.
         void displayTree(const std::string &outPath = "/home/pbosilj/Programming/Trees/filtest.png") const;
 
+        /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
+        void getLeaves(std::vector <fl::Node *> &leaves);
+
+        /// \brief Calculate extinction values for all the leaves in the tree.
+        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt);
+
+        /// \brief A unique-identifier corresponding to each of the given `Node`s is output.
+        void writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
+
+        /// \brief Input `Node`s of the current `ImageTree` from file, given one per line by a unique-identifier.
+        void loadNodesFromIDFile(std::vector <Node *> &nodes, std::istream &in) const;
+
+        /// \brief Mark all patches corresponding to any surviving `Node`s in the filtered `ImageTree` (ignores the root) with a flat color on an image.
+        void markAllPatches(cv::Mat &image) const;
+
+        /// \brief \copybrief markAllPatches(cv::Mat &image)
+        void markAllPatches(cv::Mat &image, const cv::Vec3b &value) const;
+
+        /// \brief \copybrief markAllPatches(cv::Mat &image)
+        void markAllPatches(cv::Mat &image, const cv::Scalar &value) const;
+
+        /// \brief Mark all patches corresponding the selected `Node`s in the `ImageTree` with a flat color on an image.
+        void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark) const;
+
+        /// \brief \copybrief markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
+        void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Vec3b &value) const;
+
+        /// \brief \copybrief markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
+        void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Scalar &value) const;
+
+
+        /// \brief Given a list of leaf `Node`s and associated extinction values, select
+        /// the prominent `Node` from each branch corresponding to an input leaf `Node`.
+        void selectFromLeaves(std::vector <fl::Node *> &selected,
+                              const std::vector <std::pair <int, fl::Node *> > &leafExt,
+                              std::vector <fl::Node *> *sourceLeaves = NULL);
+
+
+
+        void showPerNode(const std::vector <Node *> &toMark, std::vector <int> &classes, const cv::Mat &rgbImg) const;
+
+//        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
+//        Node *lowestPixelOf(pxCoord px) const;
+
+        template<class AT>
+        void analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const;
 
 //      template<class AT1, class AT2>
 //      void printPartialTreeWithSpectrum(std::set <fl::Node *> &toPrint, int cols, int rows);
 
 #if 1
+
+        /// \brief Computes the ultimate opening (B. Marcotegui) using an increasing `Attribute`
+        template<class AT> // where AT is increasing Attribute
+        void ultimateOpening(cv::Mat &residual, cv::Mat &scale) const;
+
         /// \brief Assign a specific `Attribute` to this `ImageTree`.
         template<class AT> // where AT is Attribute
         void addAttributeToTree(AttributeSettings *settings, bool deleteSettings = true) const;
@@ -130,6 +157,21 @@ class ImageTree {
         /// \brief Check if a specific `Attribute` is assigned to this `ImageTree`.
         template<class AT>
         bool isAttributeInTree() const;
+
+        /// \brief Get the minimal and maximal `Attribute` value present in the `ImageTree`.
+        template <typename TAT>
+        std::pair<typename TAT::attribute_type, typename TAT::attribute_type> minMaxAttribute() const;
+
+        /// \brief Print the all the `Node`s of the `ImageTree`, and their value of an `Attribute`.
+        //where AT is Attribute
+        template <typename AT>
+        void printTreeWithAttribute(std::ostream &outStream = std::cout) const;
+
+
+        /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
+        template <class AT>
+        void writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
+
 
         /// \brief Access the current `AttributeSettings` of a specific `Attribute`
         /// assigned to this `ImageTree`.
@@ -200,19 +242,6 @@ class ImageTree {
 #endif
 
 #endif
-        /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
-        void getLeaves(std::vector <fl::Node *> &leaves);
-        /// \bried Calculate extinction values for all the leaves in the tree.
-        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt);
-        /// \brief Given a list of `Node`s and associated extinction values, select the
-        /// from the `ImageTree` the `Node`s which are on the selected `Node` branches.
-        void selectFromLeaves(std::vector <fl::Node *> &selected,
-                              const std::vector <std::pair <int, fl::Node *> > &leafExt,
-                              int N);
-        /// \brief Debug. Prints some `Attribute` statistics from the selected `Node`s.
-        void printFromLeaves(const std::vector <std::pair <int, fl::Node *> > &leafExt,
-                             int N);
-
 
         friend void markMserInTree(const ImageTree &tree, int deltaLvl, std::vector <Node *> &mser, std::vector <std::pair <double, int> > &div,
             int maxArea, int minArea, double maxVariation, double minDiversity);
@@ -220,6 +249,19 @@ class ImageTree {
 
     private:
 #if 1
+
+        template<class AT>
+        void calculateUO(std::vector <int> &residualMap,
+                         std::vector <int> &scaleMap,
+                         const std::pair <fl::Node *, int> &current,
+                         const fl::Node * ancestor,
+                         int parent) const;
+
+        void reconstructUO(const std::vector< int > &res,
+                           const std::vector<int> &scl,
+                           cv::Mat &residual, cv::Mat &scale,
+                           std::pair<fl::Node *, int> &current) const;
+
         template<class AT> // where AT is Attribute
         void addAttributeToNode(Node *cur, AttributeSettings *settings) const;
 
