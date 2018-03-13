@@ -15,36 +15,42 @@
 
 namespace fl{
 
+/// Uses the DIRECT filtering rule.
+/// \remark TODO: Implement other filtering rules.
+///
+/// \param predicate The functor object which operates on the `Node`s.
+/// \note cf. the class `Predicate` to see the correct form of this
+/// functor.
+///
+/// \param root (optional) Should be omitted if performing the filtering
+/// on the whole `ImageTree`. `Node *` to the subtree which should be
+/// filtered. If set to anything other than the root of
+/// the tree, it will only filter the subtree.
+template<class Function>
+void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
+    if (root == NULL){
+        filterTreeByLevelPredicate(predicate, this->_root);
+        return;
+    }
+
+    bool deletion;
+    std::vector<Node *> &chi = root->_children;
+    do{
+        deletion = false;
+        for (int i=0; i < (int)chi.size(); ++i){
+            if (predicate(chi[i]->level(), root->level()) == false){
+                root->deleteChild(i);
+                deletion = true;
+            }
+        }
+    }while(deletion == true);
+
+    for (int i=0, szi = chi.size(); i < szi; ++i)
+        filterTreeByLevelPredicate(predicate, chi[i]);
+}
+
+
 #if 1
-
-/// \tparam TAT A specific `Attribute` class to be used in the search. Any specific
-/// `TypedAttribute` where the `TypedAttribute::value()` returns a scalar types can be used
-/// (e.g. `AreaAttribute`).
-///
-/// \return A pair made of the minimum and maximum level value of the specific
-/// `TypedAttribute` among all the `Node`s in this `ImageTree`.
-// Where TAT is optional
-template <typename TAT>
-std::pair<typename TAT::attribute_type, typename TAT::attribute_type> ImageTree::minMaxAttribute(void) const{
-    return this->_root->minMaxAttribute<TAT>();
-}
-
-/// \tparam AT The specific `TypedAttribute` which is to be printed along the
-/// subtree. The `TypedAttribute::value()` must be printable to a stream.
-///
-/// \note All the parameters are optional.
-///
-/// \param outStream The output stream to which the data should be
-/// printed. By default, it equals to `std::cout`.
-///
-/// \remark Prints the number and a list of elements (pixels) associated
-/// directly to each `Node`, as well as the `Node`'s level and
-/// `TypedAttribute::value()` associated to each node.
-//where AT is Attribute
-template<class AT>
-void ImageTree::printTreeWithAttribute(std::ostream &outStream) const {
-    this->_root->printElementsWithAttribute<AT>();
-}
 
 /// Assigns a specific `TypedAttribute` to all the `Node`s in this `ImageTree`.
 /// This ensures reserving the memory for any values that need to be stored for
@@ -76,131 +82,6 @@ void ImageTree::addAttributeToTree(AttributeSettings *settings, bool deleteSetti
         delete settings;
 }
 
-
-#if 1
-/// \param nodes A vector of nodes for which the output is written
-/// \param out An output stream to which to write the output.
-/// \tparam AT the `Attribute` which to output to a file.
-/// \note the `Attribute` AT needs to be assigned to the tree externally.
-/// regions.
-template <class AT>
-void ImageTree::writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const{
-    //this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-    for (int i=0, szi = nodes.size(); i < szi; ++i){
-        double value = ((AT*)nodes[i]->getAttribute(AT::name))->value();
-        out << value << std::endl;
-    }
-    //this->deleteAttributeFromTree<fl::AreaAttribute>();
-}
-
-#endif
-
-
-/// Calculates the Ultimate Opening (cf. Fabrizio, Marcotegui: Fast Implementation
-/// of Ultimate Opening, ISMM 2009) for the given `Attribute`
-///
-/// \tparam AT Specifies the `TypedAttribute` to be used for the base attribute opening.
-/// Must be increasing. Must be assigned to the image with `addAttributeToTree` beforehand.
-///
-/// \param residual Output parameter for the residual component of the ultimate opening.
-/// \param scale Output parameter for the scale component of the ultimate opening.
-///
-template<class AT> // where AT is increasing Attribute
-void ImageTree::ultimateOpening(cv::Mat &residual, cv::Mat &scale) const{
-    // assuming AT is in tree
-    std::vector <int> res;
-    std::vector <int> scl;
-    std::pair<fl::Node *, int> start(this->_root, 0);
-
-    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-    this->calculateUO<AT>(res, scl, start, NULL, -1);
-    this->reconstructUO(res, scl, residual, scale, start);
-    this->deleteAttributeFromTree<fl::AreaAttribute>();
-}
-
-template<class AT>
-void ImageTree::calculateUO(std::vector <int> &residualMap,
-                            std::vector <int> &scaleMap,
-                            const std::pair <fl::Node *, int> &current,
-                            const fl::Node * ancestor, // the one with maximum contrast
-                            int parent) const{ // first parent
-
-    int selfAttribute = ((AT*)current.first->getAttribute(AT::name))->value();
-    int selfArea = ((fl::AreaAttribute*)current.first->getAttribute(fl::AreaAttribute::name))->value();
-    int selfGlevel = current.first->grayLevel();
-
-    //std::cout << selfAttribute << " " << selfArea << " " << selfGlevel << std::endl;
-
-    int ancArea = selfArea;
-
-    if (ancestor != NULL){
-        int ancGlevel = ancestor->grayLevel();
-        ancArea = ((fl::AreaAttribute*)ancestor->getAttribute(fl::AreaAttribute::name))->value();
-        residualMap.emplace_back(selfGlevel - ancGlevel);
-    }
-    else{
-        residualMap.emplace_back(0);
-    }
-
-    if (parent == -1){
-        scaleMap.emplace_back(0);
-    }
-    else if (residualMap[parent] > residualMap[current.second]){
-        residualMap[current.second] = residualMap[parent];
-        scaleMap.emplace_back(scaleMap[parent]);
-    }
-    else{
-        scaleMap.emplace_back(selfAttribute+1);
-    }
-
-    for (int i=0, szi = current.first->_children.size(); i < szi; ++i){
-        int childAttribute = ((AT*)current.first->_children[i]->getAttribute(AT::name))->value();
-        if (childAttribute != selfAttribute){
-            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), current.first, current.second);
-        }
-        else{
-            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), ancestor, current.second);
-        }
-    }
-
-//    residualMap[current.second] *= (double)selfArea/ancArea;
-    double k = 205./100;
-    //double k = 10./7;
-    if (residualMap[current.second] > 0) {
-        //std::cout << "Recalculating residual with factor: " << selfArea << " " << ancArea << " values old/new: ";
-        //std::cout << residualMap[current.second] << " ";
-        //std::cout << "factor: " << k * (1 - (double)selfArea/ancArea) << " " << k << " " <<  (double)selfArea/ancArea;
-        residualMap[current.second] -= k * (1 - (double)selfArea/ancArea);
-        if (residualMap[current.second] < 0) residualMap[current.second] = 0;
-        if (residualMap[current.second] == 0)
-            scaleMap[current.second] = 0;
-        //std::cout << residualMap[current.second] << std::endl;
-    }
-}
-
-
-// where AT is Attribute
-template<class AT>
-void ImageTree::addAttributeToNode(Node *cur, AttributeSettings *settings) const{
-    // non-recursive reimplementation
-    std::vector <Node *> toProcess(1, cur);
-    Node *tmp;
-    do{
-        tmp = toProcess.back();
-        {
-            AT *nat = new AT(tmp, this, settings); // how is memory lost here???
-            AT *oat = (AT *)(tmp->addAttribute(nat, AT::name));
-            if (oat != NULL){
-                delete oat;
-            }
-        }
-        toProcess.pop_back();
-        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
-            toProcess.push_back(tmp->_children[i]);
-        }
-    }while(!toProcess.empty());
-}
-
 /// The function will take care of multiple assigned
 /// copies of `Attribute` to the `ImageTree`.
 ///
@@ -222,28 +103,6 @@ void ImageTree::deleteAttributeFromTree() const{
     this->deleteAttributeFromNode<AT>(this->_root);
 }
 
-//where AT is Attribute
-template<class AT>
-void ImageTree::deleteAttributeFromNode(Node *cur) const{
-    // non-recursive implementation
-    std::vector <Node *> toProcess(1, cur);
-    Node *tmp;
-    do{
-        tmp = toProcess.back();
-        {
-            AT *oat = (AT *)(tmp->deleteAttribute(AT::name));
-            if (oat != NULL)
-                delete oat;
-            else
-                return;
-        }
-        toProcess.pop_back();
-        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
-            toProcess.push_back(tmp->_children[i]);
-        }
-    }while(!toProcess.empty());
-}
-
 /// Checks if the specific `TypedAttribute` requested is assigned to the
 /// `Node`s of this `ImageTree`.
 ///
@@ -255,6 +114,67 @@ void ImageTree::deleteAttributeFromNode(Node *cur) const{
 template<class AT>
 bool ImageTree::isAttributeInTree() const{
     return this->_root->attributeExists(AT::name);
+}
+
+/// \tparam TAT A specific `Attribute` class to be used in the search. Any specific
+/// `TypedAttribute` where the `TypedAttribute::value()` returns a scalar types can be used
+/// (e.g. `AreaAttribute`).
+///
+/// \return A pair made of the minimum and maximum level value of the specific
+/// `TypedAttribute` among all the `Node`s in this `ImageTree`.
+// Where TAT is optional
+template <typename TAT>
+std::pair<typename TAT::attribute_type, typename TAT::attribute_type> ImageTree::minMaxAttribute(void) const{
+    return this->_root->minMaxAttribute<TAT>();
+}
+
+/// \tparam AT The specific `TypedAttribute` which is to be printed along the
+/// subtree. The `TypedAttribute::value()` must be printable to a stream.
+///
+/// \note All the parameters are optional.
+///
+/// \param outStream The output stream to which the data should be
+/// printed. By default, it equals to `std::cout`.
+///
+/// \remark Prints the number and a list of elements (pixels) associated
+/// directly to each `Node`, as well as the `Node`'s level and
+/// `TypedAttribute::value()` associated to each node.
+//where AT is Attribute
+template<class AT>
+void ImageTree::printTreeWithAttribute(std::ostream &outStream) const {
+    this->_root->printElementsWithAttribute<AT>();
+}
+
+/// \tparam AT The specific `TypedAttribute` which is to be analysed along the
+/// subtree. The `TypedAttribute::value()` must be convertable to a double.
+///
+/// \param node The `Node` marking the start of the analysis. All the `Node`s
+/// between this one and the root are output.
+/// \param attributeValues The output parameter, to be filled with the values
+/// of level and `Attribute` assigned to each node along the branch.
+template <class AT>
+void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const{
+    if (! this->isAttributeInTree<AT>())
+        return;
+    for (const Node *cur = node; !cur->isRoot(); cur = cur->parent()){
+        attributeValues.emplace_back(cur->level(), (double)((AT*)cur->getAttribute(AT::name))->value());
+        //out << cur->level() << " " << ((AT*)cur->getAttribute(AT::name))->value() << std::endl;
+    }
+}
+
+/// \param nodes A vector of nodes for which the output is written
+/// \param out An output stream to which to write the output.
+/// \tparam AT the `Attribute` which to output to a file.
+/// \note the `Attribute` AT needs to be assigned to the tree externally.
+/// regions.
+template <class AT>
+void ImageTree::writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const{
+    //this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    for (int i=0, szi = nodes.size(); i < szi; ++i){
+        double value = ((AT*)nodes[i]->getAttribute(AT::name))->value();
+        out << value << std::endl;
+    }
+    //this->deleteAttributeFromTree<fl::AreaAttribute>();
 }
 
 /// If the specific `TypedAttribute` `AT` is assigned to this `ImageTree`,
@@ -310,17 +230,6 @@ bool ImageTree::changeAttributeSettings(AttributeSettings *nsettings, bool delet
     return rValue;
 }
 
-template<class AT>
-bool ImageTree::changeAttributeSettingsOfNode(Node *cur, AttributeSettings *nsettings) const{
-    if (cur->getAttribute(AT::name)->changeSettings(nsettings)){
-        for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-            this->changeAttributeSettingsOfNode<AT>(cur->_children[i], nsettings);
-        }
-        return true;
-    }
-    return false;
-}
-
 /// If the specific `TypedAttribute` `AT` is assigned to this `ImageTree`,
 /// ensure that the `AttributeSettings` used for this `Attribute` in the `ImageTree`
 /// are the default ones for that `Attribute`.
@@ -342,6 +251,7 @@ template<class AT>
 void ImageTree::ensureDefaultSettings() const{
     (this->_root->getAttribute(AT::name))->ensureDefaultSettings();
 }
+
 /// If the specific `TypedAttribute` `AT` is assigned to this `ImageTree` and was
 /// fixed to use the default `AttributeSettings`,
 /// revert that change of the `AttributeSettings` used for this `Attribute` in the `ImageTree`
@@ -364,53 +274,6 @@ template <class AT>
 void ImageTree::revertSettingsChanges() const{
     (this->_root->getAttribute(AT::name))->revertSettingsChanges();
 }
-
-template <class AT>
-void ImageTree::analyseBranch(const fl::Node *node, std::ostream &out) const{
-    if (! this->isAttributeInTree<AT>())
-        return;
-    for (const Node *cur = node; !cur->isRoot(); cur = cur->parent()){
-        out << cur->level() << " " << ((AT*)cur->getAttribute(AT::name))->value() << std::endl;
-    }
-}
-
-#endif
-
-/// Uses the DIRECT filtering rule.
-/// \remark TODO: Implement other filtering rules.
-///
-/// \param predicate The functor object which operates on the `Node`s.
-/// \note cf. the class `Predicate` to see the correct form of this
-/// functor.
-///
-/// \param root (optional) Should be omitted if performing the filtering
-/// on the whole `ImageTree`. `Node *` to the subtree which should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
-template<class Function>
-void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
-    if (root == NULL){
-        filterTreeByLevelPredicate(predicate, this->_root);
-        return;
-    }
-
-    bool deletion;
-    std::vector<Node *> &chi = root->_children;
-    do{
-        deletion = false;
-        for (int i=0; i < (int)chi.size(); ++i){
-            if (predicate(chi[i]->level(), root->level()) == false){
-                root->deleteChild(i);
-                deletion = true;
-            }
-        }
-    }while(deletion == true);
-
-    for (int i=0, szi = chi.size(); i < szi; ++i)
-        filterTreeByLevelPredicate(predicate, chi[i]);
-}
-
-#if 1
 
 /// Uses the DIRECT filtering rule.
 /// \remark TODO: Implement other filtering rules.
@@ -515,6 +378,29 @@ void ImageTree::assignAttributeAsLevel(Node *root){
     return;
 }
 
+/// Calculates the Ultimate Opening (cf. Fabrizio, Marcotegui: Fast Implementation
+/// of Ultimate Opening, ISMM 2009) for the given `Attribute`
+///
+/// \tparam AT Specifies the `TypedAttribute` to be used for the base attribute opening.
+/// Must be increasing. Must be assigned to the image with `addAttributeToTree` beforehand.
+///
+/// \param residual Output parameter for the residual component of the ultimate opening.
+/// \param scale Output parameter for the scale component of the ultimate opening.
+///
+template<class AT> // where AT is increasing Attribute
+void ImageTree::ultimateOpening(cv::Mat &residual, cv::Mat &scale) const{
+    // assuming AT is in tree
+    std::vector <int> res;
+    std::vector <int> scl;
+    std::pair<fl::Node *, int> start(this->_root, 0);
+
+    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    this->calculateUO<AT>(res, scl, start, NULL, -1);
+    this->reconstructUO(res, scl, residual, scale, start);
+    this->deleteAttributeFromTree<fl::AreaAttribute>();
+}
+
+
 #if 2
 
 /// \tparam TAT The `TypedAttribute<X>` whose values in the `Node`s of
@@ -592,6 +478,202 @@ void ImageTree::attributeProfile(Function predicate, Node *root){
     attributeProfile<TAT>(predicate, root, NULL);
 }
 
+#endif // 2
+
+#if 3
+
+/// Assigns a `PatternSpectra2D` specified by two concrete `TypedAttribute`s
+/// \p AT1 and \p AT2 to all the `Node`s in this `ImageTree`.
+/// This ensures reserving the memory for any values that need to be stored for
+/// the `PatternSpectra2D` calculation.
+/// The function assumed `TypedAttribute`s \p AT1 and \p AT2 were previously
+/// assigned to the tree.
+///
+/// \note A copy of the attribute `PatternSpectra2D<AT1,AT2>` will be created at
+/// every `Node`, and
+/// `Node::addPatternSpectra2D()` will be called at each `Node`.
+///
+/// \note A corresponding call to `deletePatternSpectra2DFromTree<AT1, AT2>()` should be
+/// made for every call to this function.
+///
+/// \tparam AT1 Specifies the first `TypedAttribute` to be used with the
+/// `PatternSpectra2D` (e.g. `AreaAttribute`)
+///
+/// \tparam AT1 Specifies the first `TypedAttribute` to be used with the
+/// `PatternSpectra2D` (e.g. `NonCompactnessAttribute`)
+///
+/// \param settings A pointer to the settings to be used throughout the hierarchy. The
+/// same settings will be assigned to the `PatternSpectra2D<AT1,AT2>` at every `Node`.
+/// Different `PatternSpectra2DSettings` can be used for every `PatternSpectra2D` based
+/// on different `TypedAttribute`s.
+///
+/// \param deleteSettings (optional, default = `true`) Determines whether the \p settings
+/// will be deleted after this call to `addPatternSpectra2DToTree()` or not (allows the creation
+/// with the `new` function and takes care of the `delete` if set to `true`). If the
+/// `PatternSpectra2DSettings *` \p settings wants to be preserved after this call for further
+/// outside use, parameter should be set to `false`.
+template<class AT1, class AT2>
+void ImageTree::addPatternSpectra2DToTree(PatternSpectra2DSettings *settings, bool deleteSettings) const{
+    this->addPatternSpectra2DToNode<AT1, AT2>(this->_root, settings);
+    if (deleteSettings)
+        delete settings;
+}
+
+//namespace fl{
+template <typename AT1, typename AT2> class PatternSpectra2D;
+//}
+
+/// Deletes a `PatternSpectra2D` specified by two concrete `TypedAttribute`s
+/// \p AT1 and \p AT2 from all the `Node`s in this `ImageTree`.
+/// This ensures freeing the memory for any values that need to be stored for
+/// the `PatternSpectra2D` calculation.
+///
+/// \note A call to `Node::deletePatternSpectra2D()` will be made at every
+/// `Node`.
+///
+/// \note A call to this function should be made for every corresponding
+/// call to `addPatternSpectra2DToTree<AT1, AT2>()`
+///
+/// \tparam AT1 Specifies the first `TypedAttribute` defining the
+/// `PatternSpectra2D` (e.g. `AreaAttribute`)
+///
+/// \tparam AT1 Specifies the first `TypedAttribute` defining the
+/// `PatternSpectra2D` (e.g. `NonCompactnessAttribute`)
+template<class AT1, class AT2>
+void ImageTree::deletePatternSpectra2DFromTree() const{
+    this->deletePatternSpectra2DFromNode<AT1, AT2>(this->_root);
+}
+
+
+#endif // 3
+
+#endif // 1
+
+// private methods start here
+
+#if 1
+
+// where AT is Attribute
+template<class AT>
+void ImageTree::addAttributeToNode(Node *cur, AttributeSettings *settings) const{
+    // non-recursive reimplementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            AT *nat = new AT(tmp, this, settings); // how is memory lost here???
+            AT *oat = (AT *)(tmp->addAttribute(nat, AT::name));
+            if (oat != NULL){
+                delete oat;
+            }
+        }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
+}
+
+//where AT is Attribute
+template<class AT>
+void ImageTree::deleteAttributeFromNode(Node *cur) const{
+    // non-recursive implementation
+    std::vector <Node *> toProcess(1, cur);
+    Node *tmp;
+    do{
+        tmp = toProcess.back();
+        {
+            AT *oat = (AT *)(tmp->deleteAttribute(AT::name));
+            if (oat != NULL)
+                delete oat;
+            else
+                return;
+        }
+        toProcess.pop_back();
+        for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
+            toProcess.push_back(tmp->_children[i]);
+        }
+    }while(!toProcess.empty());
+}
+
+
+template<class AT>
+bool ImageTree::changeAttributeSettingsOfNode(Node *cur, AttributeSettings *nsettings) const{
+    if (cur->getAttribute(AT::name)->changeSettings(nsettings)){
+        for (int i=0, szi = cur->_children.size(); i < szi; ++i){
+            this->changeAttributeSettingsOfNode<AT>(cur->_children[i], nsettings);
+        }
+        return true;
+    }
+    return false;
+}
+
+
+
+/// \note Still didn't undergo rigorous testing.
+template<class AT>
+void ImageTree::calculateUO(std::vector <int> &residualMap,
+                            std::vector <int> &scaleMap,
+                            const std::pair <fl::Node *, int> &current,
+                            const fl::Node * ancestor, // the one with maximum contrast
+                            int parent) const{ // first parent
+
+    int selfAttribute = ((AT*)current.first->getAttribute(AT::name))->value();
+    int selfArea = ((fl::AreaAttribute*)current.first->getAttribute(fl::AreaAttribute::name))->value();
+    int selfGlevel = current.first->grayLevel();
+
+    //std::cout << selfAttribute << " " << selfArea << " " << selfGlevel << std::endl;
+
+    int ancArea = selfArea;
+
+    if (ancestor != NULL){
+        int ancGlevel = ancestor->grayLevel();
+        ancArea = ((fl::AreaAttribute*)ancestor->getAttribute(fl::AreaAttribute::name))->value();
+        residualMap.emplace_back(selfGlevel - ancGlevel);
+    }
+    else{
+        residualMap.emplace_back(0);
+    }
+
+    if (parent == -1){
+        scaleMap.emplace_back(0);
+    }
+    else if (residualMap[parent] > residualMap[current.second]){
+        residualMap[current.second] = residualMap[parent];
+        scaleMap.emplace_back(scaleMap[parent]);
+    }
+    else{
+        scaleMap.emplace_back(selfAttribute+1);
+    }
+
+    for (int i=0, szi = current.first->_children.size(); i < szi; ++i){
+        int childAttribute = ((AT*)current.first->_children[i]->getAttribute(AT::name))->value();
+        if (childAttribute != selfAttribute){
+            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), current.first, current.second);
+        }
+        else{
+            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), ancestor, current.second);
+        }
+    }
+
+//    residualMap[current.second] *= (double)selfArea/ancArea;
+    double k = 205./100;
+    //double k = 10./7;
+    if (residualMap[current.second] > 0) {
+        //std::cout << "Recalculating residual with factor: " << selfArea << " " << ancArea << " values old/new: ";
+        //std::cout << residualMap[current.second] << " ";
+        //std::cout << "factor: " << k * (1 - (double)selfArea/ancArea) << " " << k << " " <<  (double)selfArea/ancArea;
+        residualMap[current.second] -= k * (1 - (double)selfArea/ancArea);
+        if (residualMap[current.second] < 0) residualMap[current.second] = 0;
+        if (residualMap[current.second] == 0)
+            scaleMap[current.second] = 0;
+        //std::cout << residualMap[current.second] << std::endl;
+    }
+}
+
+#if 2
+
 template<class TAT, class Function>
 std::pair<bool, bool> ImageTree::attributeProfile
         (Function predicate, Node *root, std::map<Node *, bool> *ires){
@@ -642,50 +724,10 @@ std::pair<bool, bool> ImageTree::attributeProfile
     return result;
 }
 
-#endif
+
+#endif // 2
 
 #if 3
-
-/// Assigns a `PatternSpectra2D` specified by two concrete `TypedAttribute`s
-/// \p AT1 and \p AT2 to all the `Node`s in this `ImageTree`.
-/// This ensures reserving the memory for any values that need to be stored for
-/// the `PatternSpectra2D` calculation.
-/// The function assumed `TypedAttribute`s \p AT1 and \p AT2 were previously
-/// assigned to the tree.
-///
-/// \note A copy of the attribute `PatternSpectra2D<AT1,AT2>` will be created at
-/// every `Node`, and
-/// `Node::addPatternSpectra2D()` will be called at each `Node`.
-///
-/// \note A corresponding call to `deletePatternSpectra2DFromTree<AT1, AT2>()` should be
-/// made for every call to this function.
-///
-/// \tparam AT1 Specifies the first `TypedAttribute` to be used with the
-/// `PatternSpectra2D` (e.g. `AreaAttribute`)
-///
-/// \tparam AT1 Specifies the first `TypedAttribute` to be used with the
-/// `PatternSpectra2D` (e.g. `NonCompactnessAttribute`)
-///
-/// \param settings A pointer to the settings to be used throughout the hierarchy. The
-/// same settings will be assigned to the `PatternSpectra2D<AT1,AT2>` at every `Node`.
-/// Different `PatternSpectra2DSettings` can be used for every `PatternSpectra2D` based
-/// on different `TypedAttribute`s.
-///
-/// \param deleteSettings (optional, default = `true`) Determines whether the \p settings
-/// will be deleted after this call to `addPatternSpectra2DToTree()` or not (allows the creation
-/// with the `new` function and takes care of the `delete` if set to `true`). If the
-/// `PatternSpectra2DSettings *` \p settings wants to be preserved after this call for further
-/// outside use, parameter should be set to `false`.
-template<class AT1, class AT2>
-void ImageTree::addPatternSpectra2DToTree(PatternSpectra2DSettings *settings, bool deleteSettings) const{
-    this->addPatternSpectra2DToNode<AT1, AT2>(this->_root, settings);
-    if (deleteSettings)
-        delete settings;
-}
-
-//namespace fl{
-template <typename AT1, typename AT2> class PatternSpectra2D;
-//}
 
 template<class AT1, class AT2>
 void ImageTree::addPatternSpectra2DToNode(Node *cur, PatternSpectra2DSettings *settings) const{
@@ -706,27 +748,6 @@ void ImageTree::addPatternSpectra2DToNode(Node *cur, PatternSpectra2DSettings *s
             toProcess.push_back(tmp->_children[i]);
         }
     }while(!toProcess.empty());
-}
-
-/// Deletes a `PatternSpectra2D` specified by two concrete `TypedAttribute`s
-/// \p AT1 and \p AT2 from all the `Node`s in this `ImageTree`.
-/// This ensures freeing the memory for any values that need to be stored for
-/// the `PatternSpectra2D` calculation.
-///
-/// \note A call to `Node::deletePatternSpectra2D()` will be made at every
-/// `Node`.
-///
-/// \note A call to this function should be made for every corresponding
-/// call to `addPatternSpectra2DToTree<AT1, AT2>()`
-///
-/// \tparam AT1 Specifies the first `TypedAttribute` defining the
-/// `PatternSpectra2D` (e.g. `AreaAttribute`)
-///
-/// \tparam AT1 Specifies the first `TypedAttribute` defining the
-/// `PatternSpectra2D` (e.g. `NonCompactnessAttribute`)
-template<class AT1, class AT2>
-void ImageTree::deletePatternSpectra2DFromTree() const{
-    this->deletePatternSpectra2DFromNode<AT1, AT2>(this->_root);
 }
 
 template<class AT1, class AT2>
@@ -750,9 +771,10 @@ void ImageTree::deletePatternSpectra2DFromNode(Node *cur) const{
     }while(!toProcess.empty());
 }
 
-#endif
+#endif // 3
 
-#endif
+
+#endif // 1
 
 }
 

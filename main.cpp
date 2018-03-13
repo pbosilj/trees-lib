@@ -1375,7 +1375,7 @@ void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes){
         tree->analyseBranch<fl::AreaAttribute>(nodes[i], areaValues);
         for (int j=0, szj = areaValues.size(); j < szj; ++j)
             outF << areaValues[j].first << " " << (int)areaValues[j].second << std::endl;
-        areaValues.clear()
+        areaValues.clear();
         outF.close();
     }
     tree->deleteAttributeFromTree<fl::AreaAttribute>();
