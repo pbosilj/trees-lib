@@ -6,6 +6,8 @@
 
 #include "imagetree.h"
 
+#include "areaattribute.h"
+
 #include <set>
 
 #define markedSelf first
@@ -73,6 +75,109 @@ void ImageTree::addAttributeToTree(AttributeSettings *settings, bool deleteSetti
     if (deleteSettings)
         delete settings;
 }
+
+
+#if 1
+/// \param nodes A vector of nodes for which the output is written
+/// \param out An output stream to which to write the output.
+/// \tparam AT the `Attribute` which to output to a file.
+/// \note the `Attribute` AT needs to be assigned to the tree externally.
+/// regions.
+template <class AT>
+void ImageTree::writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const{
+    //this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    for (int i=0, szi = nodes.size(); i < szi; ++i){
+        double value = ((AT*)nodes[i]->getAttribute(AT::name))->value();
+        out << value << std::endl;
+    }
+    //this->deleteAttributeFromTree<fl::AreaAttribute>();
+}
+
+#endif
+
+
+/// Calculates the Ultimate Opening (cf. Fabrizio, Marcotegui: Fast Implementation
+/// of Ultimate Opening, ISMM 2009) for the given `Attribute`
+///
+/// \tparam AT Specifies the `TypedAttribute` to be used for the base attribute opening.
+/// Must be increasing. Must be assigned to the image with `addAttributeToTree` beforehand.
+///
+/// \param residual Output parameter for the residual component of the ultimate opening.
+/// \param scale Output parameter for the scale component of the ultimate opening.
+///
+template<class AT> // where AT is increasing Attribute
+void ImageTree::ultimateOpening(cv::Mat &residual, cv::Mat &scale) const{
+    // assuming AT is in tree
+    std::vector <int> res;
+    std::vector <int> scl;
+    std::pair<fl::Node *, int> start(this->_root, 0);
+
+    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    this->calculateUO<AT>(res, scl, start, NULL, -1);
+    this->reconstructUO(res, scl, residual, scale, start);
+    this->deleteAttributeFromTree<fl::AreaAttribute>();
+}
+
+template<class AT>
+void ImageTree::calculateUO(std::vector <int> &residualMap,
+                            std::vector <int> &scaleMap,
+                            const std::pair <fl::Node *, int> &current,
+                            const fl::Node * ancestor, // the one with maximum contrast
+                            int parent) const{ // first parent
+
+    int selfAttribute = ((AT*)current.first->getAttribute(AT::name))->value();
+    int selfArea = ((fl::AreaAttribute*)current.first->getAttribute(fl::AreaAttribute::name))->value();
+    int selfGlevel = current.first->grayLevel();
+
+    //std::cout << selfAttribute << " " << selfArea << " " << selfGlevel << std::endl;
+
+    int ancArea = selfArea;
+
+    if (ancestor != NULL){
+        int ancGlevel = ancestor->grayLevel();
+        ancArea = ((fl::AreaAttribute*)ancestor->getAttribute(fl::AreaAttribute::name))->value();
+        residualMap.emplace_back(selfGlevel - ancGlevel);
+    }
+    else{
+        residualMap.emplace_back(0);
+    }
+
+    if (parent == -1){
+        scaleMap.emplace_back(0);
+    }
+    else if (residualMap[parent] > residualMap[current.second]){
+        residualMap[current.second] = residualMap[parent];
+        scaleMap.emplace_back(scaleMap[parent]);
+    }
+    else{
+        scaleMap.emplace_back(selfAttribute+1);
+    }
+
+    for (int i=0, szi = current.first->_children.size(); i < szi; ++i){
+        int childAttribute = ((AT*)current.first->_children[i]->getAttribute(AT::name))->value();
+        if (childAttribute != selfAttribute){
+            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), current.first, current.second);
+        }
+        else{
+            this->calculateUO<AT>(residualMap, scaleMap, std::make_pair(current.first->_children[i], (int)residualMap.size()), ancestor, current.second);
+        }
+    }
+
+//    residualMap[current.second] *= (double)selfArea/ancArea;
+    double k = 205./100;
+    //double k = 10./7;
+    if (residualMap[current.second] > 0) {
+        //std::cout << "Recalculating residual with factor: " << selfArea << " " << ancArea << " values old/new: ";
+        //std::cout << residualMap[current.second] << " ";
+        //std::cout << "factor: " << k * (1 - (double)selfArea/ancArea) << " " << k << " " <<  (double)selfArea/ancArea;
+        residualMap[current.second] -= k * (1 - (double)selfArea/ancArea);
+        if (residualMap[current.second] < 0) residualMap[current.second] = 0;
+        if (residualMap[current.second] == 0)
+            scaleMap[current.second] = 0;
+        //std::cout << residualMap[current.second] << std::endl;
+    }
+}
+
 
 // where AT is Attribute
 template<class AT>
@@ -258,6 +363,15 @@ void ImageTree::ensureDefaultSettings() const{
 template <class AT>
 void ImageTree::revertSettingsChanges() const{
     (this->_root->getAttribute(AT::name))->revertSettingsChanges();
+}
+
+template <class AT>
+void ImageTree::analyseBranch(const fl::Node *node, std::ostream &out) const{
+    if (! this->isAttributeInTree<AT>())
+        return;
+    for (const Node *cur = node; !cur->isRoot(); cur = cur->parent()){
+        out << cur->level() << " " << ((AT*)cur->getAttribute(AT::name))->value() << std::endl;
+    }
 }
 
 #endif

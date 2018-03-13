@@ -87,6 +87,8 @@
 		<Unit filename="structures/imagetree.tpp" />
 		<Unit filename="structures/inclusionnode.cpp" />
 		<Unit filename="structures/inclusionnode.h" />
+		<Unit filename="structures/meanattribute.cpp" />
+		<Unit filename="structures/meanattribute.h" />
 		<Unit filename="structures/momentsattribute.cpp" />
 		<Unit filename="structures/momentsattribute.h" />
 		<Unit filename="structures/momentsholder.cpp" />
@@ -105,8 +107,12 @@
 		<Unit filename="structures/rangeattribute.h" />
 		<Unit filename="structures/regiondynamicsattribute.cpp" />
 		<Unit filename="structures/regiondynamicsattribute.h" />
+		<Unit filename="structures/sparsityattribute.cpp" />
+		<Unit filename="structures/sparsityattribute.h" />
 		<Unit filename="structures/valuedeviationattribute.cpp" />
 		<Unit filename="structures/valuedeviationattribute.h" />
+		<Unit filename="structures/yextentattribute.cpp" />
+		<Unit filename="structures/yextentattribute.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

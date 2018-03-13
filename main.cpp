@@ -13,6 +13,8 @@
 #include <opencv2/features2d/features2d.hpp>
 
 
+#include <iomanip>
+
 #include "structures/node.h"
 #include "structures/inclusionnode.h"
 #include "structures/partitioningnode.h"
@@ -28,6 +30,9 @@
 #include "structures/entropyattribute.h"
 #include "structures/valuedeviationattribute.h"
 #include "structures/boundingspherediameterapprox.h"
+#include "structures/yextentattribute.h"
+#include "structures/sparsityattribute.h"
+#include "structures/meanattribute.h"
 
 #include "structures/imagetree.h"
 
@@ -118,6 +123,7 @@ cv::Mat &testImage8(void);
 cv::Mat &testImage9(void);
 cv::Mat &testImage10(void);
 cv::Mat &testImage11(void);
+cv::Mat &testImage12(void);
 
 void makeTOS(void);
 
@@ -930,9 +936,34 @@ void globalPSForAll(int argc, char** argv){
 void forRomain(int argc, char** argv );
 
 void testObjectDetection(int argc, char **argv);
+void testUltimateOpening(int argc, char **argv);
+//void savedObjectAnalysis(int argc, char **argv);
+
+void runPipeline(int argc, char **argv);
+void runObjectAnalysis(int argc, char **argv);
+void runManualClassification(int argc, char **argv);
+void runObjectDetectionAndSegmentation(int argc, char **argv);
+void manualClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb);
+void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, const std::string &classPath = "");
+void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath = "");
+void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, std::vector <fl::Node *> *source = NULL);
+void loadNodes(const fl::ImageTree *tree, std::vector <fl::Node *> &selection, const std::string &detFile);
+void saveNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &detFile);
+void saveClassifiedNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string classFile);
+void loadClassifiedNodes(const fl::ImageTree *tree, std::vector <fl::Node *> *npc, std::string classFile);
+void objectAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string prefix = "");
+void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes);
+bool doesFileExist(const std::string &fileName);
 
 int main(int argc, char** argv ){
 
+    //runPipeline(argc, argv);
+    runObjectDetectionAndSegmentation(argc, argv);
+
+    //testUltimateOpening(argc, argv);
+    //return 0;
+    //savedObjectAnalysis(argc, argv);
+    return 0;
     testObjectDetection(argc, argv);
     return 0;
 
@@ -1264,6 +1295,7 @@ int main(int argc, char** argv ){
         }
 
     }
+
     else{ // if (option == 2){
         if (argc == 4){
             image1 = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
@@ -1283,36 +1315,665 @@ int main(int argc, char** argv ){
     return 0;
 }
 
-void testObjectDetection(int argc, char **argv){
-
+void testUltimateOpening(int argc, char **argv){
+    //cv::Mat &image = testImage12();
     cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-
-    //cv::imshow("Original", image);
-    //cv::waitKey(0);
-
-    cv::Mat display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
     fl::Node *root;
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::greater<int>()),
                                     std::make_pair(image.rows, image.cols)); // min-tree creation
 
-    std::cout << "constructed tree" << std::endl;
+
+    double min, max;
+    cv::minMaxLoc(image, &min, &max);
+    std::cout << "Image: min - " << min << " max - " << max << std::endl;
+    //tree->printTree();
+
+
+
+    tree->addAttributeToTree<fl::YExtentAttribute>(new fl::YExtentSettings());
+    //std::cout << "Uo is not giving it" << std::endl;
+    cv::Mat residual, scale;
+    tree->ultimateOpening<fl::YExtentAttribute>(residual, scale);
+
+    //std::cout << "Uo is giving it" << std::endl;
+
+    //double min, max;
+    cv::minMaxLoc(residual, &min, &max);
+    std::cout << "Residual: min - " << min << " max - " << max << std::endl;
+    residual.convertTo(residual, CV_16UC1, 65535.0/max);
+    cv::minMaxLoc(scale, &min, &max);
+    std::cout << "Scale: min - " << min << " max - " << max << std::endl;
+    scale.convertTo(scale, CV_16UC1, 65535.0/max);
+
+    if (argc > 2)
+        cv::imwrite(argv[2], residual);
+    if (argc > 3)
+        cv::imwrite(argv[3], scale);
+//
+    //std::cout << "Image = " << std::endl << image << std::endl;
+    //std::cout << "Residual = " << std::endl << residual << std::endl;
+    //std::cout << "Scale = " << std::endl << scale << std::endl;
+
+    tree->deleteAttributeFromTree<fl::YExtentAttribute>();
+
+}
+
+bool doesFileExist(const std::string &fileName){
+    std::ifstream infile(fileName);
+    return infile.good();
+}
+
+void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes){
+    tree->addAttributeToTree<fl::AreaAttribute>(new::AreaSettings());
+    std::vector <std::pair<int, double> > areaValues;
+    for (int i=0, szi = nodes.size(); i < szi; ++i){
+        std::stringstream ss;
+        ss << "branch_" << std::setfill('0') << std::setw(6) << i << ".txt";
+        std::ofstream outF;
+        outF.open(ss.str(), std::ios::out);
+        std::cout << "BRANCH ANALYSIS OUTPUT" << std::endl;
+        tree->analyseBranch<fl::AreaAttribute>(nodes[i], areaValues);
+        for (int j=0, szj = areaValues.size(); j < szj; ++j)
+            outF << areaValues[j].first << " " << (int)areaValues[j].second << std::endl;
+        areaValues.clear()
+        outF.close();
+    }
+    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+}
+
+void objectAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string prefix){
+
+    std::cout << "OUTPUT ATTRIBUTE VALUES " << std::endl;
+
+    tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
+
+    std::cout << "Area" << std::endl;
+
+    std::ofstream outF;
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_ar.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::AreaAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_ar.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::AreaAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_ar.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::AreaAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+
+    tree->addAttributeToTree<fl::NonCompactnessAttribute>(new NonCompactnessSettings());
+
+    std::cout << "Non-compactness" << std::endl;
+
+    //std::ofstream outF;
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_nc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_nc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_nc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
+
+    tree->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::roundness));
+
+    std::cout << "Roundness" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_rnd.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_rnd.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_rnd.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::kurtosis));
+
+    std::cout << "Kurtosis" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_kur.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_kur.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_kur.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::eccentricity));
+
+    std::cout << "Eccentricity" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_ecc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_ecc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_ecc.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::triangularity));
+
+    std::cout << "Triangularity" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_tri.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_tri.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_tri.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
+    outF.close();
+
+
+    tree->deleteAttributeFromTree<fl::MomentsAttribute>();
+
+    tree->addAttributeToTree<fl::SparsityAttribute>(new fl::SparsitySettings());
+    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
+
+    std::cout << "Sparsity" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_spa.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_spa.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_spa.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::SparsityAttribute>();
+
+    tree->addAttributeToTree<fl::RegionDynamicsAttribute>(new fl::RegionDynamicsSettings());
+    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
+
+    std::cout << "Region Dynamics " << std::endl;
+
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_rdy.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_rdy.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_rdy.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::RegionDynamicsAttribute>();
+
+    tree->addAttributeToTree<fl::MeanAttribute>(new fl::MeanSettings());
+    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
+
+    std::cout << "Mean" << std::endl;
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_mea.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MeanAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_mea.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MeanAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_mea.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::MeanAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::MeanAttribute>();
+
+    std::cout << "Value Deviation " << std::endl;
+
+    tree->addAttributeToTree<fl::ValueDeviationAttribute>(new fl::ValueDeviationSettings());
+
+    std::cout << "Writing attributes for weed patches" << std::endl;
+    outF.open(prefix+"weed_vde.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[0], outF);
+    outF.close();
+    std::cout << "Writing attributes for crop patches" << std::endl;
+    outF.open(prefix+"crop_vde.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[1], outF);
+    outF.close();
+    std::cout << "Writing attributes for mixed patches" << std::endl;
+    outF.open(prefix+"mixed_vde.txt", std::ios::out);
+    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[2], outF);
+    outF.close();
+
+    tree->deleteAttributeFromTree<fl::ValueDeviationAttribute>();
+
+
+}
+
+
+
+void loadClassifiedNodes(const fl::ImageTree *tree, std::vector <fl::Node *> *npc, std::string classFile){
+
+    std::cout << "LOADING NODES PER CLASS" << std::endl;
+
+    std::ifstream inF;
+    std::string::size_type idx = classFile.rfind('.');
+    std::string baseName = classFile.substr(0, idx);
+    std::string extension = classFile.substr(idx);
+
+    std::cout << "Reading weed patches from " << baseName + "_weed" + extension << std::endl;
+
+    inF.open(baseName + "_weed" + extension, std::ios::in);
+    tree->loadNodesFromIDFile(npc[0], inF);
+    inF.close();
+
+    std::cout << "Reading crop patches from " << baseName + "_crop" + extension << std::endl;
+
+    inF.open(baseName + "_crop" + extension, std::ios::in);
+    tree->loadNodesFromIDFile(npc[1], inF);
+    inF.close();
+
+    std::cout << "Reading mixed patches from " << baseName + "_mixed" + extension << std::endl;
+
+    inF.open(baseName + "_mixed" + extension, std::ios::in);
+    tree->loadNodesFromIDFile(npc[2], inF);
+    inF.close();
+
+
+}
+
+void saveClassifiedNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string classFile){
+
+    std::cout << "SAVING NODES PER CLASS" << std::endl;
+
+    std::ofstream outF;
+    std::string::size_type idx = classFile.rfind('.');
+    std::string baseName = classFile.substr(0, idx);
+    std::string extension = classFile.substr(idx);
+
+    std::cout << "Writing weed patches into " << baseName + "_weed" + extension << std::endl;
+
+    outF.open(baseName + "_weed" + extension, std::ios::out);
+    tree->writeNodeIDToFile(npc[0], outF);
+    outF.close();
+
+    std::cout << "Writing crop patches into " << baseName + "_crop" + extension << std::endl;
+
+    outF.open(baseName + "_crop" + extension, std::ios::out);
+    tree->writeNodeIDToFile(npc[1], outF);
+    outF.close();
+
+    std::cout << "Writing mixed patches into " << baseName + "_mixed" + extension << std::endl;
+
+    outF.open(baseName + "_mixed" + extension, std::ios::out);
+    tree->writeNodeIDToFile(npc[2], outF);
+    outF.close();
+}
+
+void saveNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &detFile){
+    std::cout << "SAVING DETECTED NODES" << std::endl;
+
+    std::ofstream outF;
+
+    std::cout << "Writing object patches into " << detFile << std::endl;
+
+    outF.open(detFile, std::ios::out);
+    tree->writeNodeIDToFile(selection, outF);
+    outF.close();
+}
+
+void loadNodes(const fl::ImageTree *tree, std::vector <fl::Node *> &selection, const std::string &detFile){
+    std::cout << "LOADING DETECTED NODES" << std::endl;
+
+    std::cout << "Reading object patches from " << detFile << std::endl;
+
+    std::ifstream inF;
+    inF.open(detFile, std::ios::in);
+    tree->loadNodesFromIDFile(selection, inF);
+    inF.close();
+
+}
+
+void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, std::vector <fl::Node *> *source){
+
+    std::cout << "OBJECT DETECTION" << std::endl;
+
+    std::cout << "Getting extinction values" << std::endl;
 
     std::vector <std::pair <int, fl::Node *> > leafExt;
     tree->getLeafExtinctions(leafExt);
-    std::cout << "Extinction values got " << std::endl;
+
     std::sort(leafExt.rbegin(), leafExt.rend());
-    std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
-//    for (int i=0, szi = 500; i < szi; ++i)
-//        std::cout << leafExt[i].first << " ";
-//    std::cout << std::endl;
-    std::cout << "Before I have: " << leafExt.size() << std::endl;
+
+    std::cout << "Number of leaves before extinction filtering: " << leafExt.size() << std::endl;
     for (std::vector<std::pair <int, fl::Node *> >::iterator it = leafExt.begin(); it != leafExt.end(); ++it){
         if (it->first < 10){
             leafExt.erase(it, leafExt.end());
             break;
         }
     }
-    std::cout << "After I have: " << leafExt.size() << std::endl;
+    std::cout << "Number of leaves to process: " << leafExt.size() << std::endl;
+
+    std::cout << "Selecting nodes" << std::endl;
+
+    tree->selectFromLeaves(selection, leafExt, source);
+
+}
+void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath){
+    std::cout << "OUTPUT SEGMENTATION" << std::endl;
+
+    cv::Mat display(tree->treeHeight(), tree->treeWidth(),
+                    CV_8UC3, cv::Vec3b(0,0,0));
+
+    //cv::Mat display(tree->image().size(), tree->image().type());
+    //cv::Mat display;
+    cv::cvtColor(tree->image(), display, cv::COLOR_GRAY2BGR);
+
+    std::cout << "channels: " << display.channels() << std::endl;
+
+    //std::cout << "channels: " << tree->image().channels() << std::endl;
+    std::cout << "channels: " << display.channels() << std::endl;
+
+    //tree->image().copyTo(display);
+    tree->markSelectedNodes(display, selection, cv::Vec3b(255, 255, 255));
+    if (!segPath.empty())
+        cv::imwrite(segPath, display);
+    else{
+        cv::namedWindow("Segmentation", cv::WINDOW_NORMAL);
+        cv::resizeWindow("Segmentation", display.cols/2, display.rows/2);
+        cv::imshow("Segmentation", display);
+        cv::waitKey(0);
+        cv::destroyWindow("Segmentation");
+    }
+}
+
+void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, const std::string &classPath){
+
+    std::cout << "OUTPUT CLASSIFICATION" << std::endl;
+
+    cv::Mat display(tree->treeHeight(), tree->treeWidth(),
+                    CV_8UC3, cv::Vec3b(0,0,0));
+    tree->markSelectedNodes(display, npc[2], cv::Vec3b(200, 80, 80));
+    tree->markSelectedNodes(display, npc[0], cv::Vec3b(80, 80, 200));
+    tree->markSelectedNodes(display, npc[1], cv::Vec3b(80, 200, 80));
+
+    if (!classPath.empty())
+        cv::imwrite(classPath, display);
+    else{
+        cv::namedWindow("Classification", cv::WINDOW_NORMAL);
+        cv::resizeWindow("Classification", display.cols/2, display.rows/2);
+        cv::imshow("Classification", display);
+        cv::waitKey(0);
+        cv::destroyWindow("Classification");
+    }
+}
+
+void manualClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb){
+    std::cout << "MANUAL CLASSIFICATION" << std::endl;
+
+    std::vector <int> classes;
+    tree->showPerNode(selection, classes, rgb);
+    for (int i=0, szi = classes.size(); i < szi; ++i)
+        if (classes[i] >= 0)
+            npc[classes[i]].push_back(selection[i]);
+}
+
+void runObjectDetectionAndSegmentation(int argc, char **argv){
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    fl::Node *root;
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+    std::vector <fl::Node *> selection;
+    objectDetection(tree, selection);
+
+    if (argc > 2)
+        saveNodes(tree, selection, argv[2]);
+
+    if (argc > 3){
+        tree->setImage(image);
+        outputSegmentation(tree, selection, argv[3]);
+        tree->unsetImage();
+    }
+    //else
+    //    outputSegmentation(tree, selection);
+    delete tree;
+}
+
+void runManualClassification(int argc, char **argv){
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    fl::Node *root;
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+    std::vector <fl::Node *> selection;
+
+    if (argc > 2)
+        loadNodes(tree, selection, argv[2]);
+    else
+        objectDetection(tree, selection);
+
+    std::vector <fl::Node *> npc[3];
+
+    tree->setImage(image);
+    manualClassification(tree, selection, npc, image);
+    tree->unsetImage();
+
+    if (argc > 3)
+        saveClassifiedNodes(tree, npc, argv[3]);
+
+    delete tree;
+}
+
+void runObjectAnalysis(int argc, char **argv){
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    fl::Node *root;
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+    std::vector <fl::Node *> selection;
+
+    if (argc > 2)
+        loadNodes(tree, selection, argv[2]);
+    else
+        objectDetection(tree, selection);
+
+    std::vector <fl::Node *> npc[3];
+
+    if (argc > 3){
+        loadClassifiedNodes(tree, npc, argv[3]);
+        objectAnalysis(tree, npc);
+    }
+
+
+    delete tree;
+}
+
+void runPipeline(int argc, char **argv){
+
+    std::cout << "Load image " << argv[1] << std::endl;
+    std::cout << "And the RGB for visualization: " << argv[2] << std::endl;
+
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    cv::Mat rgb = cv::imread(argv[2], CV_LOAD_IMAGE_COLOR);
+    fl::Node *root;
+
+    std::cout << "Constructing image tree " << std::endl;
+
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+    std::vector <fl::Node *> selection;
+    std::vector <fl::Node *> source;
+    std::vector <fl::Node *> npc[3];
+
+    bool curDet = false;
+    if (argc > 3 && doesFileExist(argv[3]))
+        loadNodes(tree, selection, argv[3]);
+    else{
+
+        objectDetection(tree, selection, &source);
+
+        curDet = true;
+        if (argc == 3)
+            return;
+        else{
+            saveNodes(tree, selection, argv[3]);
+            //saveNodes(tree, source, std::string(argv[3])+"_source");
+            //branchAnalysis(tree, source);
+        }
+    }
+
+    if (argc < 5){
+        outputSegmentation(tree, selection);
+        return;
+    }
+
+    if (!doesFileExist(argv[4]) || curDet){
+
+//        for (int i=0, szi = selection.size(); i < szi; ++i){
+//            std::stringstream ss;
+//            ss << "segment_" << std::setfill('0') << std::setw(6) << i << ".png";
+//            outputSegmentation(tree, std::vector<Node*>(1,selection[i]), ss.str());
+//        }
+
+        outputSegmentation(tree, selection, argv[4]);
+    }
+    if (argc < 6)
+        return;
+
+    std::string classBase(argv[5]);
+    std::string::size_type idx = classBase.rfind('.');
+    std::string baseName = classBase.substr(0, idx);
+    std::string extension = classBase.substr(idx);
+
+    bool curClass = false;
+    if (!doesFileExist(baseName + "_weed" + extension) ||
+        !doesFileExist(baseName + "_crop" + extension) ||
+        !doesFileExist(baseName + "_mixed" + extension)){
+
+        tree->setImage(image);
+        curClass = true;
+        manualClassification(tree, selection, npc, rgb);
+        tree->unsetImage();
+        saveClassifiedNodes(tree, npc, argv[5]);
+    }
+    else{
+        loadClassifiedNodes(tree, npc, argv[5]);
+    }
+
+    if (argc >= 7 && (!doesFileExist(argv[6]) || curClass))
+        outputClassification(tree, npc, argv[6]);
+
+    tree->setImage(image);
+
+    if (argc >= 8)
+        objectAnalysis(tree, npc, argv[7]);
+    else
+        objectAnalysis(tree, npc);
+
+    tree->unsetImage();
+
+    delete tree;
+}
+
+void testObjectDetection(int argc, char **argv){
+
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+
+//    double min, max;
+//    cv::minMaxLoc(image, &min, &max);
+//    std::cout << "Image: min - " << min << " max - " << max << std::endl;
+//    //cv::imshow("Original", image);
+//    //cv::waitKey(0);
+
+    //cv::Mat display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+    cv::Mat display(image.rows,
+     image.cols,
+      CV_8UC3,
+       cv::Vec3b(0,0,0));
+//    cv::Mat display(image.rows,
+//     image.cols,
+//      CV_8UC1,
+//       cv::Scalar(0));
+
+    fl::Node *root;
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+                                    std::make_pair(image.rows, image.cols)); // min-tree creation
+
+////    tree->addAttributeToTree<fl::YExtentAttribute>(new fl::YExtentSettings());
+////
+////    cv::Mat residual, scale;
+////    tree->ultimateOpening<fl::YExtentAttribute>(residual, scale);
+////
+////    cv::minMaxLoc(residual, &min, &max);
+////    std::cout << "Residual: min - " << min << " max - " << max << std::endl;
+////    residual.convertTo(residual, CV_16UC1, 65535.0/max);
+////    cv::minMaxLoc(residual, &min, &max);
+////
+////    std::cout << "Residual: min - " << min << " max - " << max << std::endl;
+////    cv::minMaxLoc(scale, &min, &max);
+////    std::cout << "Scale: min - " << min << " max - " << max << std::endl;
+////    scale.convertTo(scale, CV_16UC1, 65535.0/max);
+////
+////    tree->deleteAttributeFromTree<fl::YExtentAttribute>();
+//
+//    if (argc > 2)
+//        cv::imwrite(argv[2], residual);
+//    if (argc > 3)
+//        cv::imwrite(argv[3], scale);
+//
+//
+//    delete tree;
+//    return;
+
+    std::cout << "constructed tree" << std::endl;
+
+    std::vector <std::pair <int, fl::Node *> > leafExt;
+    tree->getLeafExtinctions(leafExt);
+    //std::cout << "Extinction values got " << std::endl;
+    std::sort(leafExt.rbegin(), leafExt.rend());
+    std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
+//    for (int i=0, szi = 500; i < szi; ++i)
+//        std::cout << leafExt[i].first << " ";
+//    std::cout << std::endl;
+    //std::cout << "Before I have: " << leafExt.size() << std::endl;
+    for (std::vector<std::pair <int, fl::Node *> >::iterator it = leafExt.begin(); it != leafExt.end(); ++it){
+        if (it->first < 10){
+            leafExt.erase(it, leafExt.end());
+            break;
+        }
+    }
+    std::cout << "Keeping: " << leafExt.size() << std::endl;
 
 //    std::vector <fl::Node *> onlyNodes;
 //    std::transform(leafExt.begin(),
@@ -1333,14 +1994,35 @@ void testObjectDetection(int argc, char **argv){
     std::vector <fl::Node *> selection;
     std::cout << "Selecting nodes" << std::endl;
 //    tree->setImage(image);
-//    tree->printFromLeaves(leafExt, 50);
 
 //    return;
-    tree->selectFromLeaves(selection, leafExt, leafExt.size());
+    tree->selectFromLeaves(selection, leafExt);
 
     std::cout << "Marking" << std::endl;
 
-    tree->markSelectedNodes(display, selection);
+    //tree->markSelectedNodes(display, selection);
+    std::vector <int> classes;
+    std::vector <Node*> npc[3];
+    tree->setImage(image);
+    tree->showPerNode(selection, classes, image);
+    tree->unsetImage();
+    for (int i=0, szi = classes.size(); i < szi; ++i)
+        npc[classes[i]].push_back(selection[i]);
+
+    //tree->markSelectedNodes(display, selection);
+    std::ofstream outF;
+    outF.open("weed.txt", std::ios::out);
+    tree->markSelectedNodes(display, npc[0], cv::Vec3b(80, 80, 200));
+    tree->writeNodeIDToFile(npc[0], outF);
+    outF.close();
+    outF.open("crop.txt", std::ios::out);
+    tree->markSelectedNodes(display, npc[1], cv::Vec3b(80, 200, 80));
+    tree->writeNodeIDToFile(npc[1], outF);
+    outF.close();
+    outF.open("mixed.txt", std::ios::out);
+    tree->markSelectedNodes(display, npc[2], cv::Vec3b(80, 200, 200));
+    tree->writeNodeIDToFile(npc[2], outF);
+    outF.close();
 
     std::cout << "done marking" << std::endl;
     //cv::imshow("Detected patches 2", display);
@@ -1353,134 +2035,6 @@ void testObjectDetection(int argc, char **argv){
     delete tree;
     return;
 
-    tree->setImage(image);
-//    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-//    tree->filterTreeByTIAttributePredicate<fl::AreaAttribute>(fl::RelativeIncreaseGreaterThanX<int>(150.0));
-//    tree->deleteAttributeFromTree<fl::AreaAttribute>();
-//
-
-    tree->addAttributeToTree<fl::RangeAttribute>(new fl::RangeSettings());
-    int maxRange = ((fl::RangeAttribute*)root->getAttribute(fl::RangeAttribute::name))->value();
-    tree->deleteAttributeFromTree<fl::RangeAttribute>();
-    tree->unsetImage();
-
-    //std::cout << "max range: " << maxRange << " proposed threshold: " << 60./256*(maxRange+1) << std::endl;
-
-    tree->filterTreeByLevelPredicate(fl::IncreaseGreaterThanX<int>(80./256*(maxRange+1)));
-
-    tree->markAllPatches(display);
-    cv::imshow("Detected patches", display);
-    cv::waitKey(0);
-
-    display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-
-    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::RelativeIncreaseGreaterThanX<int>(2.0));
-    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<int>(7));
-    tree->deleteAttributeFromTree<fl::AreaAttribute>();
-
-    tree->markAllPatches(display);
-    cv::imshow("Detected patches 2", display);
-    cv::waitKey(0);
-
-    if (argc > 2)
-        cv::imwrite(argv[2], display);
-
-    return;
-
-//    std::vector <fl::Node *> mser;
-//    std::vector <std::vector <cv::Point> > points;
-//    std::vector <std::pair <double, int> > div;
-//
-//    //std::vector <std::pair <double, int> > divTotal;
-//    int firstSize = 0;
-//
-//    for (int i=0; i < 2; ++i){
-//        if (i && (dual == NULL || dual == tree))
-//            continue;
-//
-//        fl::ImageTree *t = (!i)?(tree):(dual);
-//
-//        fl::markMserInTree(*t, mser, div, params);
-//
-//        //divTotal.insert(divTotal.end(), div.begin(), div.end());
-//        firstSize = mser.size();
-//
-//        fl::fillMserPoints(points, mser);
-//
-//    }
-//
-//    outF << "1.0" << std::endl;
-//    int toPrintSize = 0;
-//    for (int i=0, szi = points.size(); i < szi; ++i){
-//        fl::ellipse current(points[i], image.cols, image.rows);
-//        if (current.isOK())
-//            ++toPrintSize;
-//    }
-//    outF << toPrintSize << std::endl;
-//
-//    for (int i=0, szi = points.size(); i < szi; ++i){
-//        fl::ellipse current(points[i], image.cols, image.rows);
-//        if (current.isOK()){
-//            //if (i == 256 || i == 250) outF << "blub " << std::endl;
-//            outF << current << std::endl;
-//            //outF << current << "  " << divTotal[i].first << std::endl;
-//
-//        }
-//    }
-//
-//    if (featPath != ""){
-//
-//        cv::Mat ellipses;
-//        cv::Mat features;
-//
-//        display.copyTo(ellipses);
-//        display.copyTo(features);
-//
-//
-//        for( int i = (int)points.size()-1; i >= 0; i-- ){
-//
-//            fl::ellipse current(points[i], image.cols, image.rows);
-//            if (!(current.isOK()))
-//                continue;
-//
-//            std::sort(points[i].begin(), points[i].end(), comparator);
-//            const std::vector<cv::Point>& r = points[i];
-//
-//            for ( int j = 0; j < (int)r.size(); j++ )
-//            {
-//                cv::Point pt = r[j];
-//                display.at<cv::Vec3b>(pt) = bcolors[(i+r.size())%11];
-//            }
-//
-//            //cv::RotatedRect box = cv::fitEllipse(r);
-//            cv::RotatedRect box = cv::minAreaRect(r);
-//            cv::ellipse(ellipses, box, cv::Scalar(196,255,255), 2);
-//
-////            std::cout << i << std::endl;
-////
-////            imshow("regions", display);
-////            cv::waitKey(0);
-////
-////            imshow("regions", ellipses);
-////            cv::waitKey(0);
-//
-//
-////            if (current.small){
-////            std::cout << "i: " << i << std::endl;
-////            //fl::ellipse current(points[i], image.cols, image.rows);
-////            imshow("regions", display);
-////            cv::waitKey(0);
-////
-////            imshow("regions", ellipses);
-////            cv::waitKey(0);
-////            }
-//
-//        }
-//
-//        cv::imwrite(featPath, display);
-//        cv::imwrite(ellipsePath, ellipses);
-//    }
 }
 
 void testAllRange(const cv::Mat &image, fl::ImageTree *tos, fl::ImageTree *alpha, fl::ImageTree *max, fl::ImageTree *min, int delta){
@@ -2703,7 +3257,7 @@ cv::Mat &testImage9(void){
 
 cv::Mat &testImage10(void){
     static bool firstCall = true;
-    static cv::Mat image = cv::Mat::zeros(4, 5, CV_8U);
+    static cv::Mat image = cv::Mat::zeros(5, 4, CV_8U);
     if (firstCall){
         image.at<uchar>(0,0) = image.at<uchar>(0,1) = image.at<uchar>(0,2) = image.at<uchar>(0,3) = 70;
         image.at<uchar>(4,0) = image.at<uchar>(4,1) = image.at<uchar>(4,2) = image.at<uchar>(4,3) = 70;
@@ -2724,6 +3278,38 @@ cv::Mat &testImage11(void){
     return image;
 }
 
+cv::Mat &testImage12(void){
+    static bool firstCall = true;
+    static cv::Mat image = cv::Mat::zeros(4, 5, CV_8U);
+    if (firstCall){
+        image.at<uchar>(0,0) = 1;
+        image.at<uchar>(1,0) = 1;
+        image.at<uchar>(2,0) = 1;
+        image.at<uchar>(3,0) = 0;
+
+        image.at<uchar>(0,1) = 4;
+        image.at<uchar>(1,1) = 6;
+        image.at<uchar>(2,1) = 6;
+        image.at<uchar>(3,1) = 0;
+
+        image.at<uchar>(0,2) = 4;
+        image.at<uchar>(1,2) = 6;
+        image.at<uchar>(2,2) = 6;
+        image.at<uchar>(3,2) = 0;
+
+        image.at<uchar>(0,3) = 0;
+        image.at<uchar>(1,3) = 0;
+        image.at<uchar>(2,3) = 0;
+        image.at<uchar>(3,3) = 0;
+
+        image.at<uchar>(0,4) = 5;
+        image.at<uchar>(1,4) = 0;
+        image.at<uchar>(2,4) = 9;
+        image.at<uchar>(3,4) = 2;
+
+    }
+    return image;
+}
 
 /**************   DEBUG FUNCTIONS ****************/
 
