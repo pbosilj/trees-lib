@@ -554,6 +554,17 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
 
 #endif
 
+
+/// Run manual classification on regions for a list of `Node`s
+/// (e.g. segmentation output). Each region can be classified as
+/// `crop`, `weed, `mixed` or discarded.
+///
+/// \param toMark A vector of pointers to `Node`s to manually
+/// classify.
+/// \param classes An output vector of classes assigned to `Node`s.
+/// \note 0 = weed patch, 1 = crop patch, 2 = mixed patch, -1 = discarded.
+/// \param rgbImg Should add default value. Used to visualization purposes
+/// in manual classification.
 void ImageTree::showPerNode(const std::vector <Node *> &toMark,
                                   std::vector <int> &classes,
                             const cv::Mat &rgbImg) const{
