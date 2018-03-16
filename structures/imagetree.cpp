@@ -454,7 +454,7 @@ void ImageTree::markSelectedNodes(cv::Mat &image,
 /// \param selected Output vector filled with selected `Node`s.
 /// \param leafExt A list of leaf `Node`s and their associated extinction
 /// values.
-/// \param sourceLeaves An optional output, the leave `Node`s associated
+/// \param sourceLeaves An optional output, the leaf `Node`s associated
 /// to the selected `Node`s, in order.
 ///
 /// \note Pull parameters out, make more consistent
