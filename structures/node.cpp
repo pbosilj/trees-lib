@@ -321,6 +321,21 @@ void Node::colorSolid(cv::Mat &img, const cv::Scalar &value) const{
   return;
 }
 
+/// A unique identifier for the given `Node`s is returned. The
+/// identifier encodes the `Node`s position in the `ImageTree`,
+/// by encoding the ordinal numbers of the child `Node`s to be taken at
+/// each branching (1-indexed and 0-terminated). E.g. if a `Node` can be
+/// reached in an `ImageTree` by traversing it from the root, to its third
+/// child and then the second child of that child node, it would be encoded
+/// as "3,2,0".
+///
+/// \param child A private parameter to remember oder.
+///
+/// \return A unique-indentifier for the given `Node` in the belonging
+/// `ImageTree`.
+///
+/// \note This function should get split into public-private part. User
+/// should not be able to access the `child` parameter.
 std::string Node::getIDString(fl::Node *child){
     std::stringstream ss;
     if (!this->isRoot())

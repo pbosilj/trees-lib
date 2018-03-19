@@ -110,9 +110,9 @@ namespace fl{
             /// \brief Get the vectorial gray level of a `Node`.
             virtual const std::vector<int> &hyperGraylevel() const;
 
-            // utility;
+            // utility
 
-
+            /// \brief Return a identifier for the given `Node`s in the `ImageTree`.
             std::string getIDString(fl::Node *child = NULL);
 
             /// \brief Color the corresponding elements in an image with a flat color.
@@ -260,10 +260,6 @@ namespace fl{
             /// \brief Print the subtree belonging to the `Node` and their value of an `Attribute`.
             template <typename AT>
             void printElementsWithAttribute(std::ostream &outStream = std::cout, int depth = 0) const;
-
-//            // Still not sure if I need it or not.
-//            template<class AT1, class AT2>
-//            void printPartialWithAttribute(std::set <Node *> &toPrint,int cols, int rows);
 
 #endif
 

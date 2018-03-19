@@ -780,11 +780,6 @@ void ImageTree::deletePatternSpectra2DFromNode(Node *cur) const{
 
 #endif
 
-//template<class AT1, class AT2>
-//void ImageTree::printPartialTreeWithSpectrum(std::set <Node *> &toPrint, int cols, int rows) {
-//    this->_root->printPartialWithAttribute<AT1, AT2>(toPrint, cols, rows);
-//}
-
 //template<class TAT>
 //// where TAT is TypedAttribute<int>
 //void ImageTree::filterTreeByTIAttribute(Node *root){
