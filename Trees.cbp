@@ -54,6 +54,8 @@
 		<Unit filename="algorithms/maxtreenister.tpp" />
 		<Unit filename="algorithms/msernister.cpp" />
 		<Unit filename="algorithms/msernister.h" />
+		<Unit filename="algorithms/objectdetection.cpp" />
+		<Unit filename="algorithms/objectdetection.h" />
 		<Unit filename="algorithms/omegatreealphafilter.cpp" />
 		<Unit filename="algorithms/omegatreealphafilter.h" />
 		<Unit filename="algorithms/omegatreealphafilter.tpp" />
