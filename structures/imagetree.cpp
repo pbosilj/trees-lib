@@ -249,7 +249,7 @@ void ImageTree::displayTree(const std::string &outPath) const{
 ///
 /// \param leaves The output vector containing the list of
 /// leaf `Node`s.
-void ImageTree::getLeaves(std::vector <fl::Node *> &leaves){
+void ImageTree::getLeaves(std::vector <fl::Node *> &leaves) const{
     leaves.clear();
     std::stack<fl::Node *> nodeStack;
     nodeStack.push(this->_root);
@@ -277,7 +277,7 @@ void ImageTree::getLeaves(std::vector <fl::Node *> &leaves){
 /// \param leafExt An output vector to be filled with extinction values
 /// associated to each leaf `Node` of the tree.
 
-void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt){
+void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt) const{
     leafExt.clear();
     std::vector <fl::Node *> leaves;
     this->getLeaves(leaves);

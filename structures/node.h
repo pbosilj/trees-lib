@@ -167,7 +167,6 @@ namespace fl{
 
             friend class ImageTree;
 
-
     protected:
 
             /// Used for extinction values.

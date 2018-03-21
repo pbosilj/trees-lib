@@ -91,10 +91,10 @@ class ImageTree {
         void displayTree(const std::string &outPath = "/home/pbosilj/Programming/Trees/filtest.png") const;
 
         /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
-        void getLeaves(std::vector <fl::Node *> &leaves);
+        void getLeaves(std::vector <fl::Node *> &leaves) const;
 
         /// \brief Calculate extinction values for all the leaves in the tree.
-        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt);
+        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt) const;
 
         /// \brief A unique-identifier corresponding to each of the given `Node`s is output.
         void writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
