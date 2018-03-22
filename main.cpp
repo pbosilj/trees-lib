@@ -1336,7 +1336,7 @@ void testObjectDetection(int argc, char **argv){
 //    tree->printFromLeaves(leafExt, 50);
 
 //    return;
-    tree->selectFromLeaves(selection, leafExt, leafExt.size());
+    //tree->selectFromLeaves(selection, leafExt, leafExt.size());
 
     std::cout << "Marking" << std::endl;
 
