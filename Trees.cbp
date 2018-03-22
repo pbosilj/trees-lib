@@ -54,6 +54,8 @@
 		<Unit filename="algorithms/maxtreenister.tpp" />
 		<Unit filename="algorithms/msernister.cpp" />
 		<Unit filename="algorithms/msernister.h" />
+		<Unit filename="algorithms/objectdetection.cpp" />
+		<Unit filename="algorithms/objectdetection.h" />
 		<Unit filename="algorithms/omegatreealphafilter.cpp" />
 		<Unit filename="algorithms/omegatreealphafilter.h" />
 		<Unit filename="algorithms/omegatreealphafilter.tpp" />
@@ -87,6 +89,8 @@
 		<Unit filename="structures/imagetree.tpp" />
 		<Unit filename="structures/inclusionnode.cpp" />
 		<Unit filename="structures/inclusionnode.h" />
+		<Unit filename="structures/meanattribute.cpp" />
+		<Unit filename="structures/meanattribute.h" />
 		<Unit filename="structures/momentsattribute.cpp" />
 		<Unit filename="structures/momentsattribute.h" />
 		<Unit filename="structures/momentsholder.cpp" />
@@ -105,8 +109,12 @@
 		<Unit filename="structures/rangeattribute.h" />
 		<Unit filename="structures/regiondynamicsattribute.cpp" />
 		<Unit filename="structures/regiondynamicsattribute.h" />
+		<Unit filename="structures/sparsityattribute.cpp" />
+		<Unit filename="structures/sparsityattribute.h" />
 		<Unit filename="structures/valuedeviationattribute.cpp" />
 		<Unit filename="structures/valuedeviationattribute.h" />
+		<Unit filename="structures/yextentattribute.cpp" />
+		<Unit filename="structures/yextentattribute.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

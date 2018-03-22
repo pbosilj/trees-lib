@@ -281,6 +281,20 @@ const std::vector<int> & Node::hyperGraylevel() const {
     return this->_hgrayLevels;
 }
 
+/// A unique identifier for the given `Node` is returned. The
+/// identifier encodes the `Node`s position in the `ImageTree`,
+/// by encoding the ordinal numbers of the child `Node`s to be taken at
+/// each branching (1-indexed and 0-terminated). E.g. if a `Node` can be
+/// reached in an `ImageTree` by traversing it from the root, to its third
+/// child and then the second child of that child `Node`, it would be encoded
+/// as "3,2,0".
+///
+/// \return A unique-indentifier for the given `Node` in the belonging
+/// `ImageTree`.
+std::string Node::getIDString(){
+    return this->getIDString(NULL);
+}
+
 /// Colors the elements (pixels) of the provided image which
 /// correspond by coordinates to the current `Node` elements with
 /// a single color.
@@ -320,21 +334,6 @@ void Node::colorSolid(cv::Mat &img, const cv::Scalar &value) const{
 
   return;
 }
-
-std::string Node::getIDString(fl::Node *child){
-    std::stringstream ss;
-    if (!this->isRoot())
-        ss << this->_parent->getIDString(this);
-    if (child == NULL)
-        ss << "0";
-    for (int i=0, szi = this->_children.size(); i < szi; ++i){
-        if (this->_children[i] == child){
-            ss << i+1 << ",";
-        }
-    }
-    return ss.str();
-}
-
 
 /// Colors the elements (pixels) of the provided image which
 /// correspond by coordinates to the current `Node` elements with
@@ -457,6 +456,8 @@ int Node::nodeCount (void) {
     return this->ncount;
 }
 
+#if 1
+
 /// The specific attribute is manipulated through the abstract
 /// `Attribute` interface. To specify the desired specific attribute,
 /// the static identifier `SpecificAttribute::name` assigned for
@@ -498,6 +499,8 @@ void Node::getChildrenAttributes(const std::string &name, std::vector <Attribute
     return;
 }
 
+#if 2
+
 /// The specific attributes are specified by their static identifier
 /// `SpecificAttribute::name` assigned for every attribute.
 ///
@@ -536,6 +539,9 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
     }
     return;
 }
+
+#endif // #if 2 - pattern spectra
+#endif // #if 1 - attributes
 
 /// Deletes a child from this node. Does not check for constraints.
 /// This function will assign all the elements (pixels) directly belonging
@@ -764,7 +770,21 @@ void Node::printElements(std::ostream &outStream, int depth) const{
     return;
 }
 
-
+std::string Node::getIDString(fl::Node *child){
+    std::stringstream ss;
+    if (!this->isRoot())
+        ss << this->_parent->getIDString(this);
+    if (child == NULL)
+        ss << "0";
+    else{
+        for (int i=0, szi = this->_children.size(); i < szi; ++i){
+            if (this->_children[i] == child){
+                ss << i+1 << ",";
+            }
+        }
+    }
+    return ss.str();
+}
 
 /*
 bool Node::hasMoreChildrenPS(void) const{

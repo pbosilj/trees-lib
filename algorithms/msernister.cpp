@@ -1,4 +1,4 @@
-/// \file structures/msernister.h
+/// \file structures/msernister.cpp
 /// \author Petra Bosilj
 
 #include "msernister.h"

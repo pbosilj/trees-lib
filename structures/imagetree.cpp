@@ -61,34 +61,6 @@ ImageTree::~ImageTree(){
     }
 }
 
-//void ImageTree::deallocateRoot(const Node *n){
-//    const std::vector <Node *> &ch = n->_children;
-//    for (int i=0, szi = ch.size(); i < szi; ++i){
-//        if (ch[i] != NULL)
-//            this->deallocateRoot(ch[i]);
-//    }
-//    delete n;
-//}
-
-// non-recursive
-void ImageTree::deallocateRoot(const Node *n){
-    std::vector <std::pair<const Node *, bool> > toProcess(1, std::make_pair(n, false));
-    std::pair<const Node *, bool> tmp;
-    do{
-        tmp = toProcess.back();
-        if (tmp.second || tmp.first->_children.empty()) { // second time on queue
-            delete tmp.first;
-            toProcess.pop_back();
-        }
-        else{ // first time on queue, children not processed
-            toProcess.back().second = true;
-            for (int i=0, szi = tmp.first->_children.size(); i < szi; ++i){
-                toProcess.push_back(std::make_pair(tmp.first->_children[i], false));
-            }
-        }
-    }while(!toProcess.empty());
-}
-
 /// Flip the settings regarding the destruction of
 /// all the `Node`s in the hierarchy when the
 /// `ImageTree::~ImageTree()` destructor is called
@@ -218,6 +190,25 @@ int ImageTree::treeHeight(void) const {return height;}
 /// \return The number of `Node`s in this `ImageTree`.
 int ImageTree::countNodes(void) const { return this->_root->nodeCount(); }
 
+/// \return A pointer to a random `Node` from the `ImageTree`.
+
+/// \note Even though
+/// the pointer is not const, to allow the use of functions such as
+/// `Node::elementCount()` (which use memoization), a `Node` obtained
+/// this way should not be modified by the user.
+Node *ImageTree::randomNode(){
+
+    if (this->randomInit == false){
+        this->allNodes.clear();
+        this->_root->getAllDescendants(allNodes);
+        this->randomInit = true;
+    }
+
+    Node *returnValue = this->allNodes[std::rand() % this->allNodes.size()];
+
+    return returnValue;
+}
+
 /// \return A pair made of the minimum and maximum level value among
 /// all the `Node`s in this `ImageTree`.
 /// \remark cf. `Node::level()` to access the level of a single `Node`.
@@ -258,7 +249,7 @@ void ImageTree::displayTree(const std::string &outPath) const{
 ///
 /// \param leaves The output vector containing the list of
 /// leaf `Node`s.
-void ImageTree::getLeaves(std::vector <fl::Node *> &leaves){
+void ImageTree::getLeaves(std::vector <fl::Node *> &leaves) const{
     leaves.clear();
     std::stack<fl::Node *> nodeStack;
     nodeStack.push(this->_root);
@@ -286,22 +277,17 @@ void ImageTree::getLeaves(std::vector <fl::Node *> &leaves){
 /// \param leafExt An output vector to be filled with extinction values
 /// associated to each leaf `Node` of the tree.
 
-void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt){
+void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt) const{
     leafExt.clear();
     std::vector <fl::Node *> leaves;
-    //std::cout << "I will be getting leaves." << std::endl;
-    getLeaves(leaves);
-    //std::cout << "I have gotten leaves. Have: " << leaves.size() << std::endl;
+    this->getLeaves(leaves);
     this->addAttributeToTree<fl::RegionDynamicsAttribute>(new fl::RegionDynamicsSettings());
     int treeHeight = ((fl::RegionDynamicsAttribute*)this->_root->getAttribute(fl::RegionDynamicsAttribute::name))->value();
     for (int i=0, szi = leaves.size(); i < szi; ++i){
-        //std::cout << "i: " << i << " " << leafExt.size() << std::endl;
         int extinction = treeHeight;
         fl::Node *par = leaves[i]->parent();
-        //int parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value();
-        //int levelDiff = (leaves[i]->level() - par->level());
         for(int parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value(),
-            levelDiff = std::abs(leaves[i]->level() - par->level());
+            levelDiff = std::abs(leaves[i]->level() - par->level()); // note: no abs in the original; only for one direction trees
             parHeight <= levelDiff;
             par = par->parent(),
             parHeight = ((fl::RegionDynamicsAttribute*)par->getAttribute(fl::RegionDynamicsAttribute::name))->value(),
@@ -316,10 +302,8 @@ void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &l
         leafExt.emplace_back(extinction, leaves[i]);
     }
 
-    //std::cout << "Removing attribute" << std::endl;
     this->deleteAttributeFromTree<fl::RegionDynamicsAttribute>();
 
-    //std::cout << "Resetting visited" << std::endl;
     std::stack <fl::Node *> nodeStack;
     nodeStack.push(this->_root);
     for (fl::Node *cur; !nodeStack.empty();){
@@ -328,7 +312,6 @@ void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &l
         cur->visited = false;
         for (int i=0, szi = cur->_children.size(); i < szi; ++i) nodeStack.push(cur->_children[i]);
     }
-    //std::cout << "And done" << leafExt.size() << std::endl;
     return;
 }
 
@@ -390,11 +373,91 @@ void ImageTree::loadNodesFromIDFile(std::vector <Node *> &nodes, std::istream &i
 }
 
 
+/// In-paints all the `Node`s of the `ImageTree` except the root `Node`.
+/// Meant to be used to display remaining content in a filtered `ImageTree`.
+///
+/// \param image The image onto which to draw the regions.
+void ImageTree::markAllPatches(cv::Mat &image) const{
+    if (image.type() == CV_8UC3)
+        this->markAllPatches(image, cv::Vec3b(0, 0, 200));
+    else
+        this->markAllPatches(image, cv::Scalar(200));
+}
+
+/// \copydetails markAllPatches(cv::Mat &image)
+///
+/// \param value The RGB value of the flat color with which to draw the
+/// regions.
+void ImageTree::markAllPatches(cv::Mat &image, const cv::Vec3b &value) const{
+    const std::vector <Node *> &ch = this->_root->_children;
+    for (int i=0, szi = ch.size(); i < szi; ++i){
+        if (ch[i] != NULL){
+            ch[i]->colorSolid(image, value);
+        }
+    }
+}
+
+/// \copydetails markAllPatches(cv::Mat &image)
+///
+/// \param value The intensity value of the flat grayvalue with which to draw the
+/// regions.
+void ImageTree::markAllPatches(cv::Mat &image, const cv::Scalar &value) const{
+    const std::vector <Node *> &ch = this->_root->_children;
+    for (int i=0, szi = ch.size(); i < szi; ++i){
+        if (ch[i] != NULL){
+            ch[i]->colorSolid(image, value);
+        }
+    }
+}
+
+/// In-paints all the given `Node`s. Meant to be used to display selected
+/// `Node`s following a filtering or detection process filtered `ImageTree`.
+///
+/// \param image The image onto which to draw the regions.
+/// \param toMark The `Node`s to be drawn onto the image.
+void ImageTree::markSelectedNodes(cv::Mat &image,
+                                  const std::vector <Node *> &toMark) const{
+    if (image.type() == CV_8UC3)
+        this->markSelectedNodes(image, toMark, cv::Vec3b(0, 0, 200));
+    else
+        this->markSelectedNodes(image, toMark, cv::Scalar(200));
+}
+
+/// \copydetails markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
+///
+/// \param value The RGB value of the flat color with which to draw the
+/// regions.
+void ImageTree::markSelectedNodes(cv::Mat &image,
+                                  const std::vector <Node *> &toMark,
+                                  const cv::Vec3b &value) const{
+    for (int i=0, szi = toMark.size(); i < szi; ++i)
+        if (toMark[i] != NULL){
+            toMark[i]->colorSolid(image, value);
+        }
+}
+
+/// \copydetails markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
+///
+/// \param value The intensity value of the flat grayvalue with which to draw the
+/// regions.
+void ImageTree::markSelectedNodes(cv::Mat &image,
+                                  const std::vector <Node *> &toMark,
+                                  const cv::Scalar &value) const{
+    for (int i=0, szi = toMark.size(); i < szi; ++i)
+        if (toMark[i] != NULL){
+            toMark[i]->colorSolid(image, value);
+        }
+}
+
+#if 1
+
 /// \param selected Output vector filled with selected `Node`s.
 /// \param leafExt A list of leaf `Node`s and their associated extinction
 /// values.
-/// \param sourceLeaves An optional output, the leave `Node`s associated
+/// \param sourceLeaves An optional output, the leaf `Node`s associated
 /// to the selected `Node`s, in order.
+///
+/// \note Pull parameters out, make more consistent
 void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
                             const std::vector <std::pair <int, fl::Node *> > &leafExt,
                             std::vector <fl::Node *> *sourceLeaves){
@@ -410,77 +473,35 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
         std::vector<std::pair<double, std::pair<double, Node *> > > allGrowth;
         for (cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
             if (!last){
-                //par = cur->parent();
                 par = cur;
                 last = true;
             }
+            /// TODO: 30 IS THE DELTA PARAMETER
             for (; !par->parent()->isRoot() && std::abs(cur->level() - par->parent()->level()) <= 30; par = par->parent());
             //std::cout << "parent value " << par->level() << " " << (int)par->isRoot() << std::endl;
             int parentArea = ((fl::AreaAttribute*)par->getAttribute(fl::AreaAttribute::name))->value();
             int selfArea = ((fl::AreaAttribute*)cur->getAttribute(fl::AreaAttribute::name))->value();
-//            if (selfArea < 40)
-//                continue;
-//            else if (selfArea > 20000)
-//                break;
-            if (selfArea > 5e5)
+            if (selfArea > 5e5) /// TODO: MAXaREA PARAMETER
                 break;
-//            if (selfArea < 30)
-//                break;
-            //double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(par->level() - cur->level())));
             double growth = (double)(parentArea - selfArea) / selfArea;
             allGrowth.emplace_back(std::make_pair(growth, std::make_pair(selfArea, cur)));
 
-            //if (growth > 5)
-            //    continue;
-//            if (growth > 1.1){
-//                std::cout << cur->parent()->level() << " " << cur->level() << std::endl;
-//                best = cur;
-//                bestGrowth = growth;
-//                break;
-//            }
-//            if (std::abs(cur->parent()->level() - cur->level()) > 30){
-//                std::cout << cur->level() << " " << cur->parent()->level() << " " << selfArea << " " << parentArea << std::endl;
-//                best = cur;
-//                break;
-//            }
-            //std::cout << "\t growth: " << growth << std::endl;
-            //if (growth > 10)
-            //    continue;
-//            if (growth > bestGrowth){
-//                best = cur;
-//                bestGrowth = growth;
-//                bestArea = selfArea;
-//            }
         }
-//        std::cout << "BestGrowth " << bestGrowth << " area:" << bestArea << std::endl;
+
         int bestIndex = 0;
         bool correction = false;
         std::sort(allGrowth.rbegin(), allGrowth.rend());
+
         for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i && allGrowth[_i].first > 10; ++_i){
-        //for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i; ++_i){
             if (allGrowth[_i].second.first > 4e5)
                 continue;
-            //if (allGrowth[_i].second.first > 5*allGrowth[bestIndex].second.first){
             if (allGrowth[_i].second.first > 15*allGrowth[bestIndex].second.first) {
-            //if (allGrowth[bestIndex].second.first < 80 && allGrowth[_i].second.first > 5*allGrowth[bestIndex].second.first) {
-            //if (allGrowth[bestIndex].second.first < 80 && allGrowth[_i].second.first > std::pow(allGrowth[bestIndex].second.first, 1.5)/15) {
-//            if (allGrowth[_i].second.first > 5*allGrowth[bestIndex].second.first && allGrowth[_i].first > 500){
                 int cnt = 0;
-                //std::cout << "trying to replace " << allGrowth[bestIndex].second.first << " with " << allGrowth[_i].second.first << " (growth:" << allGrowth[_i].first << ")" << std::endl;
                 for (; _i + cnt < (int)allGrowth.size() && allGrowth[_i+cnt].second.first > 0.85*allGrowth[_i].second.first
                     && allGrowth[_i+cnt].second.first < 1.15*allGrowth[_i].second.first;
-                     //std::cout << allGrowth[_i+cnt].second.first << " (" << allGrowth[_i+cnt].first << ") ",
                      ++cnt){
                      }
-//                 for (int _j = 0; _i + _j < (int)allGrowth.size() && allGrowth[_i+_j].first > 0.5*allGrowth[_i].first;
-//                     //std::cout << allGrowth[_i+_j].second.first << " (" << allGrowth[_i+_j].first << ") ",
-//                     cnt += (allGrowth[_i+_j].second.first > 0.85*allGrowth[_i].second.first
-//                        && allGrowth[_i+_j].second.first < 1.15*allGrowth[_i].second.first),
-//                     ++_j){
-//                     }
-                //std::cout << std::endl;
                 if (cnt >= 6){
-                    //std::cout << "Replacing " << allGrowth[bestIndex].second.first << " with " << allGrowth[_i].second.first <<  std::endl;
                     if (allGrowth[_i].second.second->visited){
                         bestIndex = -1;
                         break;
@@ -488,15 +509,36 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
                     allGrowth[bestIndex].second.second -> visited = true;
                     bestIndex = _i;
                     correction = true;
-                    //_i += cnt-1;
                 }
             }
-            //std::cout << "Satb: " << allGrowth[_i].first << " Area: " << allGrowth[_i].second << std::endl;
         }
-        //if (bestGrowth > 0 && bestArea > 50){
-//        if (correction){
-//              selected.push_back(allGrowth[bestIndex].second.second);
+
+        /// alternative selection
+//        for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i; ++_i){
+//            if (allGrowth[_i].second.first > 4e5)
+//                continue;
+//            //if (allGrowth[_i].second.first > 5*allGrowth[bestIndex].second.first){
+//            if (allGrowth[_i].second.first > 15*allGrowth[bestIndex].second.first) {
+//                int cnt = 0;
+//                 for (int _j = 0; _i + _j < (int)allGrowth.size() && allGrowth[_i+_j].first > 0.5*allGrowth[_i].first;
+//                     cnt += (allGrowth[_i+_j].second.first > 0.85*allGrowth[_i].second.first
+//                        && allGrowth[_i+_j].second.first < 1.15*allGrowth[_i].second.first),
+//                     ++_j){
+//                     }
+//                if (cnt >= 4){
+//                    if (allGrowth[_i].second.second->visited){
+//                        bestIndex = -1;
+//                        break;
+//                    }
+//                    allGrowth[bestIndex].second.second -> visited = true;
+//                    bestIndex = _i;
+//                    correction = true;
+//                    _i += cnt-1;
+//                }
+//            }
 //        }
+
+        /// TODO: 150 IS THE MINaREA PARAMETER
         if (bestIndex > -1 && !allGrowth.empty() && allGrowth[bestIndex].second.first > 150){
             if (! allGrowth[bestIndex].second.second->visited){
 
@@ -504,80 +546,25 @@ void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
                 if (sourceLeaves != NULL)
                     sourceLeaves->push_back(leafExt[i].second);
                 allGrowth[bestIndex].second.second->visited = true;
-                //std::cerr << allGrowth[bestIndex].second.first << std::endl;
             }
         }
-//        if (bestGrowth > 0 && bestArea > 50){
-//            selected.push_back(best);
-//        }
     }
     this->deleteAttributeFromTree<fl::AreaAttribute>();
 }
 
-
-//produces markers for onion image
-//void ImageTree::selectFromLeaves(std::vector <fl::Node * > &selected,
-//                            const std::vector <std::pair <int, fl::Node *> > &leafExt,
-//                            int N){
-//    selected.clear();
-//    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-//    for (int i=0, szi = std::min(N, (int)leafExt.size()); i < szi; ++i){
-//        std::cout << "Node i=" << i << std::endl;
-//        Node *best = NULL, *cur;
-//        double bestGrowth = 0;
-//        for (cur = leafExt[i].second; !cur->isRoot(); cur = cur->parent()){
-////            int parentArea = ((fl::AreaAttribute*)cur->parent()->getAttribute(fl::AreaAttribute::name))->value();
-////            int selfArea = ((fl::AreaAttribute*)cur->getAttribute(fl::AreaAttribute::name))->value();
-////            double growth = ( (double)(parentArea - selfArea) / (selfArea * std::abs(cur->parent()->level() - cur->level())));
-////            if (growth > 1.1){
-////                std::cout << cur->parent()->level() << " " << cur->level() << std::endl;
-////                best = cur;
-////                bestGrowth = growth;
-////                break;
-////            }
-//            if (std::abs(cur->parent()->level() - cur->level()) > 10){
-//                best = cur;
-//                break;
-//            }
-//            //std::cout << "\t growth: " << growth << std::endl;
-//            //if (growth > 10)
-//            //    continue;
-////            if (growth > bestGrowth){
-////                best = cur;
-////                bestGrowth = growth;
-////            }
-//        }
-//        //std::cout << "BestGrowth " << bestGrowth << std::endl;
-//        selected.push_back(best);
-//    }
-//    this->deleteAttributeFromTree<fl::AreaAttribute>();
-//}
+#endif
 
 
-
-/// \return A pointer to a random `Node` from the `ImageTree`.
-
-/// \note Even though
-/// the pointer is not const, to allow the use of functions such as
-/// `Node::elementCount()` (which use memoization), a `Node` obtained
-/// this way should not be modified by the user.
-Node *ImageTree::randomNode(){
-
-    if (this->randomInit == false){
-        this->allNodes.clear();
-        this->_root->getAllDescendants(allNodes);
-        this->randomInit = true;
-    }
-
-    Node *returnValue = this->allNodes[std::rand() % this->allNodes.size()];
-
-    return returnValue;
-}
-
-
-
-
-
+/// Run manual classification on regions for a list of `Node`s
+/// (e.g. segmentation output). Each region can be classified as
+/// `crop`, `weed, `mixed` or discarded.
+///
+/// \param toMark A vector of pointers to `Node`s to manually
+/// classify.
+/// \param classes An output vector of classes assigned to `Node`s.
+/// \note 0 = weed patch, 1 = crop patch, 2 = mixed patch, -1 = discarded.
+/// \param rgbImg Should add default value. Used to visualization purposes
+/// in manual classification.
 void ImageTree::showPerNode(const std::vector <Node *> &toMark,
                                   std::vector <int> &classes,
                             const cv::Mat &rgbImg) const{
@@ -741,82 +728,56 @@ void ImageTree::showPerNode(const std::vector <Node *> &toMark,
         }
 }
 
-/// In-paints all the `Node`s of the `ImageTree` except the root `Node`.
-/// Meant to be used to display remaining content in a filtered `ImageTree`.
-///
-/// \param image The image onto which to draw the regions.
-void ImageTree::markAllPatches(cv::Mat &image) const{
-    if (image.type() == CV_8UC3)
-        this->markAllPatches(image, cv::Vec3b(0, 0, 200));
-    else
-        this->markAllPatches(image, cv::Scalar(200));
-}
+// private methods start here
 
-/// \copydetails markAllPatches(cv::Mat &image)
-///
-/// \param value The RGB value of the flat color with which to draw the
-/// regions.
-void ImageTree::markAllPatches(cv::Mat &image, const cv::Vec3b &value) const{
-    const std::vector <Node *> &ch = this->_root->_children;
-    for (int i=0, szi = ch.size(); i < szi; ++i){
-        if (ch[i] != NULL){
-            ch[i]->colorSolid(image, value);
-        }
+void ImageTree::reconstructUO(const std::vector< int > &res,
+                              const std::vector<int> &scl,
+                              cv::Mat &residual, cv::Mat &scale,
+                              std::pair<fl::Node *, int> &current) const{
+
+    const fl::Node* cur = current.first;
+    if (cur == this->root()){
+        residual = cv::Mat(this->treeHeight(), this->treeWidth(), CV_16U, cv::Scalar(0));
+        scale = cv::Mat(this->treeHeight(), this->treeWidth(), CV_16U, cv::Scalar(0));
+
+        //double min, max;
+        //cv::minMaxLoc(residual, &min, &max);
+        //std::cout << "Residual: min - " << min << " max - " << max << std::endl;
+    }
+
+    const std::vector <fl::pxCoord > &elems = cur->getOwnElements();
+    for (int i=0, szi = elems.size(); i < szi; ++i){
+
+        scale.at<unsigned short>(elems[i].Y, elems[i].X) = (unsigned short)scl[current.second];
+        residual.at<unsigned short>(elems[i].Y, elems[i].X) = (unsigned short)res[current.second];
+    }
+    //std::cout << res[current.second] << std::endl;
+
+    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
+        ++current.second;
+        current.first = cur->_children[i];
+        this->reconstructUO(res, scl, residual, scale, current);
     }
 }
 
-/// \copydetails markAllPatches(cv::Mat &image)
-///
-/// \param value The intensity value of the flat grayvalue with which to draw the
-/// regions.
-void ImageTree::markAllPatches(cv::Mat &image, const cv::Scalar &value) const{
-    const std::vector <Node *> &ch = this->_root->_children;
-    for (int i=0, szi = ch.size(); i < szi; ++i){
-        if (ch[i] != NULL){
-            ch[i]->colorSolid(image, value);
+// non-recursive
+void ImageTree::deallocateRoot(const Node *n){
+    std::vector <std::pair<const Node *, bool> > toProcess(1, std::make_pair(n, false));
+    std::pair<const Node *, bool> tmp;
+    do{
+        tmp = toProcess.back();
+        if (tmp.second || tmp.first->_children.empty()) { // second time on queue
+            delete tmp.first;
+            toProcess.pop_back();
         }
-    }
-}
-
-/// In-paints all the given `Node`s. Meant to be used to display selected
-/// `Node`s following a filtering or detection process filtered `ImageTree`.
-///
-/// \param image The image onto which to draw the regions.
-/// \param toMark The `Node`s to be drawn onto the image.
-void ImageTree::markSelectedNodes(cv::Mat &image,
-                                  const std::vector <Node *> &toMark) const{
-    if (image.type() == CV_8UC3)
-        this->markSelectedNodes(image, toMark, cv::Vec3b(0, 0, 200));
-    else
-        this->markSelectedNodes(image, toMark, cv::Scalar(200));
-}
-
-/// \copydetails markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
-///
-/// \param value The RGB value of the flat color with which to draw the
-/// regions.
-void ImageTree::markSelectedNodes(cv::Mat &image,
-                                  const std::vector <Node *> &toMark,
-                                  const cv::Vec3b &value) const{
-    for (int i=0, szi = toMark.size(); i < szi; ++i)
-        if (toMark[i] != NULL){
-            toMark[i]->colorSolid(image, value);
+        else{ // first time on queue, children not processed
+            toProcess.back().second = true;
+            for (int i=0, szi = tmp.first->_children.size(); i < szi; ++i){
+                toProcess.push_back(std::make_pair(tmp.first->_children[i], false));
+            }
         }
+    }while(!toProcess.empty());
 }
-
-/// \copydetails markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
-///
-/// \param value The intensity value of the flat grayvalue with which to draw the
-/// regions.
-void ImageTree::markSelectedNodes(cv::Mat &image,
-                                  const std::vector <Node *> &toMark,
-                                  const cv::Scalar &value) const{
-    for (int i=0, szi = toMark.size(); i < szi; ++i)
-        if (toMark[i] != NULL){
-            toMark[i]->colorSolid(image, value);
-        }
-}
-
 
 void ImageTree::checkConstraints() const{
   std::vector < std::vector <bool> > covered (this->height, std::vector<bool> (this->width, false));
@@ -857,34 +818,3 @@ void ImageTree::checkConstraints() const{
 //    }while(!toProcess.empty());
 //    return NULL;
 //}
-
-
-void ImageTree::reconstructUO(const std::vector< int > &res,
-                              const std::vector<int> &scl,
-                              cv::Mat &residual, cv::Mat &scale,
-                              std::pair<fl::Node *, int> &current) const{
-
-    const fl::Node* cur = current.first;
-    if (cur == this->root()){
-        residual = cv::Mat(this->treeHeight(), this->treeWidth(), CV_16U, cv::Scalar(0));
-        scale = cv::Mat(this->treeHeight(), this->treeWidth(), CV_16U, cv::Scalar(0));
-
-        //double min, max;
-        //cv::minMaxLoc(residual, &min, &max);
-        //std::cout << "Residual: min - " << min << " max - " << max << std::endl;
-    }
-
-    const std::vector <fl::pxCoord > &elems = cur->getOwnElements();
-    for (int i=0, szi = elems.size(); i < szi; ++i){
-
-        scale.at<unsigned short>(elems[i].Y, elems[i].X) = (unsigned short)scl[current.second];
-        residual.at<unsigned short>(elems[i].Y, elems[i].X) = (unsigned short)res[current.second];
-    }
-    //std::cout << res[current.second] << std::endl;
-
-    for (int i=0, szi = cur->_children.size(); i < szi; ++i){
-        ++current.second;
-        current.first = cur->_children[i];
-        this->reconstructUO(res, scl, residual, scale, current);
-    }
-}

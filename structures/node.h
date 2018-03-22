@@ -110,10 +110,10 @@ namespace fl{
             /// \brief Get the vectorial gray level of a `Node`.
             virtual const std::vector<int> &hyperGraylevel() const;
 
-            // utility;
+            /// \brief Return a identifier for the given `Node`s in the `ImageTree`.
+            std::string getIDString();
 
-
-            std::string getIDString(fl::Node *child = NULL);
+            // utility
 
             /// \brief Color the corresponding elements in an image with a flat color.
             void colorSolid(cv::Mat &img, const cv::Scalar &value) const;
@@ -142,12 +142,16 @@ namespace fl{
             /// \brief Retrieve children `Attribute`s of a specific type.
             void getChildrenAttributes(const std::string &name, std::vector <Attribute *> &cat) const;
 
+#if 2
+
             // pattern spectra access:
             /// \brief Retrieve an `PatternSpectra2D` of a specific type.
             AnyPatternSpectra2D *getPatternSpectra2D(const std::string &name) const;
 
             /// \brief Retrieve children `PatternSpectra2D`s of a specific type.
             void getChildrenPatternSpectra2D(const std::string &name, std::vector <AnyPatternSpectra2D *> &cps) const;
+#endif
+
 #endif
             // friends and algorithms:
 
@@ -162,7 +166,6 @@ namespace fl{
             friend std::pair <int, bool> areaDiff(Node *root, const int deltaLvl);
 
             friend class ImageTree;
-
 
     protected:
 
@@ -261,27 +264,25 @@ namespace fl{
             template <typename AT>
             void printElementsWithAttribute(std::ostream &outStream = std::cout, int depth = 0) const;
 
-//            // Still not sure if I need it or not.
-//            template<class AT1, class AT2>
-//            void printPartialWithAttribute(std::set <Node *> &toPrint,int cols, int rows);
-
 #endif
 
-    private:
+        private:
+
+            std::string getIDString(fl::Node *child);
 
 #if 1
-        std::map <std::string, AnyPatternSpectra2D *> patternspectra;
-        std::map <std::string, Attribute *> attributes;
-        std::map <std::string, int> attributeCount;
+            std::map <std::string, AnyPatternSpectra2D *> patternspectra;
+            std::map <std::string, Attribute *> attributes;
+            std::map <std::string, int> attributeCount;
 #endif
 
-        const cv::Mat *referenceImg;
+            const cv::Mat *referenceImg;
 
-        /// The number of elements in this `Node`.
-        int size;
+            /// The number of elements in this `Node`.
+            int size;
 
-        /// The number of `Node`s in the subtree.
-        int ncount;
+            /// The number of `Node`s in the subtree.
+            int ncount;
 
   };
 

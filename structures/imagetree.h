@@ -91,10 +91,10 @@ class ImageTree {
         void displayTree(const std::string &outPath = "/home/pbosilj/Programming/Trees/filtest.png") const;
 
         /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
-        void getLeaves(std::vector <fl::Node *> &leaves);
+        void getLeaves(std::vector <fl::Node *> &leaves) const;
 
         /// \brief Calculate extinction values for all the leaves in the tree.
-        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt);
+        void getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt) const;
 
         /// \brief A unique-identifier corresponding to each of the given `Node`s is output.
         void writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
@@ -120,31 +120,39 @@ class ImageTree {
         /// \brief \copybrief markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
         void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Scalar &value) const;
 
+        /// \brief Perform a filtering on `ImageTree` by evaluating a
+        /// predicate on the values of `Node::level()`.
+        template<class Function>
+        void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
+
+#if 1
 
         /// \brief Given a list of leaf `Node`s and associated extinction values, select
         /// the prominent `Node` from each branch corresponding to an input leaf `Node`.
+        ///
+        /// TODO: write full description
+        /// TODO: implement as external function instead of `ImageTree` method?
         void selectFromLeaves(std::vector <fl::Node *> &selected,
                               const std::vector <std::pair <int, fl::Node *> > &leafExt,
                               std::vector <fl::Node *> *sourceLeaves = NULL);
 
+#endif
 
-
+        /// \brief Given a list of `Node`s (output of segmentation step), it prompts the user
+        /// to assign one of the three possible classes to the selected regions.
+        /// (producing ground truth).
+        ///
+        /// TODO: write full description
+        /// TODO: implement as external function instead of `ImageTree` method?
         void showPerNode(const std::vector <Node *> &toMark, std::vector <int> &classes, const cv::Mat &rgbImg) const;
 
 //        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
 //        Node *lowestPixelOf(pxCoord px) const;
 
-        template<class AT>
-        void analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const;
-
 //      template<class AT1, class AT2>
 //      void printPartialTreeWithSpectrum(std::set <fl::Node *> &toPrint, int cols, int rows);
 
 #if 1
-
-        /// \brief Computes the ultimate opening (B. Marcotegui) using an increasing `Attribute`
-        template<class AT> // where AT is increasing Attribute
-        void ultimateOpening(cv::Mat &residual, cv::Mat &scale) const;
 
         /// \brief Assign a specific `Attribute` to this `ImageTree`.
         template<class AT> // where AT is Attribute
@@ -167,11 +175,14 @@ class ImageTree {
         template <typename AT>
         void printTreeWithAttribute(std::ostream &outStream = std::cout) const;
 
+        /// \brief Return the levels and `Attribute` values for each `Node` along the
+        /// branch (from the given `Node` towards the root).
+        template<class AT>
+        void analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const;
 
         /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
         template <class AT>
         void writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
-
 
         /// \brief Access the current `AttributeSettings` of a specific `Attribute`
         /// assigned to this `ImageTree`.
@@ -190,14 +201,6 @@ class ImageTree {
         /// \brief Revert from using the default settings for a specific `Attribute`.
         template<class AT>
         void revertSettingsChanges() const;
-#endif
-
-        /// \brief Perform a filtering on `ImageTree` by evaluating a
-        /// predicate on the values of `Node::level()`.
-        template<class Function>
-        void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
-
-#if 1
 
         /// \brief Perform a filtering on `ImageTree` by only the most
         /// ancestral `Node` with the same value of `Attribute` along each branch.
@@ -213,6 +216,10 @@ class ImageTree {
         template<class TAT>
         void assignAttributeAsLevel(Node *_root = NULL);
 
+        /// \brief Computes the ultimate opening (B. Marcotegui) using an increasing `Attribute`
+        template<class AT> // where AT is increasing Attribute
+        void ultimateOpening(cv::Mat &residual, cv::Mat &scale) const;
+
 #if 2
 
         /// \brief Filter the `ImageTree` so that reconstruction after the filtering
@@ -226,7 +233,7 @@ class ImageTree {
         void attributeProfile(Function predicate, Node *root = NULL);
 
 
-#endif
+#endif // 2
 
 #if 3
         /// \brief Assign a `PatternSpectra2D` based on two specific `Attribute`s
@@ -239,9 +246,9 @@ class ImageTree {
         template<class AT1, class AT2>
         void deletePatternSpectra2DFromTree() const;
 
-#endif
+#endif // 3
 
-#endif
+#endif // 1
 
         friend void markMserInTree(const ImageTree &tree, int deltaLvl, std::vector <Node *> &mser, std::vector <std::pair <double, int> > &div,
             int maxArea, int minArea, double maxVariation, double minDiversity);
@@ -249,6 +256,15 @@ class ImageTree {
 
     private:
 #if 1
+
+        template<class AT> // where AT is Attribute
+        void addAttributeToNode(Node *cur, AttributeSettings *settings) const;
+
+        template<class AT> // where AT is Attribute
+        void deleteAttributeFromNode(Node *cur) const;
+
+        template<class AT> // where AT is Attribute
+        bool changeAttributeSettingsOfNode(Node *cur, AttributeSettings *nsettings) const;
 
         template<class AT>
         void calculateUO(std::vector <int> &residualMap,
@@ -261,25 +277,18 @@ class ImageTree {
                            const std::vector<int> &scl,
                            cv::Mat &residual, cv::Mat &scale,
                            std::pair<fl::Node *, int> &current) const;
-
-        template<class AT> // where AT is Attribute
-        void addAttributeToNode(Node *cur, AttributeSettings *settings) const;
-
-        template<class AT> // where AT is Attribute
-        void deleteAttributeFromNode(Node *cur) const;
-
-        template<class AT> // where AT is Attribute
-        bool changeAttributeSettingsOfNode(Node *cur, AttributeSettings *nsettings) const;
 #if 2
         template<class TAT, class Function>
         std::pair<bool, bool> attributeProfile(Function predicate, Node *root, std::map<Node *, bool> *ires);
-#endif
+#endif // 2
+#if 3
         template<class AT1, class AT2>
         void addPatternSpectra2DToNode(Node *cur, PatternSpectra2DSettings *settings) const;
 
         template<class AT1, class AT2>
         void deletePatternSpectra2DFromNode(Node *cur) const;
-#endif
+#endif // 3
+#endif // 1
         fl::Node *_root;
         int width, height;
 

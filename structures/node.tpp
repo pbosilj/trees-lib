@@ -134,45 +134,4 @@ void fl::Node::printElementsWithAttribute(std::ostream &outStream, int depth) co
     return;
 }
 
-// not sure if we need this or not...
-//template<class AT1, class AT2>
-//void Node::printPartialWithAttribute(std::set <Node *> &toPrint, int cols, int rows){
-//    if (this->getAttribute(AT1::name)== NULL || this->getAttribute(AT2::name)== NULL){
-//        return;
-//    }
-//
-//    bool printAtr = (this->isRoot() || (toPrint.find(this) != toPrint.end()));
-//
-//    if (printAtr){
-//        const std::vector<std::vector<double> > &ps = this->
-//                    getPatternSpectra2D(AT1::name+AT2::name)->getPatternSpectraMatrix();
-//
-//        std::cout << "<Node " << AT1::name+AT2::name << "=\"";
-//        for (int j=1; j < (int)ps.size()-1; ++j){
-//            for (int k=1; k < (int)ps[j].size()-1; ++k){
-//                std::cout << std::pow(ps[j][k], 0.2) << ",";
-//            }
-//        }
-//        std::cout << "\">" << std::endl;
-//
-//        std::vector <std::pair <int, int> > px;
-//        this->getElements(px);
-//
-//
-//        std::vector<cv::Point> forEllipse;
-//        for (int j=0, szj = px.size(); j < szj; ++j)
-//            forEllipse.push_back(cv::Point(px[j].first, px[j].second));
-//
-//        ellipse current(forEllipse, cols, rows);
-//        std::cerr << current << std::endl;
-//
-//    }
-//    for (int i=0, szi = (int)this->_children.size(); i < szi; ++i)
-//        this->_children[i]->printPartialWithAttribute<AT1,AT2>(toPrint, cols, rows);
-//
-//    if (printAtr){
-//        std::cout << "</Node>" << std::endl;
-//    }
-//}
-
 #endif // TPP_NODE
