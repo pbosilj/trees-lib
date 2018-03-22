@@ -49,6 +49,7 @@
 #include "algorithms/tosgeraud.h"
 #include "algorithms/alphatreedualmax.h"
 #include "algorithms/omegatreealphafilter.h"
+#include "algorithms/objectdetection.h"
 
 #include "algorithms/maxtreeberger.h"
 
@@ -1667,27 +1668,10 @@ void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, s
 
     std::cout << "OBJECT DETECTION" << std::endl;
 
-    std::cout << "Getting extinction values" << std::endl;
-
-    std::vector <std::pair <int, fl::Node *> > leafExt;
-    tree->getLeafExtinctions(leafExt);
-
-    std::sort(leafExt.rbegin(), leafExt.rend());
-
-    std::cout << "Number of leaves before extinction filtering: " << leafExt.size() << std::endl;
-    for (std::vector<std::pair <int, fl::Node *> >::iterator it = leafExt.begin(); it != leafExt.end(); ++it){
-        if (it->first < 10){
-            leafExt.erase(it, leafExt.end());
-            break;
-        }
-    }
-    std::cout << "Number of leaves to process: " << leafExt.size() << std::endl;
-
-    std::cout << "Selecting nodes" << std::endl;
-
-    tree->selectFromLeaves(selection, leafExt, source);
-
+    fl::treeObjectDetection(*tree, selection, source);
 }
+
+
 void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath){
     std::cout << "OUTPUT SEGMENTATION" << std::endl;
 
@@ -1958,46 +1942,10 @@ void testObjectDetection(int argc, char **argv){
 
     std::cout << "constructed tree" << std::endl;
 
-    std::vector <std::pair <int, fl::Node *> > leafExt;
-    tree->getLeafExtinctions(leafExt);
-    //std::cout << "Extinction values got " << std::endl;
-    std::sort(leafExt.rbegin(), leafExt.rend());
-    std::cout << "Extinctions calculated. Size: " << leafExt.size() << std::endl;
-//    for (int i=0, szi = 500; i < szi; ++i)
-//        std::cout << leafExt[i].first << " ";
-//    std::cout << std::endl;
-    //std::cout << "Before I have: " << leafExt.size() << std::endl;
-    for (std::vector<std::pair <int, fl::Node *> >::iterator it = leafExt.begin(); it != leafExt.end(); ++it){
-        if (it->first < 10){
-            leafExt.erase(it, leafExt.end());
-            break;
-        }
-    }
-    std::cout << "Keeping: " << leafExt.size() << std::endl;
-
-//    std::vector <fl::Node *> onlyNodes;
-//    std::transform(leafExt.begin(),
-//               leafExt.end(),
-//               std::back_inserter(onlyNodes),
-//               [](const std::pair<int, fl::Node *>& p) { return p.second; });
-//
-//    tree->markAroundNodes(display, onlyNodes);
-//
-//    //cv::imshow("Detected patches 2", display);
-//    if (argc > 3)
-//        cv::imwrite(argv[3], display);
-//    //cv::waitKey(0);
-//    display = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
-//
-//    return;
-
-    std::vector <fl::Node *> selection;
     std::cout << "Selecting nodes" << std::endl;
-//    tree->setImage(image);
+    std::vector <fl::Node *> selection;
+    fl::treeObjectDetection(*tree, selection);
 
-//    return;
-
-    tree->selectFromLeaves(selection, leafExt);
 
     std::cout << "Marking" << std::endl;
 

@@ -125,19 +125,6 @@ class ImageTree {
         template<class Function>
         void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
 
-#if 1
-
-        /// \brief Given a list of leaf `Node`s and associated extinction values, select
-        /// the prominent `Node` from each branch corresponding to an input leaf `Node`.
-        ///
-        /// TODO: write full description
-        /// TODO: implement as external function instead of `ImageTree` method?
-        void selectFromLeaves(std::vector <fl::Node *> &selected,
-                              const std::vector <std::pair <int, fl::Node *> > &leafExt,
-                              std::vector <fl::Node *> *sourceLeaves = NULL);
-
-#endif
-
         /// \brief Given a list of `Node`s (output of segmentation step), it prompts the user
         /// to assign one of the three possible classes to the selected regions.
         /// (producing ground truth).

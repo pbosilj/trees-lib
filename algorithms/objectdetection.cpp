@@ -40,15 +40,40 @@ namespace fl{
         return cnt;
     }
 
-    void treeObjectDetection(const ImageTree &tree,
-                            std::vector <Node *> &selectedObjects, std::vector <Node *> *associatedLeaves){
 
-        int extinctionThreshold = 10;
-        int delta = 30;
-        int minArea = 150;
-        int maxArea = 4e5;
-        int minGrowth = 10;
-        int K = 15;
+    /// Performs object detection on an `ImageTree` by trying to find the
+    /// regions in tree branches just before the branch exhibits a sudden
+    /// growth in area. Various tolerances can be adjusted.
+    ///
+    /// Bosilj, Cielniak, Duckett, 2018, "Connected attribute morphology for
+    /// unified vegetation segmentation and classification in precision
+    /// agriculture"
+    ///
+    /// \param `ImageTree` representing the image on which to perform object
+    /// detection
+    /// \param selectedObjects Output vector filled with selected `Node`s.
+    /// \param associatedLeaves An optional output, the leaf `Node`s associated
+    /// to the selected `Node`s, in order.
+    ///
+    /// \param minArea Optional parameter. Only regions with size larger than
+    /// `minArea` pixels will be selected.
+    /// \param maxArea Optional parameter. Only regions with size smaller than
+    /// `maxArea` pixels will be selected.
+    /// \param delta Optional parameter. Stability parameter for measuring
+    /// the growth rate. Larger `delta` means the growth rate will be calculated
+    /// for a larger range of gray levels.
+    /// \param extinctionThreshold Optional parameter. Only branches starting in
+    /// local extrema with exctinction values larger then `extinctionThreshold`
+    /// will be considered for object detection.
+    /// \param minGrowth Optional parameter. Only regions with growth in area
+    /// larger than `minGrowth` will be considered.
+    /// \param K Optional parameter. If several regions exhibit strong "sudden
+    /// growth", larger regions with smaller growth will be considered over
+    /// smaller regions if their size is `K` or more times larger than that of
+    /// smaller regions originally selected.
+    void treeObjectDetection(const ImageTree &tree,
+                            std::vector <Node *> &selectedObjects, std::vector <Node *> *associatedLeaves,
+                            int delta, int minArea, int maxArea, int extinctionThreshold, int minGrowth, int K){
 
 #if SIMILAR_SUCCESSIVE
         int minSimilarRegions = 6;
@@ -73,8 +98,10 @@ namespace fl{
         selectedObjects.clear();
         if (associatedLeaves) associatedLeaves->clear();
 
+        std::cout << "Selecting nodes" << std::endl;
+
         tree.addAttributeToTree<AreaAttribute>(new AreaSettings());
-        std::set <Node *> toggleVisit; // mark visited nodes along branches to reduce double-processing
+        std::set <Node *> visited; // mark visited nodes along branches to reduce double-processing
         for (int i=0, szi = (int)leafExt.size(); i < szi; ++i){
             Node *cur, *par;
 
@@ -94,7 +121,7 @@ namespace fl{
             // look through all candidates; with a minimum allowed growth; stop if you find previously processed case.
             int bestIndex = 0;
             for (int _i=1, sz_i = (int)allGrowth.size(); _i < sz_i && allGrowth[_i].first > minGrowth &&
-                                                         toggleVisit.find(allGrowth[bestIndex].second.second) == toggleVisit.end(); ++_i){
+                                                         visited.find(allGrowth[bestIndex].second.second) == visited.end(); ++_i){
                 if (allGrowth[_i].second.first > maxArea)
                     continue;
 
@@ -108,7 +135,7 @@ namespace fl{
 #endif
                     // if there is enough similar regions, can replace:
                     if (cnt >= minSimilarRegions){
-                        toggleVisit.emplace(allGrowth[bestIndex].second.second);
+                        visited.emplace(allGrowth[bestIndex].second.second);
                         bestIndex = _i;
                     }
                 }
@@ -116,11 +143,11 @@ namespace fl{
 
             // if regions exist, the one found has sufficient area and was not output before:
             if (!allGrowth.empty() && allGrowth[bestIndex].second.first > minArea &&
-                toggleVisit.find(allGrowth[bestIndex].second.second) == toggleVisit.end()){
+                visited.find(allGrowth[bestIndex].second.second) == visited.end()){
                 selectedObjects.push_back(allGrowth[bestIndex].second.second); // output the selection
                 if (associatedLeaves != NULL)
                     associatedLeaves->push_back(leafExt[i].second); // output the source leaf if requested
-                toggleVisit.emplace(allGrowth[bestIndex].second.second);
+                visited.emplace(allGrowth[bestIndex].second.second);
             }
         }
 
