@@ -125,14 +125,6 @@ class ImageTree {
         template<class Function>
         void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
 
-        /// \brief Given a list of `Node`s (output of segmentation step), it prompts the user
-        /// to assign one of the three possible classes to the selected regions.
-        /// (producing ground truth).
-        ///
-        /// TODO: write full description
-        /// TODO: implement as external function instead of `ImageTree` method?
-        void showPerNode(const std::vector <Node *> &toMark, std::vector <int> &classes, const cv::Mat &rgbImg) const;
-
 //        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
 //        Node *lowestPixelOf(pxCoord px) const;
 

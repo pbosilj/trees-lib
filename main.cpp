@@ -50,6 +50,7 @@
 #include "algorithms/alphatreedualmax.h"
 #include "algorithms/omegatreealphafilter.h"
 #include "algorithms/objectdetection.h"
+#include "algorithms/regionclassification.h"
 
 #include "algorithms/maxtreeberger.h"
 
@@ -944,7 +945,7 @@ void runPipeline(int argc, char **argv);
 void runObjectAnalysis(int argc, char **argv);
 void runManualClassification(int argc, char **argv);
 void runObjectDetectionAndSegmentation(int argc, char **argv);
-void manualClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb);
+void manualClassification(const fl::ImageTree *tree, std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb);
 void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, const std::string &classPath = "");
 void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath = "");
 void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, std::vector <fl::Node *> *source = NULL);
@@ -958,8 +959,8 @@ bool doesFileExist(const std::string &fileName);
 
 int main(int argc, char** argv ){
 
-    //runPipeline(argc, argv);
-    runObjectDetectionAndSegmentation(argc, argv);
+    runPipeline(argc, argv);
+    //runObjectDetectionAndSegmentation(argc, argv);
 
     //testUltimateOpening(argc, argv);
     //return 0;
@@ -1675,6 +1676,8 @@ void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, s
 void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath){
     std::cout << "OUTPUT SEGMENTATION" << std::endl;
 
+    std::cout << "outputing " << selection.size() << " nodes" << std::endl;
+
     cv::Mat display(tree->treeHeight(), tree->treeWidth(),
                     CV_8UC3, cv::Vec3b(0,0,0));
 
@@ -1685,7 +1688,6 @@ void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *
     std::cout << "channels: " << display.channels() << std::endl;
 
     //std::cout << "channels: " << tree->image().channels() << std::endl;
-    std::cout << "channels: " << display.channels() << std::endl;
 
     //tree->image().copyTo(display);
     tree->markSelectedNodes(display, selection, cv::Vec3b(255, 255, 255));
@@ -1721,14 +1723,15 @@ void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node
     }
 }
 
-void manualClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb){
+void manualClassification(const fl::ImageTree *tree, std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb){
     std::cout << "MANUAL CLASSIFICATION" << std::endl;
 
-    std::vector <int> classes;
-    tree->showPerNode(selection, classes, rgb);
-    for (int i=0, szi = classes.size(); i < szi; ++i)
-        if (classes[i] >= 0)
-            npc[classes[i]].push_back(selection[i]);
+    std::vector <int> classSizes;
+    fl::manualRegionClassification(selection, tree->image(), rgb, classSizes);
+
+    int sizeSoFar = 0;
+    for (int i=0, szi = classSizes.size(); i < szi; ++i)
+        npc[i].insert(npc[i].end(), selection.begin()+sizeSoFar, selection.begin()+sizeSoFar+classSizes[i]);
 }
 
 void runObjectDetectionAndSegmentation(int argc, char **argv){
@@ -1838,7 +1841,9 @@ void runPipeline(int argc, char **argv){
     }
 
     if (argc < 5){
+        tree->setImage(image);
         outputSegmentation(tree, selection);
+        tree->unsetImage();
         return;
     }
 
@@ -1849,8 +1854,9 @@ void runPipeline(int argc, char **argv){
 //            ss << "segment_" << std::setfill('0') << std::setw(6) << i << ".png";
 //            outputSegmentation(tree, std::vector<Node*>(1,selection[i]), ss.str());
 //        }
-
+        tree->setImage(image);
         outputSegmentation(tree, selection, argv[4]);
+        tree->unsetImage();
     }
     if (argc < 6)
         return;
@@ -1950,13 +1956,13 @@ void testObjectDetection(int argc, char **argv){
     std::cout << "Marking" << std::endl;
 
     //tree->markSelectedNodes(display, selection);
-    std::vector <int> classes;
+    std::vector <int> classSizes;
     std::vector <Node*> npc[3];
-    tree->setImage(image);
-    tree->showPerNode(selection, classes, image);
-    tree->unsetImage();
-    for (int i=0, szi = classes.size(); i < szi; ++i)
-        npc[classes[i]].push_back(selection[i]);
+    fl::manualRegionClassification(selection, image, image, classSizes);
+
+    int sizeSoFar = 0;
+    for (int i=0, szi = classSizes.size(); i < szi; ++i)
+        npc[i].insert(npc[i].end(), selection.begin()+sizeSoFar, selection.begin()+sizeSoFar+classSizes[i]);
 
     //tree->markSelectedNodes(display, selection);
     std::ofstream outF;
