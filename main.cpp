@@ -1996,11 +1996,8 @@ void testObjectDetection(int argc, char **argv){
 //    tree->setImage(image);
 
 //    return;
-<<<<<<< HEAD
-    //tree->selectFromLeaves(selection, leafExt, leafExt.size());
-=======
+
     tree->selectFromLeaves(selection, leafExt);
->>>>>>> 1806087dcfb72a5628a99f74b3d8e2869f008403
 
     std::cout << "Marking" << std::endl;
 
