@@ -1828,7 +1828,7 @@ void runPipeline(int argc, char **argv){
         loadNodes(tree, selection, argv[3]);
     else{
 
-        objectDetection(tree, selection, &source);
+        objectDetection(tree, selection, &source); // new implementation
 
         curDet = true;
         if (argc == 3)
@@ -1873,7 +1873,7 @@ void runPipeline(int argc, char **argv){
 
         tree->setImage(image);
         curClass = true;
-        manualClassification(tree, selection, npc, rgb);
+        manualClassification(tree, selection, npc, rgb); // new implementation
         tree->unsetImage();
         saveClassifiedNodes(tree, npc, argv[5]);
     }

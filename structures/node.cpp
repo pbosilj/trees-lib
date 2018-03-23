@@ -555,7 +555,7 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
 void Node::deleteChild(int childIndex){
     Node *toDelete = this->_children[childIndex];
 
-    if (toDelete->_children.empty()){
+    if (toDelete->_children.empty()){ // the node I am deleting has no children
         if (childIndex < (int)(this->_children.size()-1)){ // not deleting last child
             this->_children[childIndex] = this->_children.back();
         }

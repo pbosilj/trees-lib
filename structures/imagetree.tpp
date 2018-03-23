@@ -43,6 +43,12 @@ void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
                 deletion = true;
             }
         }
+        // for partitioning trees: if one leaf sibling is deleted, all have to be
+        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
+            for (int i=0; i < (int)chi.size(); ++i){
+                root->deleteChild(i);
+            }
+        }
     }while(deletion == true);
 
     for (int i=0, szi = chi.size(); i < szi; ++i)

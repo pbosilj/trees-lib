@@ -333,7 +333,6 @@ void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &l
 void ImageTree::writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostream &out) const{
     for (int i=0, szi = nodes.size(); i < szi; ++i){
         out << nodes[i]->getIDString() << " " << nodes[i]->level() << std::endl;
-
     }
 }
 
