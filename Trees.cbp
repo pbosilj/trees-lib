@@ -61,6 +61,8 @@
 		<Unit filename="algorithms/omegatreealphafilter.tpp" />
 		<Unit filename="algorithms/predicate.h" />
 		<Unit filename="algorithms/predicate.tpp" />
+		<Unit filename="algorithms/regionclassification.cpp" />
+		<Unit filename="algorithms/regionclassification.h" />
 		<Unit filename="algorithms/tosgeraud.cpp" />
 		<Unit filename="algorithms/tosgeraud.h" />
 		<Unit filename="main.cpp" />

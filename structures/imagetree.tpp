@@ -33,27 +33,55 @@ void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
         return;
     }
 
-    bool deletion;
+    bool deletion, singleDeletionOK;
     std::vector<Node *> &chi = root->_children;
     do{
         deletion = false;
+        singleDeletionOK = true;
         for (int i=0; i < (int)chi.size(); ++i){
             if (predicate(chi[i]->level(), root->level()) == false){
-                root->deleteChild(i);
+                singleDeletionOK &= root->deleteChild(i);
                 deletion = true;
             }
         }
-        // for partitioning trees: if one leaf sibling is deleted, all have to be
-        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
-            for (int i=0; i < (int)chi.size(); ++i){
-                root->deleteChild(i);
-            }
-        }
+        if (deletion && !singleDeletionOK)
+            root->collapseSubtree();
+
     }while(deletion == true);
 
     for (int i=0, szi = chi.size(); i < szi; ++i)
         filterTreeByLevelPredicate(predicate, chi[i]);
 }
+// old and wrong
+//template<class Function>
+//void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
+//    if (root == NULL){
+//        filterTreeByLevelPredicate(predicate, this->_root);
+//        return;
+//    }
+//
+//    bool deletion;
+//    std::vector<Node *> &chi = root->_children;
+//    do{
+//        deletion = false;
+//        for (int i=0; i < (int)chi.size(); ++i){
+//            if (predicate(chi[i]->level(), root->level()) == false){
+//                root->deleteChild(i);
+//                deletion = true;
+//            }
+//        }
+//        // for partitioning trees: if one leaf sibling is deleted, all have to be
+//        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
+//            for (int i=0; i < (int)chi.size(); ++i){
+//                root->deleteChild(i);
+//            }
+//        }
+//    }while(deletion == true);
+//
+//    for (int i=0, szi = chi.size(); i < szi; ++i)
+//        filterTreeByLevelPredicate(predicate, chi[i]);
+//}
+
 
 
 #if 1
@@ -332,27 +360,53 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, Node *root){
         return;
     }
 
-    bool deletion;
+    bool deletion, singleDeletionOK;
     std::vector<Node *> &chi = root->_children;
     do{
         deletion = false;
+        singleDeletionOK = true;
         for (int i=0; i < (int)chi.size(); ++i){
             if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-                root->deleteChild(i);
+                singleDeletionOK &= root->deleteChild(i);
                 deletion = true;
             }
         }
-        // for partitioning trees: if one leaf sibling is deleted, all have to be
-        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
-            for (int i=0; i < (int)chi.size(); ++i){
-                root->deleteChild(i);
-            }
-        }
+        if (deletion && !singleDeletionOK)
+            root->collapseSubtree();
+
     }while(deletion == true);
 
     for (int i=0, szi = chi.size(); i < szi; ++i)
         filterTreeByAttributePredicate<TAT>(predicate, chi[i]);
 }
+//template<class TAT, class Function>
+//void ImageTree::filterTreeByAttributePredicate(Function predicate, Node *root){
+//    if (root == NULL){
+//        filterTreeByAttributePredicate<TAT>(predicate, this->_root);
+//        return;
+//    }
+//
+//    bool deletion;
+//    std::vector<Node *> &chi = root->_children;
+//    do{
+//        deletion = false;
+//        for (int i=0; i < (int)chi.size(); ++i){
+//            if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
+//                root->deleteChild(i);
+//                deletion = true;
+//            }
+//        }
+//        // for partitioning trees: if one leaf sibling is deleted, all have to be
+//        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
+//            for (int i=0; i < (int)chi.size(); ++i){
+//                root->deleteChild(i);
+//            }
+//        }
+//    }while(deletion == true);
+//
+//    for (int i=0, szi = chi.size(); i < szi; ++i)
+//        filterTreeByAttributePredicate<TAT>(predicate, chi[i]);
+//}
 
 /// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used as
 /// new levels in this `ImageTree` (e.g. `AreaAttribute`).

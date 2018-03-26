@@ -122,6 +122,7 @@ class ImageTree {
 
         /// \brief Perform a filtering on `ImageTree` by evaluating a
         /// predicate on the values of `Node::level()`.
+        /// TODO check for correctnes
         template<class Function>
         void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
 
@@ -188,6 +189,7 @@ class ImageTree {
 
         /// \brief Perform a filtering on `ImageTree` by evaluating a predicate
         /// on the values of an `Attribute` for each `Node.
+        /// TODO check for correctnes
         template<class TAT, class Function>
         void filterTreeByAttributePredicate(Function predicate, Node *_root = NULL);
 

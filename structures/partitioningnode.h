@@ -46,6 +46,9 @@ class PartitioningNode : public fl::Node{
 
         /// \brief Class destructor
         virtual ~PartitioningNode() { }
+
+        /// \brief \copybrief Node::deleteChild().
+        bool deleteChild(int childIndex);
     private:
 };
 

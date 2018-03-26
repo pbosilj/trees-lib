@@ -543,16 +543,20 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
 #endif // #if 2 - pattern spectra
 #endif // #if 1 - attributes
 
-/// Deletes a child from this node. Does not check for constraints.
+/// Deletes a child from this node. Does not check for `Node` type constraints.
 /// This function will assign all the elements (pixels) directly belonging
 /// to the child `Node` being deleted to the parent `Node`. Also, all children
 /// of the child `Node` become the children of the parent `Node`.
 ///
 /// \param childIndex The index of the child to be deleted.
 ///
+/// \return succcess of the `delete` operation.
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`.
-void Node::deleteChild(int childIndex){
+bool Node::deleteChild(int childIndex){
+    if (this->_children.size() <= childIndex)
+        return false;
+
     Node *toDelete = this->_children[childIndex];
 
     if (toDelete->_children.empty()){ // the node I am deleting has no children
@@ -562,8 +566,8 @@ void Node::deleteChild(int childIndex){
         this->_children.pop_back();
     }
     else{ // who I'm deleting has 1+ children
-        this->_children[childIndex] = toDelete->_children[0];
-        this->_children.insert(this->_children.end(), ++toDelete->_children.begin(), toDelete->_children.end());
+        this->_children[childIndex] = toDelete->_children[0]; // insert first child of deleted node
+        this->_children.insert(this->_children.end(), ++toDelete->_children.begin(), toDelete->_children.end()); // all other children of deleted node
 
         this->_children[childIndex]->_parent = this;
         for (int i = this->_children.size() - toDelete->_children.size() + 1, szi = this->_children.size(); i < szi; ++i)
@@ -581,6 +585,18 @@ void Node::deleteChild(int childIndex){
     }while (!crt->isRoot());
 
     delete toDelete;
+    return true;
+}
+
+/// \brief Delete all descendant `Node`s and collapse into current `Node`.
+bool Node::collapseSubtree(void){
+    if (this->_children.empty())
+        return true;
+
+    while (!this->_children.empty()){
+        this->_children.back()->deleteChild(this->_children.size()-1);
+    }
+    return (this->_children.empty() && !this->_S.empty()); // should always return true
 }
 
 /// \param p `Node *` pointer to a new parent `Node`.

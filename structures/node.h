@@ -174,7 +174,7 @@ namespace fl{
 
             /// \brief The list of own elements.
 
-            /// The list of the `Node` not belonging to any of its children.
+            /// The list of the pixels not belonging to any of its children.
             std::vector<std::pair<int, int> > _S;
 
             /// The list of children of the `Node`.
@@ -215,7 +215,11 @@ namespace fl{
             bool ncountKnown;
 
             /// \brief Delete a child `Node`.
-            void deleteChild(int childIndex);
+            bool deleteChild(int childIndex);
+
+
+            /// \brief Delete all descendant `Node`s and collapse into current `Node`.
+            bool collapseSubtree(void);
 
             /// \brief Check if the constraints according to `Node` type are valid.
             ///

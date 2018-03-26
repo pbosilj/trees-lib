@@ -37,6 +37,23 @@ PartitioningNode::PartitioningNode(const std::vector< PartitioningNode* >& child
     this->checkConstraints();
 }
 
+/// Deletes a child from this node.
+/// This function will assign all the elements (pixels) directly belonging
+/// to the child `Node` being deleted to the parent `Node`. Also, all children
+/// of the child `Node` become the children of the parent `Node`.
+///
+/// \param childIndex The index of the child to be deleted.
+///
+/// \return succcess of the `delete` operation.
+/// \remark This function invalidates `Node::ncountKnown` and triggers a
+///  recalculation at next call to `nodeCount()`
+bool PartitioningNode::deleteChild(int childIndex){
+    if (this->_children.size() > childIndex &&
+     ! ((PartitioningNode*)this->_children[childIndex])->_children.empty())
+        return Node::deleteChild(childIndex);
+    return Node::deleteChild(childIndex);
+}
+
 /// Checks some of the constraints of the `PartitioningNode`, testing it
 /// for validity.
 ///

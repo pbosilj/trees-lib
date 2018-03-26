@@ -45,6 +45,9 @@ public:
     /// \brief Assign a \p level to the `Node`.
     virtual void assignLevel(const double &level);
 
+    /// \brief \copybrief Node::deleteChild().
+    bool deleteChild(int childIndex);
+
 protected:
     /// \brief Check if the constraints are valid for a `InclusionNode`.
     virtual void checkConstraints(void) const;
