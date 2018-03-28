@@ -193,6 +193,18 @@ class ImageTree {
         template<class TAT, class Function>
         void filterTreeByAttributePredicate(Function predicate, Node *_root = NULL);
 
+
+        template<class TAT, class Function>
+        void filterTreeByAttributePredicate1(Function predicate, int contrastDiff, Node *_root = NULL);
+
+        template<class TAT, class Function>
+        void filterTreeByAttributePredicate2(Function predicate, Node *_root = NULL);
+
+        /// final implementation to test
+        template<class TAT, class Function>
+        void filterTreeByAttributePredicate3(Function predicate, int rule = 0, Node *_root = NULL);
+
+
         /// \brief Assign the values of an `Attribute` as the level to each `Node`.
         template<class TAT>
         void assignAttributeAsLevel(Node *_root = NULL);

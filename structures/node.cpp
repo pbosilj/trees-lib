@@ -8,6 +8,7 @@ using namespace fl;
 Node::Node(const std::vector< std::pair< int, int > >& S)
         : _S(S), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
+    this->setFilteringFunctions();
 }
 
 /// Constructor initializing internal `Node` elements (pixels),
@@ -23,6 +24,7 @@ Node::Node(const std::vector< std::pair< int, int > >& S,
     for (int i=0, szi = this->_children.size(); i < szi; ++i){
         this->_children[i]->setParent(this);
     }
+    this->setFilteringFunctions();
 }
 
 Node::Node(const Node& other)
@@ -30,6 +32,7 @@ Node::Node(const Node& other)
         sizeKnown(other.sizeKnown), ncountKnown(other.ncountKnown),
         referenceImg(other.referenceImg), size(other.size), ncount(other.ncount) {
     this->attributes.insert(other.attributes.begin(), other.attributes.end());
+    this->setFilteringFunctions();
 }
 
 /// Allows to access an ancestral `Node` removed for \p depth
@@ -543,14 +546,15 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
 #endif // #if 2 - pattern spectra
 #endif // #if 1 - attributes
 
-/// Deletes a child from this node. Does not check for `Node` type constraints.
-/// This function will assign all the elements (pixels) directly belonging
-/// to the child `Node` being deleted to the parent `Node`. Also, all children
-/// of the child `Node` become the children of the parent `Node`.
+/// Deletes a child from this `Node`. Does not check for `Node` type
+/// constraints. This function will assign all the elements (pixels)
+/// directly belonging to the child `Node` being deleted to the parent
+/// `Node`. Also, all children of the child `Node` become the children
+/// of the parent `Node`.
 ///
 /// \param childIndex The index of the child to be deleted.
 ///
-/// \return succcess of the `delete` operation.
+/// \return succcess of the `deleteChild` operation.
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`.
 bool Node::deleteChild(int childIndex){
@@ -588,15 +592,46 @@ bool Node::deleteChild(int childIndex){
     return true;
 }
 
-/// \brief Delete all descendant `Node`s and collapse into current `Node`.
+/// Collapses the subtree under this `Node`. `Node` type constraints will
+/// always be satisfied after such an operation. This function will
+/// assign all the elements (pixels) of any `Node`s in the subtree to
+/// the parent `Node`
+///
+/// \return succcess of the `collapseSubtree` operation.
+/// \remark This function invalidates `Node::ncountKnown` and triggers a
+///  recalculation at next call to `nodeCount()`.
 bool Node::collapseSubtree(void){
     if (this->_children.empty())
         return true;
 
     while (!this->_children.empty()){
-        this->_children.back()->deleteChild(this->_children.size()-1);
+
+        this->_children.back()->Node::deleteChild(this->_children.size()-1);
     }
     return (this->_children.empty() && !this->_S.empty()); // should always return true
+}
+
+/// Deletes a child from this `Node` according to a filtering rule. Does
+/// check the `Node` type constraints (eventually calls the overriden
+/// versions of `Node::deleteChild()`. Also checks filtering-type constraints.
+/// The sub-tree of the deleted `Node` is adjusted accordingly (see
+/// \p rule for explanation). This function will assign
+/// all the elements (pixels) directly belonging to the child `Node`
+/// being deleted to the parent `Node`. Also, all children of the
+/// child `Node` become the children of the parent `Node`.
+///
+/// \param childIndex The index of the child to be deleted.
+/// \param rule Filtering rule to be used. Options are:
+///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
+///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtree.
+///     - 2 = MAX FILTERING. Sub-tree removed (collapsed).
+///
+/// \return succcess of the `deleteChildWithRule` operation.
+/// \remark This function invalidates `Node::ncountKnown` and triggers a
+///  recalculation at next call to `nodeCount()`.
+bool Node::deleteChildWithRule(int childIndex, int rule){
+    return (this->filteringOptions.size() > rule) &&
+           (this->*(filteringOptions[rule]))(childIndex);
 }
 
 /// \param p `Node *` pointer to a new parent `Node`.
@@ -800,6 +835,32 @@ std::string Node::getIDString(fl::Node *child){
         }
     }
     return ss.str();
+}
+
+bool Node::directRuleDelete(int childIndex){
+    return this->deleteChild(childIndex);
+}
+
+bool Node::subtractiveRuleDelete(int childIndex){
+    if (childIndex >= this->_children.size())
+        return false;
+    Node *childToDelete = this->_children[childIndex];
+    for (int i=0, szi = childToDelete->_children.size(); i < szi; ++i)
+        childToDelete->_children[i]->_propagatingContrast += this->grayLevel() - childToDelete->grayLevel();
+    return this->deleteChild(childIndex);
+}
+
+bool Node::maxRuleDelete(int childIndex){
+    return (childIndex < this->_children.size() &&
+            this->_children[childIndex]->collapseSubtree() &&
+            this->deleteChild(childIndex));
+}
+
+
+void Node::setFilteringFunctions(void){
+    this->filteringOptions.emplace_back(&Node::directRuleDelete);
+    this->filteringOptions.emplace_back(&Node::subtractiveRuleDelete);
+    this->filteringOptions.emplace_back(&Node::maxRuleDelete);
 }
 
 /*

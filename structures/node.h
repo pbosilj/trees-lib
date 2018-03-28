@@ -200,6 +200,9 @@ namespace fl{
             /// In case of multichannel images. One gray level per channel.
             std::vector < int > _hgrayLevels;
 
+            /// \brief Used in filtering to propagate contrast changes.
+            int _propagatingContrast;
+
             /// \brief Indicator value of size.
 
             /// Can be:
@@ -215,11 +218,13 @@ namespace fl{
             bool ncountKnown;
 
             /// \brief Delete a child `Node`.
-            bool deleteChild(int childIndex);
-
+            virtual bool deleteChild(int childIndex);
 
             /// \brief Delete all descendant `Node`s and collapse into current `Node`.
             bool collapseSubtree(void);
+
+            /// \brief Delete a child `Node` and adjust the subtree according to the filtering rule.
+            bool deleteChildWithRule(int childIndex, int rule = 0);
 
             /// \brief Check if the constraints according to `Node` type are valid.
             ///
@@ -271,6 +276,20 @@ namespace fl{
 #endif
 
         private:
+            typedef  bool (Node::*filteringFunction)(int);
+            std::vector<filteringFunction> filteringOptions;
+
+            /// \brief Delete a child `Node` and adjust the subtree according to the direct filtering rule.
+            bool directRuleDelete(int childIndex);
+
+            /// \brief Delete a child `Node` and adjust the subtree according to the subtractive filtering rule.
+            bool subtractiveRuleDelete(int childIndex);
+
+            /// \brief Delete a child `Node` and adjust the subtree according to the max filtering rule.
+            bool maxRuleDelete(int childIndex);
+
+            /// \brief Set the available filtering functions.
+            void setFilteringFunctions(void);
 
             std::string getIDString(fl::Node *child);
 
