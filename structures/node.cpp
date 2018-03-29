@@ -6,7 +6,7 @@ using namespace fl;
 ///
 /// \param S An array of pixel coordinates
 Node::Node(const std::vector< std::pair< int, int > >& S)
-        : _S(S), sizeKnown(false), ncountKnown(false) {
+        : _propagatingContrast(0), _S(S), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
     this->setFilteringFunctions();
 }
@@ -19,7 +19,7 @@ Node::Node(const std::vector< std::pair< int, int > >& S)
 ///   \remark All children in \p children have to be of the same type
 Node::Node(const std::vector< std::pair< int, int > >& S,
 	       const std::vector< Node* >& children)
-		  : _S(S), _children(children), sizeKnown(false), ncountKnown(false) {
+		  : _propagatingContrast(0), _S(S), _children(children), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
     for (int i=0, szi = this->_children.size(); i < szi; ++i){
         this->_children[i]->setParent(this);
@@ -28,7 +28,7 @@ Node::Node(const std::vector< std::pair< int, int > >& S,
 }
 
 Node::Node(const Node& other)
-        : _S(other._S), _children(other._children), _parent(other._parent), _level(other._level),
+        : _propagatingContrast(other._propagatingContrast), _S(other._S), _children(other._children), _parent(other._parent), _level(other._level),
         sizeKnown(other.sizeKnown), ncountKnown(other.ncountKnown),
         referenceImg(other.referenceImg), size(other.size), ncount(other.ncount) {
     this->attributes.insert(other.attributes.begin(), other.attributes.end());
@@ -605,8 +605,7 @@ bool Node::collapseSubtree(void){
         return true;
 
     while (!this->_children.empty()){
-
-        this->_children.back()->Node::deleteChild(this->_children.size()-1);
+        this->Node::deleteChild(this->_children.size()-1);
     }
     return (this->_children.empty() && !this->_S.empty()); // should always return true
 }
@@ -811,9 +810,9 @@ void Node::printElements(std::ostream &outStream, int depth) const{
         outStream << "empty ";
     else{
         outStream << this->_S.size() << " ";
-        for (int i=0; i < (int)this->_S.size(); ++i){
-            outStream << "(" << this->_S[i].first << " " << this->_S[i].second << ") ";
-        }
+        //for (int i=0; i < (int)this->_S.size(); ++i){
+        //    outStream << "(" << this->_S[i].first << " " << this->_S[i].second << ") ";
+        //}
     }
     outStream << " -> " << this->level() << " " << this->grayLevel() << std::endl;
     for (int i=0, szi = (int)this->_children.size(); i < szi; ++i)

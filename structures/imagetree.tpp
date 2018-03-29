@@ -309,8 +309,15 @@ void ImageTree::revertSettingsChanges() const{
     (this->_root->getAttribute(AT::name))->revertSettingsChanges();
 }
 
-/// Uses the DIRECT filtering rule.
-/// \remark TODO: Implement other filtering rules.
+/// Filters the tree by keeping at most one consequtive `Node` with
+/// the same `Attribute` value. Uses the selected filtering rule.
+/// Depending on the filtering rule, the gray level of certain `Node`s
+/// could change, however the level of all the `Node`s remains unchanged.
+///
+/// \param rule Filtering rule to be used. Options are:
+///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
+///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
+///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
 ///
 /// \param root (optional) Should be omitted if performing the filtering
 /// on the whole `ImageTree`. `Node *` to the subtree which should be
@@ -329,12 +336,14 @@ void ImageTree::revertSettingsChanges() const{
 ///
 /// \note Is used when constructing an (omega)-tree from an alpha-tree
 template<class TAT>
-void ImageTree::filterTreeByAttribute(Node *root){
-    filterTreeByAttributePredicate<TAT>(DifferentThanParent<typename TAT::attribute_type>(), root);
+void ImageTree::filterTreeByAttribute(int rule, Node *root){
+    filterTreeByAttributePredicate<TAT>(DifferentThanParent<typename TAT::attribute_type>(), rule, root);
 }
 
-/// Uses the DIRECT filtering rule.
-/// \remark TODO: Implement other filtering rules.
+/// Filters the tree by evaluating a `Predicate` on the values of
+/// the chosen `TypedAttribute`, applying the selected filtering rule.
+/// Depending on the filtering rule, the gray level of certain `Node`s
+/// could change, however the level of all the `Node`s remains unchanged.
 ///
 /// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used for
 /// filtering (e.g. `AreaAttribute`).
@@ -348,81 +357,20 @@ void ImageTree::filterTreeByAttribute(Node *root){
 /// \note cf. the class `Predicate` to see the correct form of this
 /// functor.
 ///
+/// \param rule Filtering rule to be used. Options are:
+///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
+///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
+///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
+///
 /// \param root (discouraged) Should be omitted if performing the filtering
 /// on the whole `ImageTree` (intended usage). `Node *` to the subtree which
 /// should be
 /// filtered. If set to anything other than the root of
 /// the tree, it will only filter the subtree.
-/// \note Direct rule only. Testing other filtering rules.
 template<class TAT, class Function>
-void ImageTree::filterTreeByAttributePredicate(Function predicate, Node *root){
+void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Node *root){
     if (root == NULL){
-        filterTreeByAttributePredicate<TAT>(predicate, this->_root);
-        return;
-    }
-
-    bool singleDeletionOK;
-    std::vector<Node *> &chi = root->_children;
-
-    singleDeletionOK = true;
-    for (int i=0, szi = chi.size(); i < szi; ++i){
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-            if (singleDeletionOK &= root->deleteChild(i)){
-                --i;
-                szi = chi.size();
-            }
-        }
-    }
-
-    if (!singleDeletionOK)
-        root->collapseSubtree();
-    else
-        for (int i=0, szi = chi.size(); i < szi; ++i)
-            filterTreeByAttributePredicate<TAT>(predicate, chi[i]);
-}
-
-/// Only subtractive rule using the `Node` member called `_propagationContrast`
-template<class TAT, class Function>
-void ImageTree::filterTreeByAttributePredicate2(Function predicate, Node *root){
-    if (root == NULL){
-        filterTreeByAttributePredicate2<TAT>(predicate, this->_root);
-        return;
-    }
-    bool singleDeletionOK;
-    std::vector<Node *> &chi = root->_children;
-
-    singleDeletionOK = true;
-    for (int i=0, szi = chi.size(); i < szi; ++i){
-
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-            for (int j=0, szj = chi[i]->_children.size(); j < szj; ++j)
-                chi[i]->_children[j]->_propagatingContrast += root->grayLevel() - chi[i]->grayLevel();
-            if (singleDeletionOK &= root->deleteChild(i)){
-                --i;
-                szi = chi.size();
-            }
-        }
-    }
-
-    if (!singleDeletionOK)
-        root->collapseSubtree();
-    else{
-        for (int i=0, szi = chi.size(); i < szi; ++i){
-            chi[i]->_propagatingContrast += root->_propagatingContrast;
-            filterTreeByAttributePredicate2<TAT>(predicate, chi[i]);
-
-        }
-    }
-
-    root->_grayLevel += root->_propagatingContrast;
-    root->_propagatingContrast = 0;
-}
-
-/// This is the final form that should be tested
-template<class TAT, class Function>
-void ImageTree::filterTreeByAttributePredicate3(Function predicate, int rule, Node *root){
-    if (root == NULL){
-        filterTreeByAttributePredicate3<TAT>(predicate, rule, this->_root);
+        filterTreeByAttributePredicate<TAT>(predicate, rule, this->_root);
         return;
     }
     bool singleDeletionOK;
@@ -443,77 +391,13 @@ void ImageTree::filterTreeByAttributePredicate3(Function predicate, int rule, No
     else{
         for (int i=0, szi = chi.size(); i < szi; ++i){
             chi[i]->_propagatingContrast += root->_propagatingContrast;
-            filterTreeByAttributePredicate3<TAT>(predicate, rule, chi[i]);
-
+            filterTreeByAttributePredicate<TAT>(predicate, rule, chi[i]);
         }
     }
 
     root->_grayLevel += root->_propagatingContrast;
     root->_propagatingContrast = 0;
 }
-
-/// Subtractive only - version with propagation value as argument (first; clean version)
-template<class TAT, class Function>
-void ImageTree::filterTreeByAttributePredicate1(Function predicate, int contrastDiff, Node *root){
-    if (root == NULL){
-        filterTreeByAttributePredicate1<TAT>(predicate, contrastDiff, this->_root);
-        return;
-    }
-    //root->_grayLevel += contrastDiff;
-    bool deletion, singleDeletionOK;
-    std::vector<Node *> &chi = root->_children;
-    std::map<Node*, int> contrast;
-
-    singleDeletionOK = true;
-    for (int i=0, szi = chi.size(); i < szi; ++i){
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-            for (int j=0, szj = chi[i]->_children.size(); j < szj; ++j)
-                contrast[chi[i]->_children[j]] = root->grayLevel() - chi[i]->grayLevel() + contrastDiff;
-            if (singleDeletionOK &= root->deleteChild(i)){
-                --i;
-                szi = chi.size();
-            }
-        }
-        else if (contrast.find(chi[i]) == contrast.end())
-            contrast[chi[i]] = contrastDiff;
-    }
-    if (!singleDeletionOK)
-        root->collapseSubtree();
-    else
-        for (int i=0, szi = chi.size(); i < szi; ++i)
-            filterTreeByAttributePredicate1<TAT>(predicate, contrast[chi[i]], chi[i]);
-
-    root->_grayLevel += contrastDiff;
-}
-
-//template<class TAT, class Function>
-//void ImageTree::filterTreeByAttributePredicate(Function predicate, Node *root){
-//    if (root == NULL){
-//        filterTreeByAttributePredicate<TAT>(predicate, this->_root);
-//        return;
-//    }
-//
-//    bool deletion;
-//    std::vector<Node *> &chi = root->_children;
-//    do{
-//        deletion = false;
-//        for (int i=0; i < (int)chi.size(); ++i){
-//            if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-//                root->deleteChild(i);
-//                deletion = true;
-//            }
-//        }
-//        // for partitioning trees: if one leaf sibling is deleted, all have to be
-//        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
-//            for (int i=0; i < (int)chi.size(); ++i){
-//                root->deleteChild(i);
-//            }
-//        }
-//    }while(deletion == true);
-//
-//    for (int i=0, szi = chi.size(); i < szi; ++i)
-//        filterTreeByAttributePredicate<TAT>(predicate, chi[i]);
-//}
 
 /// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used as
 /// new levels in this `ImageTree` (e.g. `AreaAttribute`).

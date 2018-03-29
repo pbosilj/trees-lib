@@ -182,28 +182,17 @@ class ImageTree {
         template<class AT>
         void revertSettingsChanges() const;
 
-        /// \brief Perform a filtering on `ImageTree` by only the most
+        /// \brief Perform a filtering on `ImageTree` by keeping only the most
         /// ancestral `Node` with the same value of `Attribute` along each branch.
+        /// Allows a selection of filtering rule.
         template<class TAT>
-        void filterTreeByAttribute(Node *_root = NULL);
+        void filterTreeByAttribute(int rule = 0, Node *_root = NULL);
 
         /// \brief Perform a filtering on `ImageTree` by evaluating a predicate
-        /// on the values of an `Attribute` for each `Node.
-        /// TODO check for correctnes
+        /// on the values of an `Attribute` for each `Node`, using a selected
+        /// filtering rule.
         template<class TAT, class Function>
-        void filterTreeByAttributePredicate(Function predicate, Node *_root = NULL);
-
-
-        template<class TAT, class Function>
-        void filterTreeByAttributePredicate1(Function predicate, int contrastDiff, Node *_root = NULL);
-
-        template<class TAT, class Function>
-        void filterTreeByAttributePredicate2(Function predicate, Node *_root = NULL);
-
-        /// final implementation to test
-        template<class TAT, class Function>
-        void filterTreeByAttributePredicate3(Function predicate, int rule = 0, Node *_root = NULL);
-
+        void filterTreeByAttributePredicate(Function predicate, int rule = 0, Node *_root = NULL);
 
         /// \brief Assign the values of an `Attribute` as the level to each `Node`.
         template<class TAT>

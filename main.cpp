@@ -626,12 +626,14 @@ void simplifyImageWithTreeByLevel(std::string input, std::string output, double 
 
 void simplifyImageWithTreeByArea(int argc, char **argv){
 
-    cv::Mat inputImage;
+
     cv::Mat outputImage;
 
+    cv::Mat inputImage;
     inputImage = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
-    std::cout << inputImage.cols << " " << inputImage.rows << std::endl;
-    outputImage = cv::Mat::zeros(inputImage.cols, inputImage.rows, CV_8U);
+    //cv::Mat &inputImage = testImage3();
+    //std::cout << inputImage.cols << " " << inputImage.rows << std::endl;
+    outputImage = cv::Mat::zeros(inputImage.rows, inputImage.cols, CV_8U);
 
     std::cout << outputImage.cols << " " << outputImage.rows << std::endl;
 
@@ -640,8 +642,8 @@ void simplifyImageWithTreeByArea(int argc, char **argv){
     int option;
     sscanf(argv[3], "%d", &option);
 
-    int area;
-    sscanf(argv[4], "%d", &area);
+    double avalue;
+    sscanf(argv[4], "%lf", &avalue);
 
     fl::Node *root;
     fl::ImageTree *tree;
@@ -676,13 +678,25 @@ void simplifyImageWithTreeByArea(int argc, char **argv){
     }
 
     std::cout << root->level() << std::endl;
-    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(area));
-    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+    //tree->printTree();
+    tree->displayTree();
+    tree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
+    //tree->printTreeWithAttribute<fl::NonCompactnessAttribute>();
+    tree->filterTreeByAttributePredicate<fl::NonCompactnessAttribute>(fl::LessThanX<double>(avalue),1);
+    tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
+    //tree->printTree();
     tree->displayTree();
 
+
+
+
+    std::cout << "Generating output " << std::endl;
     root->colorMe(outputImage);
+    std::cout << "Generating output " << std::endl;
     cv::imwrite(argv[2], outputImage);
+    std::cout << "Generating output " << std::endl;
+
+    delete tree;
 }
 
 void forYanwei(int delta, cv::Mat &image, bool minTree, int salientNum = -1);
@@ -958,6 +972,10 @@ void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes);
 bool doesFileExist(const std::string &fileName);
 
 int main(int argc, char** argv ){
+
+    simplifyImageWithTreeByArea(argc, argv);
+    std::cout << "Out of the function" << std::endl;
+    return 0;
 
     runPipeline(argc, argv);
     //runObjectDetectionAndSegmentation(argc, argv);
@@ -2977,6 +2995,7 @@ cv::Mat &testImage1(void){
                 image.at<uchar>(i,j) = (uchar)180;
 
         }
+        image.at<uchar>(0,2) = 180;
         firstCall = false;
     }
     return image;
@@ -3019,14 +3038,13 @@ cv::Mat &testImage2(void){
 cv::Mat &testImage3(void){
     static bool firstCall = true;
     static cv::Mat image = cv::Mat::zeros(7, 11, CV_8U);
-    std::cout << image.rows << " " << image.cols << std::endl;
     if (firstCall){
         for (int i=0; i < 11; ++i){
-            image.at<uchar>(0, i) = (uchar)255;
-            image.at<uchar>(6, i) = (uchar)255;
+            image.at<uchar>(0, i) = (uchar)210;
+            image.at<uchar>(6, i) = (uchar)210;
             if (i < 7){
-                image.at<uchar>(i,  0) = (uchar)255;
-                image.at<uchar>(i, 10) = (uchar)255;
+                image.at<uchar>(i,  0) = (uchar)210;
+                image.at<uchar>(i, 10) = (uchar)210;
             }
         }
         for (int i=1; i < 10; ++i){
@@ -3040,7 +3058,7 @@ cv::Mat &testImage3(void){
         }
         for (int i=2; i < 5; ++i)
             for (int j=2; j < 5; ++j)
-                image.at<uchar>(i,j) = (uchar)255;
+                image.at<uchar>(i,j) = (uchar)200;
         firstCall = false;
     }
     return image;
