@@ -15,74 +15,54 @@
 
 namespace fl{
 
-/// Uses the DIRECT filtering rule.
-/// \remark TODO: Implement other filtering rules.
+/// Filters the tree by evaluating a `Predicate` on the level assigned
+/// to the `Node`, applying the selected filtering rule.
+/// Depending on the filtering rule, the gray level of certain `Node`s
+/// could change, however the level of all the unfiltered `Node`s remains
+/// unchanged.
 ///
 /// \param predicate The functor object which operates on the `Node`s.
 /// \note cf. the class `Predicate` to see the correct form of this
 /// functor.
 ///
-/// \param root (optional) Should be omitted if performing the filtering
-/// on the whole `ImageTree`. `Node *` to the subtree which should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
+/// \param rule Filtering rule to be used. Options are:
+///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
+///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
+///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
+///
+/// \param root (discouraged) Should be omitted if performing the filtering
+/// on the whole `ImageTree` (intended use). `Node *` to the subtree which
+/// should be filtered.
+/// If set to anything other than the root of the tree, it will only filter
+/// the subtree.
 template<class Function>
-void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
+void ImageTree::filterTreeByLevelPredicate(Function predicate, int rule, Node *root){
     if (root == NULL){
-        filterTreeByLevelPredicate(predicate, this->_root);
+        filterTreeByLevelPredicate(predicate, rule, this->_root);
         return;
     }
 
-    bool deletion, singleDeletionOK;
+    bool singleDeletionOK = true;
     std::vector<Node *> &chi = root->_children;
-    do{
-        deletion = false;
-        singleDeletionOK = true;
-        for (int i=0; i < (int)chi.size(); ++i){
-            if (predicate(chi[i]->level(), root->level()) == false){
-                singleDeletionOK &= root->deleteChild(i);
-                deletion = true;
-            }
+    for (int i=0, szi = chi.size(); i < szi; ++i){
+        if ((predicate(chi[i]->level(), root->level()) == false) &&
+                (singleDeletionOK &= root->deleteChildWithRule(i,rule))){
+            --i;
+            szi = chi.size();
         }
-        if (deletion && !singleDeletionOK)
-            root->collapseSubtree();
+    }
 
-    }while(deletion == true);
-
-    for (int i=0, szi = chi.size(); i < szi; ++i)
-        filterTreeByLevelPredicate(predicate, chi[i]);
+    if (!singleDeletionOK)
+        root->collapseSubtree();
+    else{
+        for (int i=0, szi = chi.size(); i < szi; ++i){
+            chi[i]->_propagatingContrast += root->_propagatingContrast;
+            filterTreeByLevelPredicate(predicate, rule, chi[i]);
+        }
+    }
+    root->_grayLevel += root->_propagatingContrast;
+    root->_propagatingContrast = 0;
 }
-// old and wrong
-//template<class Function>
-//void ImageTree::filterTreeByLevelPredicate(Function predicate, Node *root){
-//    if (root == NULL){
-//        filterTreeByLevelPredicate(predicate, this->_root);
-//        return;
-//    }
-//
-//    bool deletion;
-//    std::vector<Node *> &chi = root->_children;
-//    do{
-//        deletion = false;
-//        for (int i=0; i < (int)chi.size(); ++i){
-//            if (predicate(chi[i]->level(), root->level()) == false){
-//                root->deleteChild(i);
-//                deletion = true;
-//            }
-//        }
-//        // for partitioning trees: if one leaf sibling is deleted, all have to be
-//        if (deletion && root->getOwnElements().empty() && (!chi.empty() && !chi[0]->getOwnElements().empty())){
-//            for (int i=0; i < (int)chi.size(); ++i){
-//                root->deleteChild(i);
-//            }
-//        }
-//    }while(deletion == true);
-//
-//    for (int i=0, szi = chi.size(); i < szi; ++i)
-//        filterTreeByLevelPredicate(predicate, chi[i]);
-//}
-
-
 
 #if 1
 
@@ -352,7 +332,7 @@ void ImageTree::filterTreeByAttribute(int rule, Node *root){
 /// `typename TAT::attribute_type` (that is, the type `X` when `TypedAttribute<X>`
 /// is used).
 ///
-/// \tparam predicate The functor object which operates on the `Node`s
+/// \param predicate The functor object which operates on the `Node`s
 /// `TypedAttribute` values.
 /// \note cf. the class `Predicate` to see the correct form of this
 /// functor.
@@ -364,9 +344,9 @@ void ImageTree::filterTreeByAttribute(int rule, Node *root){
 ///
 /// \param root (discouraged) Should be omitted if performing the filtering
 /// on the whole `ImageTree` (intended usage). `Node *` to the subtree which
-/// should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
+/// should be filtered.
+/// If set to anything other than the root of the tree, it will only filter
+/// the subtree.
 template<class TAT, class Function>
 void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Node *root){
     if (root == NULL){
@@ -378,11 +358,10 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
 
     singleDeletionOK = true;
     for (int i=0, szi = chi.size(); i < szi; ++i){
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-            if (singleDeletionOK &= root->deleteChildWithRule(i,rule)){
-                --i;
-                szi = chi.size();
-            }
+        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false &&
+                (singleDeletionOK &= root->deleteChildWithRule(i,rule))){
+            --i;
+            szi = chi.size();
         }
     }
 

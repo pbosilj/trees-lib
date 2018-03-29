@@ -124,7 +124,7 @@ class ImageTree {
         /// predicate on the values of `Node::level()`.
         /// TODO check for correctnes
         template<class Function>
-        void filterTreeByLevelPredicate(Function predicate, Node *_root = NULL);
+        void filterTreeByLevelPredicate(Function predicate, int rule = 0, Node *_root = NULL);
 
 //        /// \brief Get a leaf `Node` from the `ImageTree` containing a pixel.
 //        Node *lowestPixelOf(pxCoord px) const;
