@@ -564,7 +564,7 @@ void simplifyImageWithTreeByLevel(std::string input, std::string output, double 
                                         std::make_pair(inputImage.rows, inputImage.cols));
 //            //std::cout << tree->countNodes() << std::endl;
 //            tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-//            tree->attributeProfileIncreasing<fl::AreaAttribute>(fl::GreaterEqualThanX<int>(strength));
+//            tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterEqualThanX<int>(strength), 3);
 //            tree->deleteAttributeFromTree<fl::AreaAttribute>();
 
             //tree->addAttributeToTree<fl::BoundingSphereDiameterApprox>(new fl::BoundingSphereDiameterApproxSettings(4,  fl::distanceL1NonIntegral<double>()));
@@ -594,7 +594,7 @@ void simplifyImageWithTreeByLevel(std::string input, std::string output, double 
             std::cout << "construction finished" << std::endl;
             //std::cout << tree->countNodes() << std::endl;
 //            tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-//            tree->attributeProfileIncreasing<fl::AreaAttribute>(fl::GreaterEqualThanX<int>(strength));
+//            tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterEqualThanX<int>(strength),3);
 //            tree->deleteAttributeFromTree<fl::AreaAttribute>();
             //std::cout << tree->countNodes() << std::endl;
             //tree->displayTree();

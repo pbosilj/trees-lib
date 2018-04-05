@@ -280,7 +280,10 @@ namespace fl{
 
         private:
             typedef  bool (Node::*filteringFunction)(int);
-            std::vector<filteringFunction> filteringOptions;
+
+            typedef std::function<bool(Node*, int)> anyFilter;
+
+            static std::vector<anyFilter> filteringOptions;
 
             /// \brief Delete a child `Node` and adjust the subtree according to the direct filtering rule.
             bool directRuleDelete(int childIndex);
@@ -290,6 +293,8 @@ namespace fl{
 
             /// \brief Delete a child `Node` and adjust the subtree according to the max filtering rule.
             bool maxRuleDelete(int childIndex);
+
+            bool softCollapse(filteringFunction f, int childIndex);
 
             /// \brief Set the available filtering functions.
             void setFilteringFunctions(void);

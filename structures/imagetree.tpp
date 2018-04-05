@@ -369,6 +369,8 @@ void ImageTree::filterTreeByAttribute(int rule, Node *root){
 /// should be filtered.
 /// If set to anything other than the root of the tree, it will only filter
 /// the subtree.
+/// \note Big implementation overlap with `filterTreeByALevelPredicate`.
+/// Should figure out a better way to reuse code rather than copy it.
 template<class TAT, class Function>
 void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Node *root){
     if (root == NULL){
@@ -394,7 +396,7 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
     }
 
     if (!singleDeletionOK ||    // If I tried deleting one child, but it's brothers wouldn't let me: delete them all (partitioning trees; rules 0,1,2)
-        !survivingChild){        // Non-satisfying children surivive-collapse individually with rule = 3. If they are all such, all can be deleted instead.
+        !survivingChild){       // Non-satisfying children surivive-collapse individually with rule = 3. If they are all such, all can be deleted instead.
             root->collapseSubtree();
     }
     else{
@@ -446,6 +448,8 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
 ///
 /// \remark TODO this function modifies the tree. would be useful to have a copy
 /// operator
+///
+/// \remark Obsolete. Test replacement function.
 template<class TAT, class Function>
 void ImageTree::attributeProfileIncreasing(Function predicate, Node *root){
     if (root==NULL){
@@ -491,6 +495,8 @@ void ImageTree::attributeProfileIncreasing(Function predicate, Node *root){
 ///
 /// \remark TODO this function modifies the tree. would be useful to have a copy
 /// operator.
+///
+/// \remark Obsolete. Test replacement function.
 template<class TAT, class Function>
 void ImageTree::attributeProfile(Function predicate, Node *root){
     attributeProfile<TAT>(predicate, root, NULL);
@@ -745,10 +751,11 @@ void ImageTree::calculateUO(std::vector <int> &residualMap,
 
 #if 2
 
+/// \remark Obsolete. Test replacement function.
 template<class TAT, class Function>
 std::pair<bool, bool> ImageTree::attributeProfile
         (Function predicate, Node *root, std::map<Node *, bool> *ires){
-    std::pair<bool, bool> result = std::make_pair(false, true);
+    std::pair<bool, bool> result = std::make_pair(false, true); // (markedSelf, markedBranch)
     if (ires == NULL){
         std::map <Node *, bool> *tmp = new std::map <Node *, bool>();
         return attributeProfile<TAT>(predicate, root, tmp);

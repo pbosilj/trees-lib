@@ -206,11 +206,21 @@ class ImageTree {
 
         /// \brief Filter the `ImageTree` so that reconstruction after the filtering
         /// gives the Attribute Profile for the select increasing `Attribute` for the image.
+        ///
+        /// \remark Obsolete. Equal to calling `filterTreeByAttributePredicate(predicate, rule=5)`
+        /// (rule == direct max) for partitionng trees.
         template<class TAT, class Function>
         void attributeProfileIncreasing(Function predicate, Node *root = NULL);
 
         /// \brief Filter the `ImageTree` so that reconstruction after the filtering
         /// gives the Attribute Profile for the select `Attribute` for the image.
+        ///
+        /// \note For some reason deletes the `true` `Nodes` which do not participate in
+        /// visualization. Which is a stupid decision.
+        ///
+        /// \remark Obsolete. Equal to calling `filterTreeByAttributePredicate(predicate, rule=3)`
+        /// (rule == direct soft). Visually same results; will not filter out `true` `Node`s
+        /// like this function.
         template<class TAT, class Function>
         void attributeProfile(Function predicate, Node *root = NULL);
 
@@ -260,6 +270,7 @@ class ImageTree {
                            cv::Mat &residual, cv::Mat &scale,
                            std::pair<fl::Node *, int> &current) const;
 #if 2
+        /// \remark Obsolete. Test replacement function.
         template<class TAT, class Function>
         std::pair<bool, bool> attributeProfile(Function predicate, Node *root, std::map<Node *, bool> *ires);
 #endif // 2

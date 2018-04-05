@@ -1,6 +1,10 @@
 #include "node.h"
 
+#include <functional>
+
 using namespace fl;
+
+std::vector<Node::anyFilter> Node::filteringOptions(0);
 
 /// Constructor initializing internal `Node` elements (pixels).
 ///
@@ -8,7 +12,8 @@ using namespace fl;
 Node::Node(const std::vector< std::pair< int, int > >& S)
         : _propagatingContrast(0), _S(S), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
-    this->setFilteringFunctions();
+    if (Node::filteringOptions.empty())
+        this->setFilteringFunctions();
 }
 
 /// Constructor initializing internal `Node` elements (pixels),
@@ -24,7 +29,8 @@ Node::Node(const std::vector< std::pair< int, int > >& S,
     for (int i=0, szi = this->_children.size(); i < szi; ++i){
         this->_children[i]->setParent(this);
     }
-    this->setFilteringFunctions();
+    if (Node::filteringOptions.empty())
+        this->setFilteringFunctions();
 }
 
 Node::Node(const Node& other)
@@ -32,7 +38,8 @@ Node::Node(const Node& other)
         sizeKnown(other.sizeKnown), ncountKnown(other.ncountKnown),
         referenceImg(other.referenceImg), size(other.size), ncount(other.ncount) {
     this->attributes.insert(other.attributes.begin(), other.attributes.end());
-    this->setFilteringFunctions();
+    if (Node::filteringOptions.empty())
+        this->setFilteringFunctions();
 }
 
 /// Allows to access an ancestral `Node` removed for \p depth
@@ -625,13 +632,20 @@ bool Node::collapseSubtree(void){
 ///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
 ///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtree.
 ///     - 2 = MAX FILTERING. Sub-tree removed (collapsed).
+///     - 3 = SOFT DIRECT. Like direct, but soft.
+///     - 4 = SOFT SUBTRACTIVE. Like subtractive, but soft.
+///     - 5 = SOFT MAX. Like max, but soft.
+/// \note Soft filtering rules do not return `false` upon unsuccessfull
+/// delete, but rather set the gray level of the child `Node` to that
+/// of its parent, thus `soft` deleting it.
 ///
 /// \return succcess of the `deleteChildWithRule` operation.
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`.
 bool Node::deleteChildWithRule(int childIndex, int rule){
     return (this->filteringOptions.size() > rule) &&
-           (this->*(filteringOptions[rule]))(childIndex);
+            Node::filteringOptions[rule](this, childIndex);
+           //(this->*(this->filteringOptions[rule]))(childIndex);
 }
 
 /// \param p `Node *` pointer to a new parent `Node`.
@@ -847,13 +861,13 @@ bool Node::subtractiveRuleDelete(int childIndex){
 
     Node *childToDelete = this->_children[childIndex];
     const std::vector<int> &hGLevel = this->hyperGraylevel();
+    const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
 
     for (int i=0, szi = childToDelete->_children.size(); i < szi; ++i){
         // gray level propagation
         childToDelete->_children[i]->_propagatingContrast += this->grayLevel() - childToDelete->grayLevel();
 
         // hyper gray level propagation
-        const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
         if ( !hGLevel.empty() ){
             childToDelete->_children[i]->_propagatingHyperContrast.resize(hGLevel.size(), 0); // no effect if already exists
             for (int j=0, szj = hGLevel.size(); j < szj; ++j){
@@ -871,10 +885,60 @@ bool Node::maxRuleDelete(int childIndex){ // or is it min rule?
 }
 
 
+bool Node::collapsableSoftMaxDelete(int childIndex){ // or is it min rule?
+    if (childIndex >= this->_children.size())
+        return false;
+
+    Node *childToDelete = this->_children[childIndex];
+
+    bool deleteSuccess = childToDelete->collapseSubtree();
+
+    if (deleteSuccess){
+        // gray level "contraction" (set same gray level as parent)
+        childToDelete->_propagatingContrast = this->grayLevel() - childToDelete->grayLevel();
+
+        // hyper gray level "contraction" (set same gray level as parent)
+        const std::vector<int> &hGLevel = this->hyperGraylevel();
+        const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
+        if (!hGLevel.empty()){
+            childToDelete->_propagatingHyperContrast.resize(hGLevel.size(), 0);
+            for (int i=0, szi = hGLevel.size(); i < szi; ++i)
+                childToDelete->_propagatingHyperContrast[i] += hGLevel[i] - childHGLevel[i];
+        }
+    }
+    return deleteSuccess;
+}
+
+bool Node::softCollapse(filteringFunction f, int childIndex){
+
+    bool success = (this->*(f))(childIndex);
+
+    if (success == false){
+        Node *childToDelete = this->_children[childIndex];
+        // gray level "contraction" (set same gray level as parent)
+        childToDelete->_propagatingContrast = this->grayLevel() - childToDelete->grayLevel();
+
+        // hyper gray level "contraction" (set same gray level as parent)
+        const std::vector<int> &hGLevel = this->hyperGraylevel();
+        const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
+        if (!hGLevel.empty()){
+            childToDelete->_propagatingHyperContrast.resize(hGLevel.size(), 0);
+            for (int i=0, szi = hGLevel.size(); i < szi; ++i)
+                childToDelete->_propagatingHyperContrast[i] += hGLevel[i] - childHGLevel[i];
+        }
+    }
+    return true;
+}
+
+
 void Node::setFilteringFunctions(void){
-    this->filteringOptions.emplace_back(&Node::directRuleDelete);
-    this->filteringOptions.emplace_back(&Node::subtractiveRuleDelete);
-    this->filteringOptions.emplace_back(&Node::maxRuleDelete);
+    Node::filteringOptions.clear();
+    Node::filteringOptions.emplace_back(&Node::directRuleDelete);
+    Node::filteringOptions.emplace_back(&Node::subtractiveRuleDelete);
+    Node::filteringOptions.emplace_back(&Node::maxRuleDelete);
+    Node::filteringOptions.emplace_back(std::bind(&Node::softCollapse, std::placeholders::_1, &Node::directRuleDelete, std::placeholders::_2));
+    Node::filteringOptions.emplace_back(std::bind(&Node::softCollapse, std::placeholders::_1, &Node::subtractiveRuleDelete, std::placeholders::_2));
+    Node::filteringOptions.emplace_back(std::bind(&Node::softCollapse, std::placeholders::_1, &Node::maxRuleDelete, std::placeholders::_2));
 }
 
 /*
