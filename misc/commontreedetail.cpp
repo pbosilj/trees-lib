@@ -20,7 +20,7 @@ namespace fl{
     }
 
     std::vector<int> detail::alphaTreeGrayLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chHGL, const std::vector<int> &chSz) const{
-        if (HchGL.empty()){
+        if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
                 rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
