@@ -23,12 +23,12 @@ namespace fl{
         if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y));
             return rValue;
         }
 
         long long areatot=0L;
-        std::vector <long long> total(chGL[0].size(), 0L);
+        std::vector <long long> total(chHGL[0].size(), 0L);
 
         for (int i=0, szi = chHGL.size(); i < szi; ++i ){
             for (int j=0, szj = chHGL[i].size(); j < szj; ++j)
@@ -57,7 +57,7 @@ namespace fl{
         if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y));
             return rValue;
         }
 
@@ -87,7 +87,7 @@ namespace fl{
         if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y));
             return rValue;
         }
 

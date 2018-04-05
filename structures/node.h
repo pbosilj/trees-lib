@@ -203,6 +203,9 @@ namespace fl{
             /// \brief Used in filtering to propagate contrast changes.
             int _propagatingContrast;
 
+            /// \brief Used in filtering to propagate contrast changes on hyperspectral images.
+            std::vector <int> _propagatingHyperContrast;
+
             /// \brief Indicator value of size.
 
             /// Can be:

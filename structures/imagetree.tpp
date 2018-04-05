@@ -356,6 +356,8 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
     bool singleDeletionOK;
     std::vector<Node *> &chi = root->_children;
 
+    root->_propagatingHyperContrast.resize(root->hyperGraylevel().size(), 0);
+
     singleDeletionOK = true;
     for (int i=0, szi = chi.size(); i < szi; ++i){
         if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false &&
@@ -368,68 +370,27 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
     if (!singleDeletionOK)
         root->collapseSubtree();
     else{
-        for (int i=0, szi = chi.size(); i < szi; ++i){
+        for (int i=0, szi = chi.size(), szj = root->_propagatingHyperContrast.size(); i < szi; ++i){
+            // contrast propagation
             chi[i]->_propagatingContrast += root->_propagatingContrast;
+
+            // contrast propagation for hyperspectral images. won't do anything if not set.
+            chi[i]->_propagatingHyperContrast.resize(chi[i]->hyperGraylevel().size(), 0);
+            for (int j=0; j < szj; ++j){
+                chi[i]->_propagatingHyperContrast[j] += root->_propagatingHyperContrast[j];
+            }
+
             filterTreeByAttributePredicate<TAT>(predicate, rule, chi[i]);
         }
     }
 
     root->_grayLevel += root->_propagatingContrast;
+    for (int i=0, szi = root->_hgrayLevels.size(); i < szi; ++i)
+        root->_hgrayLevels[i] += root->_propagatingHyperContrast[i];
     root->_propagatingContrast = 0;
+    root->_propagatingHyperContrast.clear();
+
 }
-
-/// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used as
-/// new levels in this `ImageTree` (e.g. `AreaAttribute`).
-///
-/// \remark `typename TAT::attribute_type` (that is, the type `X` when `TypedAttribute<X>`
-/// is used) needs to be a scalar value, i.e. castable to `double`.
-///
-/// \param root (discouraged) Should be omitted if associating a `TypedAttribute` value
-/// to all the `Node`s in the `ImageTree` (intended usage).
-/// `Node *` to the subtree which should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
-///
-/// \note Implements the second step of complexity-driven simplification from
-/// P. Bosilj, S. Lefevre, E. Kijak: "Hierarchical Image Representation Simplification
-/// Driven by Region Complexity" (for the first step use `filterTreeByAttribute()`)
-template<class TAT>
-void ImageTree::assignAttributeAsLevel(Node *root){
-    if (root == NULL){
-        assignAttributeAsLevel<TAT>(this->_root);
-        return;
-    }
-
-    root->assignLevel(((TAT*)root->getAttribute(TAT::name))->value());
-    std::vector <Node *> &children = root->_children;
-    for (int i=0, szi = children.size(); i < szi; ++i)
-        assignAttributeAsLevel<TAT>(children[i]);
-
-    return;
-}
-
-/// Calculates the Ultimate Opening (cf. Fabrizio, Marcotegui: Fast Implementation
-/// of Ultimate Opening, ISMM 2009) for the given `Attribute`
-///
-/// \tparam AT Specifies the `TypedAttribute` to be used for the base attribute opening.
-/// Must be increasing. Must be assigned to the image with `addAttributeToTree` beforehand.
-///
-/// \param residual Output parameter for the residual component of the ultimate opening.
-/// \param scale Output parameter for the scale component of the ultimate opening.
-///
-template<class AT> // where AT is increasing Attribute
-void ImageTree::ultimateOpening(cv::Mat &residual, cv::Mat &scale) const{
-    // assuming AT is in tree
-    std::vector <int> res;
-    std::vector <int> scl;
-    std::pair<fl::Node *, int> start(this->_root, 0);
-
-    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-    this->calculateUO<AT>(res, scl, start, NULL, -1);
-    this->reconstructUO(res, scl, residual, scale, start);
-    this->deleteAttributeFromTree<fl::AreaAttribute>();
-}
-
 
 #if 2
 
@@ -509,6 +470,59 @@ void ImageTree::attributeProfile(Function predicate, Node *root){
 }
 
 #endif // 2
+
+
+/// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used as
+/// new levels in this `ImageTree` (e.g. `AreaAttribute`).
+///
+/// \remark `typename TAT::attribute_type` (that is, the type `X` when `TypedAttribute<X>`
+/// is used) needs to be a scalar value, i.e. castable to `double`.
+///
+/// \param root (discouraged) Should be omitted if associating a `TypedAttribute` value
+/// to all the `Node`s in the `ImageTree` (intended usage).
+/// `Node *` to the subtree which should be
+/// filtered. If set to anything other than the root of
+/// the tree, it will only filter the subtree.
+///
+/// \note Implements the second step of complexity-driven simplification from
+/// P. Bosilj, S. Lefevre, E. Kijak: "Hierarchical Image Representation Simplification
+/// Driven by Region Complexity" (for the first step use `filterTreeByAttribute()`)
+template<class TAT>
+void ImageTree::assignAttributeAsLevel(Node *root){
+    if (root == NULL){
+        assignAttributeAsLevel<TAT>(this->_root);
+        return;
+    }
+
+    root->assignLevel(((TAT*)root->getAttribute(TAT::name))->value());
+    std::vector <Node *> &children = root->_children;
+    for (int i=0, szi = children.size(); i < szi; ++i)
+        assignAttributeAsLevel<TAT>(children[i]);
+
+    return;
+}
+
+/// Calculates the Ultimate Opening (cf. Fabrizio, Marcotegui: Fast Implementation
+/// of Ultimate Opening, ISMM 2009) for the given `Attribute`
+///
+/// \tparam AT Specifies the `TypedAttribute` to be used for the base attribute opening.
+/// Must be increasing. Must be assigned to the image with `addAttributeToTree` beforehand.
+///
+/// \param residual Output parameter for the residual component of the ultimate opening.
+/// \param scale Output parameter for the scale component of the ultimate opening.
+///
+template<class AT> // where AT is increasing Attribute
+void ImageTree::ultimateOpening(cv::Mat &residual, cv::Mat &scale) const{
+    // assuming AT is in tree
+    std::vector <int> res;
+    std::vector <int> scl;
+    std::pair<fl::Node *, int> start(this->_root, 0);
+
+    this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    this->calculateUO<AT>(res, scl, start, NULL, -1);
+    this->reconstructUO(res, scl, residual, scale, start);
+    this->deleteAttributeFromTree<fl::AreaAttribute>();
+}
 
 #if 3
 
