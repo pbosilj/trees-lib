@@ -605,6 +605,7 @@ bool Node::collapseSubtree(void){
         return true;
 
     while (!this->_children.empty()){
+        // I can allow myself "unsafe" delete as I will delete all the children
         this->Node::deleteChild(this->_children.size()-1);
     }
     return (this->_children.empty() && !this->_S.empty()); // should always return true
@@ -843,13 +844,27 @@ bool Node::directRuleDelete(int childIndex){
 bool Node::subtractiveRuleDelete(int childIndex){
     if (childIndex >= this->_children.size())
         return false;
+
     Node *childToDelete = this->_children[childIndex];
-    for (int i=0, szi = childToDelete->_children.size(); i < szi; ++i)
+    const std::vector<int> &hGLevel = this->hyperGraylevel();
+
+    for (int i=0, szi = childToDelete->_children.size(); i < szi; ++i){
+        // gray level propagation
         childToDelete->_children[i]->_propagatingContrast += this->grayLevel() - childToDelete->grayLevel();
+
+        // hyper gray level propagation
+        const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
+        if ( !hGLevel.empty() ){
+            childToDelete->_children[i]->_propagatingHyperContrast.resize(hGLevel.size(), 0); // no effect if already exists
+            for (int j=0, szj = hGLevel.size(); j < szj; ++j){
+                childToDelete->_children[i]->_propagatingHyperContrast[j] += hGLevel[j] - childHGLevel[j];
+            }
+        }
+    }
     return this->deleteChild(childIndex);
 }
 
-bool Node::maxRuleDelete(int childIndex){
+bool Node::maxRuleDelete(int childIndex){ // or is it min rule?
     return (childIndex < this->_children.size() &&
             this->_children[childIndex]->collapseSubtree() &&
             this->deleteChild(childIndex));

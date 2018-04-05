@@ -35,6 +35,9 @@ namespace fl{
 /// should be filtered.
 /// If set to anything other than the root of the tree, it will only filter
 /// the subtree.
+///
+/// \note Big implementation overlap with `filterTreeByAttributePredicate`.
+/// Should figure out a better way to reuse code rather than copy it.
 template<class Function>
 void ImageTree::filterTreeByLevelPredicate(Function predicate, int rule, Node *root){
     if (root == NULL){
@@ -42,26 +45,45 @@ void ImageTree::filterTreeByLevelPredicate(Function predicate, int rule, Node *r
         return;
     }
 
+    root->_propagatingHyperContrast.resize(root->hyperGraylevel().size(), 0);
+
     bool singleDeletionOK = true;
+    bool survivingChild = false;
+
     std::vector<Node *> &chi = root->_children;
     for (int i=0, szi = chi.size(); i < szi; ++i){
-        if ((predicate(chi[i]->level(), root->level()) == false) &&
-                (singleDeletionOK &= root->deleteChildWithRule(i,rule))){
-            --i;
-            szi = chi.size();
+        if (predicate(chi[i]->level(), root->level()) == false){
+            if (singleDeletionOK &= root->deleteChildWithRule(i,rule)){
+                --i;
+                szi = chi.size();
+            }
         }
+        else
+            survivingChild=true;
     }
 
-    if (!singleDeletionOK)
-        root->collapseSubtree();
+    if (!singleDeletionOK ||    // If I tried deleting one child, but it's brothers wouldn't let me: delete them all (partitioning trees; rules 0,1,2)
+        !survivingChild){        // Non-satisfying children surivive-collapse individually with rule = 3. If they are all such, all can be deleted instead.
+            root->collapseSubtree();
+    }
     else{
-        for (int i=0, szi = chi.size(); i < szi; ++i){
+        for (int i=0, szi = chi.size(), szj = root->_propagatingHyperContrast.size(); i < szi; ++i){
+            // contrast propagation
             chi[i]->_propagatingContrast += root->_propagatingContrast;
+
+            // contrast propagation for hyperspectral images. won't do anything if not set.
+            chi[i]->_propagatingHyperContrast.resize(chi[i]->hyperGraylevel().size(), 0);
+            for (int j=0; j < szj; ++j){
+                chi[i]->_propagatingHyperContrast[j] += root->_propagatingHyperContrast[j];
+            }
             filterTreeByLevelPredicate(predicate, rule, chi[i]);
         }
     }
     root->_grayLevel += root->_propagatingContrast;
+    for (int i=0, szi = root->_hgrayLevels.size(); i < szi; ++i)
+        root->_hgrayLevels[i] += root->_propagatingHyperContrast[i];
     root->_propagatingContrast = 0;
+    root->_propagatingHyperContrast.clear();
 }
 
 #if 1
@@ -353,22 +375,28 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
         filterTreeByAttributePredicate<TAT>(predicate, rule, this->_root);
         return;
     }
-    bool singleDeletionOK;
-    std::vector<Node *> &chi = root->_children;
 
     root->_propagatingHyperContrast.resize(root->hyperGraylevel().size(), 0);
 
-    singleDeletionOK = true;
+    bool singleDeletionOK = true;
+    bool survivingChild = false;
+
+    std::vector<Node *> &chi = root->_children;
     for (int i=0, szi = chi.size(); i < szi; ++i){
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false &&
-                (singleDeletionOK &= root->deleteChildWithRule(i,rule))){
-            --i;
-            szi = chi.size();
+        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
+            if (singleDeletionOK &= root->deleteChildWithRule(i,rule)){
+                --i;
+                szi = chi.size();
+            }
         }
+        else
+            survivingChild = true;
     }
 
-    if (!singleDeletionOK)
-        root->collapseSubtree();
+    if (!singleDeletionOK ||    // If I tried deleting one child, but it's brothers wouldn't let me: delete them all (partitioning trees; rules 0,1,2)
+        !survivingChild){        // Non-satisfying children surivive-collapse individually with rule = 3. If they are all such, all can be deleted instead.
+            root->collapseSubtree();
+    }
     else{
         for (int i=0, szi = chi.size(), szj = root->_propagatingHyperContrast.size(); i < szi; ++i){
             // contrast propagation
@@ -389,7 +417,6 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
         root->_hgrayLevels[i] += root->_propagatingHyperContrast[i];
     root->_propagatingContrast = 0;
     root->_propagatingHyperContrast.clear();
-
 }
 
 #if 2
