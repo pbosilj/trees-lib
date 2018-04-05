@@ -9,7 +9,7 @@ namespace fl{
 
     int detail::alphaTreeGrayLvlAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<int> &chGL, const std::vector<int> &chSz) const{
         if (chGL.empty()){
-            return this->img.at<uchar>(ownElems.front().Y, ownElems.front().X);
+            return (int)detail::getCvMatElem(this->img, ownElems.front().X, ownElems.front().Y);
         }
 
         long long total=0L, areatot=0L;
@@ -23,7 +23,7 @@ namespace fl{
         if (chGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.push_back(this->imgs[i].at<uchar>(ownElems.front().Y, ownElems.front().X));
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
             return rValue;
         }
 
@@ -44,7 +44,7 @@ namespace fl{
 
     int detail::alphaTreeMinLvlAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<int> &chGL, const std::vector<int> &/*chSz*/) const{
         if (chGL.empty()){
-            return this->img.at<uchar>(ownElems.front().Y, ownElems.front().X);
+            return (int)detail::getCvMatElem(this->img, ownElems.front().X, ownElems.front().Y);
         }
 
         int minV = chGL[0];
@@ -57,7 +57,7 @@ namespace fl{
         if (chGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.push_back(this->imgs[i].at<uchar>(ownElems.front().Y, ownElems.front().X));
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
             return rValue;
         }
 
@@ -73,7 +73,7 @@ namespace fl{
 
     int detail::alphaTreeMaxLvlAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<int> &chGL, const std::vector<int> &/*chSz*/) const{
         if (chGL.empty()){
-            return this->img.at<uchar>(ownElems.front().Y, ownElems.front().X);
+            return (int)detail::getCvMatElem(this->img, ownElems.front().X, ownElems.front().Y);
         }
 
         int maxV = chGL[0];
@@ -87,7 +87,7 @@ namespace fl{
         if (chGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
-                rValue.push_back(this->imgs[i].at<uchar>(ownElems.front().Y, ownElems.front().X));
+                rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
             return rValue;
         }
 
