@@ -19,8 +19,8 @@ namespace fl{
         return (int)(total/areatot);
     }
 
-    std::vector<int> detail::alphaTreeGrayLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chGL, const std::vector<int> &chSz) const{
-        if (chGL.empty()){
+    std::vector<int> detail::alphaTreeGrayLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chHGL, const std::vector<int> &chSz) const{
+        if (HchGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
                 rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
@@ -30,13 +30,13 @@ namespace fl{
         long long areatot=0L;
         std::vector <long long> total(chGL[0].size(), 0L);
 
-        for (int i=0, szi = chGL.size(); i < szi; ++i ){
-            for (int j=0, szj = chGL[i].size(); j < szj; ++j)
-                total[j]+=chSz[i]*chGL[i][j];
+        for (int i=0, szi = chHGL.size(); i < szi; ++i ){
+            for (int j=0, szj = chHGL[i].size(); j < szj; ++j)
+                total[j]+=chSz[i]*chHGL[i][j];
             areatot+=chSz[i];
         }
         std::vector <int> rValue;
-        for (int j=0, szj = chGL[0].size(); j < szj; ++j)
+        for (int j=0, szj = chHGL[0].size(); j < szj; ++j)
             rValue.push_back((int)(total[j]/areatot));
 
         return rValue;
@@ -53,19 +53,19 @@ namespace fl{
 
         return minV;
     }
-    std::vector<int> detail::alphaTreeMinLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chGL, const std::vector<int> &/*chSz*/) const{
-        if (chGL.empty()){
+    std::vector<int> detail::alphaTreeMinLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chHGL, const std::vector<int> &/*chSz*/) const{
+        if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
                 rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
             return rValue;
         }
 
-        std::vector<int> minV = chGL[0];
+        std::vector<int> minV = chHGL[0];
 
-        for (int i=1, szi = chGL.size(); i < szi; ++i ){
-            for (int j=0, szj = chGL[i].size(); j < szj; ++j)
-                minV[j] = std::min(minV[j], chGL[i][j]);
+        for (int i=1, szi = chHGL.size(); i < szi; ++i ){
+            for (int j=0, szj = chHGL[i].size(); j < szj; ++j)
+                minV[j] = std::min(minV[j], chHGL[i][j]);
         }
 
         return minV;
@@ -83,19 +83,19 @@ namespace fl{
         return maxV;
     }
 
-    std::vector<int> detail::alphaTreeMaxLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chGL, const std::vector<int> &/*chSz*/) const{
-        if (chGL.empty()){
+    std::vector<int> detail::alphaTreeMaxLvlHyperAssign::operator() (double /*myLvl*/, const std::vector <pxCoord> &ownElems, const std::vector<std::vector<int> > &chHGL, const std::vector<int> &/*chSz*/) const{
+        if (chHGL.empty()){
             std::vector<int> rValue;
             for (int i=0, szi=imgs.size(); i < szi; ++i)
                 rValue.emplace_back((int)detail::getCvMatElem(this->imgs[i], ownElems.front().X, ownElems.front().Y);
             return rValue;
         }
 
-        std::vector<int> minV = chGL[0];
+        std::vector<int> minV = chHGL[0];
 
-        for (int i=1, szi = chGL.size(); i < szi; ++i ){
-            for (int j=0, szj = chGL[i].size(); j < szj; ++j)
-                minV[j] = std::max(minV[j], chGL[i][j]);
+        for (int i=1, szi = chHGL.size(); i < szi; ++i ){
+            for (int j=0, szj = chHGL[i].size(); j < szj; ++j)
+                minV[j] = std::max(minV[j], chHGL[i][j]);
         }
 
         return minV;
