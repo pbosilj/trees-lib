@@ -48,7 +48,7 @@ PartitioningNode::PartitioningNode(const std::vector< PartitioningNode* >& child
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`
 bool PartitioningNode::deleteChild(int childIndex){
-    if (this->_children.size() > childIndex &&
+    if ((int)this->_children.size() > childIndex &&
      ! ((PartitioningNode*)this->_children[childIndex])->_children.empty())
         return Node::deleteChild(childIndex);
     return Node::deleteChild(childIndex);

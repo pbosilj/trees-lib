@@ -276,7 +276,6 @@ void ImageTree::getLeaves(std::vector <fl::Node *> &leaves) const{
 ///
 /// \param leafExt An output vector to be filled with extinction values
 /// associated to each leaf `Node` of the tree.
-
 void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &leafExt) const{
     leafExt.clear();
     std::vector <fl::Node *> leaves;
@@ -329,7 +328,6 @@ void ImageTree::getLeafExtinctions(std::vector <std::pair <int, fl::Node *> > &l
 ///
 /// \note `Node`s output with this function and in this format can be
 /// input by the function `ImageTree::loadNodesFromIDFile()`.
-
 void ImageTree::writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostream &out) const{
     for (int i=0, szi = nodes.size(); i < szi; ++i){
         out << nodes[i]->getIDString() << " " << nodes[i]->level() << std::endl;
@@ -351,10 +349,8 @@ void ImageTree::writeNodeIDToFile(const std::vector <Node *> &nodes, std::ostrea
 /// \note The `Node`s can be written out in the appropriate format suitable
 /// for input through this function using the function
 /// `ImageTree::writeNodeIDToFile()`.
-
 void ImageTree::loadNodesFromIDFile(std::vector <Node *> &nodes, std::istream &in) const{
     std::string line;
-    int num;
     while (std::getline(in, line)){
         std::stringstream linestream(line);
         std::string svalue;
