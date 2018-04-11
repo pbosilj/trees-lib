@@ -127,8 +127,7 @@ void ImageTree::addAttributeToTree(AttributeSettings *settings, bool deleteSetti
 /// The function will take care of multiple assigned
 /// copies of `Attribute` to the `ImageTree`.
 ///
-/// \note One call to this function
-/// must be made
+/// \note One call to this function must be made
 /// for each call to `addAttributeToTree<AT>()`.
 ///
 /// \note This should eventually take care of the `AttributeSettings`
@@ -202,6 +201,35 @@ void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, 
         attributeValues.emplace_back(cur->level(), (double)((AT*)cur->getAttribute(AT::name))->value());
         //out << cur->level() << " " << ((AT*)cur->getAttribute(AT::name))->value() << std::endl;
     }
+}
+
+
+/// TODO: check correctness, implement three different summation rules
+template<class ATT>
+void ImageTree::calculateGCF(std::map<double, int> &GCF, const fl::Node *_root) const{
+    if (_root == NULL){
+        this->calculateGCF<ATT>(GCF, this->root());
+        return;
+    }
+
+    if (_root == this->root())
+        GCF.clear();
+
+    std::vector <const fl::Node *> toProcess(1, _root);
+
+    const Node *cur;
+    do{
+        double attributeValue = (double)((ATT*)cur->getAttribute(ATT::name))->value();
+        // insert attributeValue in GCF
+
+        ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
+
+        for (int i=0, szi = cur->_children.size(); i < szi; ++i)
+            toProcess.push_back(cur->_children[i]);
+    }while(!toProcess.empty());
+
+
+    std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(), [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(x.first, x.second + y.second);});
 }
 
 /// \param nodes A vector of nodes for which the output is written

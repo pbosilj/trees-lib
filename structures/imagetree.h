@@ -160,6 +160,11 @@ class ImageTree {
         template<class AT>
         void analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const;
 
+        /// \brief Get the granulometric curve from the `ImageTree` for the given
+        /// `Attribute`
+        template<class ATT>
+        void calculateGCF(std::map<double, int> &GCF, const fl::Node *_root = NULL) const;
+
         /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
         template <class AT>
         void writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
