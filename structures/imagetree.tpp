@@ -206,7 +206,7 @@ void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, 
 
 /// TODO: check correctness, implement three different summation rules
 template<class ATT>
-void ImageTree::calculateGCF(std::map<double, int> &GCF, const fl::Node *_root) const{
+void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root) const{
     if (_root == NULL){
         this->calculateGCF<ATT>(GCF, this->root());
         return;
@@ -219,17 +219,22 @@ void ImageTree::calculateGCF(std::map<double, int> &GCF, const fl::Node *_root) 
 
     const Node *cur;
     do{
-        double attributeValue = (double)((ATT*)cur->getAttribute(ATT::name))->value();
-        // insert attributeValue in GCF
+        cur = toProcess.back();
 
+        double attributeValue = (double)((ATT*)cur->getAttribute(ATT::name))->value();
+
+        // insert attributeValue in GCF
         ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
+
+        toProcess.pop_back();
 
         for (int i=0, szi = cur->_children.size(); i < szi; ++i)
             toProcess.push_back(cur->_children[i]);
     }while(!toProcess.empty());
 
 
-    std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(), [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(x.first, x.second + y.second);});
+    //std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),
+    //                 [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
 }
 
 /// \param nodes A vector of nodes for which the output is written

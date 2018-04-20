@@ -80,6 +80,31 @@ namespace fl{
         template <class Compare>
         double getCvMatMin(const cv::Mat &img, Compare cmp);
 
+        void sumHistogramsIntoFirst(std::map<double, int> &src1, const std::map <double, int> &src2){
+            std::map<double, int>::iterator I1 = src1.begin();
+            std::map<double, int>::const_iterator I2 = src2.begin();
+
+            for (I1 = src1.begin(), I2 = src2.begin(); I1 != src1.end() && I2 != src2.end(); ++I1, ++I2){
+                if (I1->first == I2->first){
+                    I1->second += I2->second;
+                }
+                else if (I1->first > I2->first){
+                    --I1;
+                    src1.insert(I1, *I2);
+                }
+                else{ // if (I2->first < I2->first)
+                    src1.insert(I1, *I2);
+                }
+            }
+
+            for (; I2 != src2.end(); ++I2)
+                src1.insert(src1.end(), *I2);
+        }
+
+        void histogramToGCF(std::map <double, int> &data){
+            std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),
+                [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
+        }
     }
 }
 
