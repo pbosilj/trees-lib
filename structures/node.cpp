@@ -884,31 +884,6 @@ bool Node::maxRuleDelete(int childIndex){ // or is it min rule?
             this->deleteChild(childIndex));
 }
 
-
-bool Node::collapsableSoftMaxDelete(int childIndex){ // or is it min rule?
-    if (childIndex >= this->_children.size())
-        return false;
-
-    Node *childToDelete = this->_children[childIndex];
-
-    bool deleteSuccess = childToDelete->collapseSubtree();
-
-    if (deleteSuccess){
-        // gray level "contraction" (set same gray level as parent)
-        childToDelete->_propagatingContrast = this->grayLevel() - childToDelete->grayLevel();
-
-        // hyper gray level "contraction" (set same gray level as parent)
-        const std::vector<int> &hGLevel = this->hyperGraylevel();
-        const std::vector<int> &childHGLevel = childToDelete->hyperGraylevel();
-        if (!hGLevel.empty()){
-            childToDelete->_propagatingHyperContrast.resize(hGLevel.size(), 0);
-            for (int i=0, szi = hGLevel.size(); i < szi; ++i)
-                childToDelete->_propagatingHyperContrast[i] += hGLevel[i] - childHGLevel[i];
-        }
-    }
-    return deleteSuccess;
-}
-
 bool Node::softCollapse(filteringFunction f, int childIndex){
 
     bool success = (this->*(f))(childIndex);
