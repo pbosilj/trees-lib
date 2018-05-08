@@ -575,11 +575,11 @@ void simplifyImageWithTreeByLevel(std::string input, std::string output, double 
             //tree->displayTree();
 
             tree->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::hu, 1));
-            tree->attributeProfile<fl::MomentsAttribute>(fl::GreaterEqualThanX<double>(strength));
+            tree->filterTreeByAttributePredicate<fl::MomentsAttribute>(fl::GreaterEqualThanX<double>(strength), 5);
             tree->deleteAttributeFromTree<fl::MomentsAttribute>();
 
 //            tree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
-//            tree->attributeProfile<fl::NonCompactnessAttribute>(fl::GreaterEqualThanX<double>(strength));
+//            tree->filterTreeByAttributePredicate<fl::NonCompactnessAttribute>(fl::GreaterEqualThanX<double>(strength), 5);
 //            tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
 
 
@@ -599,12 +599,12 @@ void simplifyImageWithTreeByLevel(std::string input, std::string output, double 
             //std::cout << tree->countNodes() << std::endl;
             //tree->displayTree();
 //            tree->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::hu, 1));
-//            tree->attributeProfile<fl::MomentsAttribute>(fl::GreaterEqualThanX<double>(strength));
+//            tree->filterTreeByAttributePredicate<fl::MomentsAttribute>(fl::GreaterEqualThanX<double>(strength), 5);
 //            tree->deleteAttributeFromTree<fl::MomentsAttribute>();
 
 
             tree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
-            tree->attributeProfile<fl::NonCompactnessAttribute>(fl::GreaterEqualThanX<double>(strength));
+            tree->filterTreeByAttributePredicate<fl::NonCompactnessAttribute>(fl::GreaterEqualThanX<double>(strength), 5);
             tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
 
 

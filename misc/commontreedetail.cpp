@@ -184,4 +184,9 @@ namespace fl{
             return (double)(*(ushort *)(*it));
         return (double)(*(uchar *)(*it));
     }
+
+    void detail::histogramToGCF(std::map <double, int> &data){
+        //std::partial_sum(data.begin(), data.end(), data.begin(),
+        //    [](std::pair<double, int>& x, std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
+    }
 }

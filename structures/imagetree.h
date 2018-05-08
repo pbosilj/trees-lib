@@ -160,6 +160,11 @@ class ImageTree {
         template<class AT>
         void analyseBranch(const fl::Node *node, std::vector <std::pair<int, double> > &attributeValues) const;
 
+        /// \brief Get the granulometric curve from the `ImageTree` for the given
+        /// `Attribute`
+        template<class ATT>
+        void calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root = NULL) const;
+
         /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
         template <class AT>
         void writeAttributesToFile(const std::vector <Node *> &nodes, std::ostream &out) const;
@@ -201,31 +206,6 @@ class ImageTree {
         /// \brief Computes the ultimate opening (B. Marcotegui) using an increasing `Attribute`
         template<class AT> // where AT is increasing Attribute
         void ultimateOpening(cv::Mat &residual, cv::Mat &scale) const;
-
-#if 2
-
-        /// \brief Filter the `ImageTree` so that reconstruction after the filtering
-        /// gives the Attribute Profile for the select increasing `Attribute` for the image.
-        ///
-        /// \remark Obsolete. Equal to calling `filterTreeByAttributePredicate(predicate, rule=5)`
-        /// (rule == direct max) for partitionng trees.
-        template<class TAT, class Function>
-        void attributeProfileIncreasing(Function predicate, Node *root = NULL);
-
-        /// \brief Filter the `ImageTree` so that reconstruction after the filtering
-        /// gives the Attribute Profile for the select `Attribute` for the image.
-        ///
-        /// \note For some reason deletes the `true` `Nodes` which do not participate in
-        /// visualization. Which is a stupid decision.
-        ///
-        /// \remark Obsolete. Equal to calling `filterTreeByAttributePredicate(predicate, rule=3)`
-        /// (rule == direct soft). Visually same results; will not filter out `true` `Node`s
-        /// like this function.
-        template<class TAT, class Function>
-        void attributeProfile(Function predicate, Node *root = NULL);
-
-
-#endif // 2
 
 #if 3
         /// \brief Assign a `PatternSpectra2D` based on two specific `Attribute`s
@@ -269,11 +249,7 @@ class ImageTree {
                            const std::vector<int> &scl,
                            cv::Mat &residual, cv::Mat &scale,
                            std::pair<fl::Node *, int> &current) const;
-#if 2
-        /// \remark Obsolete. Test replacement function.
-        template<class TAT, class Function>
-        std::pair<bool, bool> attributeProfile(Function predicate, Node *root, std::map<Node *, bool> *ires);
-#endif // 2
+
 #if 3
         template<class AT1, class AT2>
         void addPatternSpectra2DToNode(Node *cur, PatternSpectra2DSettings *settings) const;

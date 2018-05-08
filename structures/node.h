@@ -142,7 +142,7 @@ namespace fl{
             /// \brief Retrieve children `Attribute`s of a specific type.
             void getChildrenAttributes(const std::string &name, std::vector <Attribute *> &cat) const;
 
-#if 2
+#if 3
 
             // pattern spectra access:
             /// \brief Retrieve an `PatternSpectra2D` of a specific type.
@@ -150,9 +150,9 @@ namespace fl{
 
             /// \brief Retrieve children `PatternSpectra2D`s of a specific type.
             void getChildrenPatternSpectra2D(const std::string &name, std::vector <AnyPatternSpectra2D *> &cps) const;
-#endif
+#endif // #if 3 - pattern spectra
 
-#endif
+#endif // #if 1 - attribute
             // friends and algorithms:
 
             friend std::pair<int, bool> mserRecursive(Node *root, const int deltaLvl, std::vector <Node * > &mserOrder, int minArea, double maxVariation);
@@ -294,6 +294,8 @@ namespace fl{
             /// \brief Delete a child `Node` and adjust the subtree according to the max filtering rule.
             bool maxRuleDelete(int childIndex);
 
+            /// \brief Decorator for various deletion rules. If a `Node` can't be removed from the `ImageTree`
+            /// in order to preserve a valid structure by assigning it the gray level of it's parent `Node`.
             bool softCollapse(filteringFunction f, int childIndex);
 
             /// \brief Set the available filtering functions.
@@ -302,9 +304,10 @@ namespace fl{
             std::string getIDString(fl::Node *child);
 
 #if 1
-            std::map <std::string, AnyPatternSpectra2D *> patternspectra;
             std::map <std::string, Attribute *> attributes;
             std::map <std::string, int> attributeCount;
+            std::map <std::string, AnyPatternSpectra2D *> patternspectra;
+
 #endif
 
             const cv::Mat *referenceImg;

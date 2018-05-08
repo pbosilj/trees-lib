@@ -10,7 +10,7 @@ std::vector<Node::anyFilter> Node::filteringOptions(0);
 ///
 /// \param S An array of pixel coordinates
 Node::Node(const std::vector< std::pair< int, int > >& S)
-        : _propagatingContrast(0), _S(S), sizeKnown(false), ncountKnown(false) {
+        : _S(S),  _propagatingContrast(0), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
     if (Node::filteringOptions.empty())
         this->setFilteringFunctions();
@@ -24,7 +24,7 @@ Node::Node(const std::vector< std::pair< int, int > >& S)
 ///   \remark All children in \p children have to be of the same type
 Node::Node(const std::vector< std::pair< int, int > >& S,
 	       const std::vector< Node* >& children)
-		  : _propagatingContrast(0), _S(S), _children(children), sizeKnown(false), ncountKnown(false) {
+		  : _S(S), _children(children), _propagatingContrast(0), sizeKnown(false), ncountKnown(false) {
     this->setParent(NULL);
     for (int i=0, szi = this->_children.size(); i < szi; ++i){
         this->_children[i]->setParent(this);
@@ -34,10 +34,14 @@ Node::Node(const std::vector< std::pair< int, int > >& S,
 }
 
 Node::Node(const Node& other)
-        : _propagatingContrast(other._propagatingContrast), _S(other._S), _children(other._children), _parent(other._parent), _level(other._level),
+        : _S(other._S), _children(other._children), _parent(other._parent), _level(other._level),
+        _grayLevel(other._grayLevel), _hgrayLevels(other._hgrayLevels),
+        _propagatingContrast(other._propagatingContrast), _propagatingHyperContrast(other._propagatingHyperContrast),
         sizeKnown(other.sizeKnown), ncountKnown(other.ncountKnown),
+        attributes(other.attributes), attributeCount(other.attributeCount), patternspectra(other.patternspectra),
         referenceImg(other.referenceImg), size(other.size), ncount(other.ncount) {
-    this->attributes.insert(other.attributes.begin(), other.attributes.end());
+    //this->attributes.insert(other.attributes.begin(), other.attributes.end());
+    //this->patternspectra.insert(other.patternspectra.being(), other.patternspectra.end());
     if (Node::filteringOptions.empty())
         this->setFilteringFunctions();
 }
@@ -380,8 +384,8 @@ void Node::colorMe(cv::Mat& img) const{
 /// \remark To be used when the gray level of a `Node` is a vector
 /// value (i.e. hierarchies from multichannel images).
 void Node::colorThem(std::vector <cv::Mat> &imgs) const{
-    for (int i=0, szi = this->_S.size(); i < szi; ++i){
-        for (int j=0; j < imgs.size(); ++j){
+    for (int i=0, szi = this->_S.size(), szj = imgs.size(); i < szi; ++i){
+        for (int j=0; j < szj; ++j){
             imgs[j].at<uchar>(this->_S[i].second, this->_S[i].first) = (uchar)this->_hgrayLevels[j];
         }
     }
@@ -509,7 +513,7 @@ void Node::getChildrenAttributes(const std::string &name, std::vector <Attribute
     return;
 }
 
-#if 2
+#if 3
 
 /// The specific attributes are specified by their static identifier
 /// `SpecificAttribute::name` assigned for every attribute.
@@ -550,7 +554,7 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
     return;
 }
 
-#endif // #if 2 - pattern spectra
+#endif // #if 3 - pattern spectra
 #endif // #if 1 - attributes
 
 /// Deletes a child from this `Node`. Does not check for `Node` type
@@ -565,7 +569,7 @@ void Node::getChildrenPatternSpectra2D(const std::string &name, std::vector <Any
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`.
 bool Node::deleteChild(int childIndex){
-    if (this->_children.size() <= childIndex)
+    if ((int)this->_children.size() <= childIndex)
         return false;
 
     Node *toDelete = this->_children[childIndex];
@@ -636,14 +640,14 @@ bool Node::collapseSubtree(void){
 ///     - 4 = SOFT SUBTRACTIVE. Like subtractive, but soft.
 ///     - 5 = SOFT MAX. Like max, but soft.
 /// \note Soft filtering rules do not return `false` upon unsuccessfull
-/// delete, but rather set the gray level of the child `Node` to that
+/// delete, but rather sets the gray level of the child `Node` to that
 /// of its parent, thus `soft` deleting it.
 ///
 /// \return succcess of the `deleteChildWithRule` operation.
 /// \remark This function invalidates `Node::ncountKnown` and triggers a
 ///  recalculation at next call to `nodeCount()`.
 bool Node::deleteChildWithRule(int childIndex, int rule){
-    return (this->filteringOptions.size() > rule) &&
+    return ((int)this->filteringOptions.size() > rule) &&
             Node::filteringOptions[rule](this, childIndex);
            //(this->*(this->filteringOptions[rule]))(childIndex);
 }
@@ -856,7 +860,7 @@ bool Node::directRuleDelete(int childIndex){
 }
 
 bool Node::subtractiveRuleDelete(int childIndex){
-    if (childIndex >= this->_children.size())
+    if (childIndex >= (int)this->_children.size())
         return false;
 
     Node *childToDelete = this->_children[childIndex];
@@ -879,11 +883,18 @@ bool Node::subtractiveRuleDelete(int childIndex){
 }
 
 bool Node::maxRuleDelete(int childIndex){ // or is it min rule?
-    return (childIndex < this->_children.size() &&
+    return (childIndex < (int)this->_children.size() &&
             this->_children[childIndex]->collapseSubtree() &&
             this->deleteChild(childIndex));
 }
 
+/// \param f Filtering function to decorate.
+/// \param childIndex The index of a `child` Node to attempt the
+/// deletion upon.
+///
+/// Soft filtering rules do not return `false` upon unsuccessfull
+/// delete using rule `f`, but rather sets the gray level of the
+/// child `Node` to that of its parent, thus `soft` deleting it.
 bool Node::softCollapse(filteringFunction f, int childIndex){
 
     bool success = (this->*(f))(childIndex);

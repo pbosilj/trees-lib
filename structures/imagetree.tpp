@@ -29,6 +29,12 @@ namespace fl{
 ///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
 ///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
 ///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
+///     - 3 = SOFT DIRECT. Like direct, but soft.
+///     - 4 = SOFT SUBTRACTIVE. Like subtractive, but soft.
+///     - 5 = SOFT MAX. Like max, but soft.
+/// \note Soft filtering rules do not return `false` upon unsuccessfull
+/// delete, but rather sets the gray level of the child `Node` to that
+/// of its parent, thus `soft` deleting it.
 ///
 /// \param root (discouraged) Should be omitted if performing the filtering
 /// on the whole `ImageTree` (intended use). `Node *` to the subtree which
@@ -121,8 +127,7 @@ void ImageTree::addAttributeToTree(AttributeSettings *settings, bool deleteSetti
 /// The function will take care of multiple assigned
 /// copies of `Attribute` to the `ImageTree`.
 ///
-/// \note One call to this function
-/// must be made
+/// \note One call to this function must be made
 /// for each call to `addAttributeToTree<AT>()`.
 ///
 /// \note This should eventually take care of the `AttributeSettings`
@@ -196,6 +201,40 @@ void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, 
         attributeValues.emplace_back(cur->level(), (double)((AT*)cur->getAttribute(AT::name))->value());
         //out << cur->level() << " " << ((AT*)cur->getAttribute(AT::name))->value() << std::endl;
     }
+}
+
+
+/// TODO: check correctness, implement three different summation rules
+template<class ATT>
+void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root) const{
+    if (_root == NULL){
+        this->calculateGranulometryHistogram<ATT>(GCF, this->root());
+        return;
+    }
+
+    if (_root == this->root())
+        GCF.clear();
+
+    std::vector <const fl::Node *> toProcess(1, _root);
+
+    const Node *cur;
+    do{
+        cur = toProcess.back();
+
+        double attributeValue = (double)((ATT*)cur->getAttribute(ATT::name))->value();
+
+        // insert attributeValue in GCF
+        ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
+
+        toProcess.pop_back();
+
+        for (int i=0, szi = cur->_children.size(); i < szi; ++i)
+            toProcess.push_back(cur->_children[i]);
+    }while(!toProcess.empty());
+
+
+    //std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),
+    //                 [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
 }
 
 /// \param nodes A vector of nodes for which the output is written
@@ -320,6 +359,12 @@ void ImageTree::revertSettingsChanges() const{
 ///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
 ///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
 ///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
+///     - 3 = SOFT DIRECT. Like direct, but soft.
+///     - 4 = SOFT SUBTRACTIVE. Like subtractive, but soft.
+///     - 5 = SOFT MAX. Like max, but soft.
+/// \note Soft filtering rules do not return `false` upon unsuccessfull
+/// delete, but rather sets the gray level of the child `Node` to that
+/// of its parent, thus `soft` deleting it.
 ///
 /// \param root (optional) Should be omitted if performing the filtering
 /// on the whole `ImageTree`. `Node *` to the subtree which should be
@@ -363,13 +408,19 @@ void ImageTree::filterTreeByAttribute(int rule, Node *root){
 ///     - 0 = DIRECT FILTERING. No sub-tree adjustment.
 ///     - 1 = SUBTRACTIVE FILTERING. Contrast adjustment on the subtrees.
 ///     - 2 = MAX FILTERING. Sub-trees removed (collapsed).
+///     - 3 = SOFT DIRECT. Like direct, but soft.
+///     - 4 = SOFT SUBTRACTIVE. Like subtractive, but soft.
+///     - 5 = SOFT MAX. Like max, but soft.
+/// \note Soft filtering rules do not return `false` upon unsuccessfull
+/// delete, but rather sets the gray level of the child `Node` to that
+/// of its parent, thus `soft` deleting it.
 ///
 /// \param root (discouraged) Should be omitted if performing the filtering
 /// on the whole `ImageTree` (intended usage). `Node *` to the subtree which
 /// should be filtered.
 /// If set to anything other than the root of the tree, it will only filter
 /// the subtree.
-/// \note Big implementation overlap with `filterTreeByALevelPredicate`.
+/// \note Big implementation overlap with `filterTreeByLevelPredicate`.
 /// Should figure out a better way to reuse code rather than copy it.
 template<class TAT, class Function>
 void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Node *root){
@@ -420,90 +471,6 @@ void ImageTree::filterTreeByAttributePredicate(Function predicate, int rule, Nod
     root->_propagatingContrast = 0;
     root->_propagatingHyperContrast.clear();
 }
-
-#if 2
-
-/// \tparam TAT The `TypedAttribute<X>` whose values in the `Node`s of
-/// the `ImageTree` are used for attribute profile
-/// calculation. `X` must be a scalar value (castable to `double`).
-/// TAT must be an increasing `Attribute`.
-///
-/// \param predicate A functor object representing an increasing
-/// predicate to be used for attribute profile calculation.
-///
-/// \remark The combination of an increasing `Attribute` and `Predicate`
-/// used corresponds to the increasing criterion used to construct this
-/// attribute profile.
-///
-/// \param root (discouraged) Should be omitted if performing the filtering
-/// on the whole `ImageTree` (intended usage). `Node *` to the subtree which
-/// should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
-///
-/// \note This function was optimized for increasing criteria, and will work faster
-/// than the generic `attributeProfile()` function.
-///
-/// \remark TODO if all the children are at the same level; they can be deleted
-///
-/// \remark TODO this function modifies the tree. would be useful to have a copy
-/// operator
-///
-/// \remark Obsolete. Test replacement function.
-template<class TAT, class Function>
-void ImageTree::attributeProfileIncreasing(Function predicate, Node *root){
-    if (root==NULL){
-        attributeProfileIncreasing<TAT>(predicate, this->_root);
-        return;
-    }
-    std::vector<Node *> &chi = root->_children;
-    for (int i=0, szi = (int)chi.size(); i < szi; ++i){
-        if (predicate(((TAT*)chi[i]->getAttribute(TAT::name))->value(), ((TAT*)root->getAttribute(TAT::name))->value()) == false){
-            // collapse:
-            for (; !(chi[i]->_children.empty());){
-                chi[i]->deleteChild(0);
-            }
-            chi[i]->_grayLevel = root->_grayLevel;
-            chi[i]->_hgrayLevels = root->_hgrayLevels;
-        }
-        else{
-            attributeProfileIncreasing<TAT>(predicate, chi[i]);
-        }
-    }
-}
-
-/// \tparam TAT The `TypedAttribute<X>` whose values in the `Node`s of
-/// the `ImageTree` are used for attribute profile
-/// calculation. `X` must be a scalar value (castable to `double`).
-/// TAT can be any kind of `Attribute`.
-///
-/// \param predicate A functor object representing a
-/// predicate to be used for attribute profile calculation.
-///
-/// \remark Any combination of  `Attribute` and `Predicate` can be
-/// used.
-///
-/// \param root (discouraged) Should be omitted if performing the filtering
-/// on the whole `ImageTree` (intended usage). `Node *` to the subtree which
-/// should be
-/// filtered. If set to anything other than the root of
-/// the tree, it will only filter the subtree.
-///
-/// \note This function should be used for non-increasing criteria. The function
-/// `attributeProfileIncreasing()` has been optimized to work with increasing
-/// criteria.
-///
-/// \remark TODO this function modifies the tree. would be useful to have a copy
-/// operator.
-///
-/// \remark Obsolete. Test replacement function.
-template<class TAT, class Function>
-void ImageTree::attributeProfile(Function predicate, Node *root){
-    attributeProfile<TAT>(predicate, root, NULL);
-}
-
-#endif // 2
-
 
 /// \tparam TAT Specifies the `TypedAttribute<X>` whose values are used as
 /// new levels in this `ImageTree` (e.g. `AreaAttribute`).
@@ -748,62 +715,6 @@ void ImageTree::calculateUO(std::vector <int> &residualMap,
         //std::cout << residualMap[current.second] << std::endl;
     }
 }
-
-#if 2
-
-/// \remark Obsolete. Test replacement function.
-template<class TAT, class Function>
-std::pair<bool, bool> ImageTree::attributeProfile
-        (Function predicate, Node *root, std::map<Node *, bool> *ires){
-    std::pair<bool, bool> result = std::make_pair(false, true); // (markedSelf, markedBranch)
-    if (ires == NULL){
-        std::map <Node *, bool> *tmp = new std::map <Node *, bool>();
-        return attributeProfile<TAT>(predicate, root, tmp);
-        delete tmp;
-    }
-    if (root==NULL){
-        return attributeProfile<TAT>(predicate, this->_root, ires);
-    }
-
-    std::vector<Node *> &chi = root->_children;
-    for (int i=0; i < (int)chi.size(); ++i){
-        std::pair<bool,bool> childRes = attributeProfile<TAT>(predicate, chi[i], ires);
-        result.markedBranch = result.markedBranch && childRes.markedBranch;
-    }
-
-    result.markedBranch = result.markedBranch && !chi.empty();
-    result.markedSelf = !result.markedBranch && predicate(((TAT*)root->getAttribute(TAT::name))->value());
-    result.markedBranch = result.markedBranch || result.markedSelf;
-
-    (*ires)[root] = result.markedSelf;
-
-    for (int i=0; i < chi.size();){
-        // child is good and should be kept:
-        if ((*ires)[chi[i]] == true){
-            ++i;
-            continue;
-        }
-        // child is bad and a leaf, so we make it like parent:
-        if (chi[i]->_children.empty()){
-            chi[i]->_grayLevel = root->_grayLevel;
-            chi[i]->_hgrayLevels = root->_hgrayLevels;
-            ++i;
-            continue;
-        }
-        // child is bad and an inner node; so we assign
-        // its subtree and self-pixels to the parent
-        root->deleteChild(i);
-    }
-
-    if (root == this->_root){
-        delete ires;
-    }
-
-    return result;
-}
-
-
-#endif // 2
 
 #if 3
 
