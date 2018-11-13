@@ -58,7 +58,7 @@ namespace fl{
         protected:
         private:
             bool ownMoments;
-            fl::MomentsSettings *tmp;
+            std::vector<fl::MomentsSettings *>tmp;
     };
 
 }

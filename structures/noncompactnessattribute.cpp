@@ -11,7 +11,7 @@ const std::string fl::NonCompactnessAttribute::name = "non-compactness";
 ///
 /// Ensures that `AreaAttribute` as well as `MomentsAttribute` are added to the `ImageTree`.
 fl::NonCompactnessAttribute::NonCompactnessAttribute(const Node *baseNode, const ImageTree *baseTree, AttributeSettings *settings, int deleteSettings)
-    : TypedAttribute<double>(baseNode, baseTree, settings, deleteSettings), ownMoments(false), tmp(NULL){
+    : TypedAttribute<double>(baseNode, baseTree, settings, deleteSettings), ownMoments(false), tmp(std::vector<fl::MomentsSettings *>(0)){
             this->initSettings();
 
             if (!(this->myNode->isRoot()))
@@ -36,7 +36,7 @@ fl::NonCompactnessAttribute::~NonCompactnessAttribute(){
 /// Ensures that the `MomentsSettings` for the internally used `MomentsAttribute`
 /// are correctly set. Stores the previous `AttributeSettings` of `MomentsSettings`
 void fl::NonCompactnessAttribute::ensureDefaultSettings(){
-    this->tmp = ((MomentsSettings *)this->myTree->getAttributeSettings<fl::MomentsAttribute>())->clone();
+    this->tmp.emplace_back(((MomentsSettings *)this->myTree->getAttributeSettings<fl::MomentsAttribute>())->clone());
     this->myTree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::hu, 1));
     TypedAttribute<double>::ensureDefaultSettings();
 }
@@ -45,9 +45,9 @@ void fl::NonCompactnessAttribute::ensureDefaultSettings(){
 /// in `NoncCompactnessAttribute::ensureDefaultSettings()`.
 void fl::NonCompactnessAttribute::revertSettingsChanges(){
     if (this->hasStoredSettnigs()){
-        this->myTree->changeAttributeSettings<fl::MomentsAttribute>(this->tmp, false);
-        delete this->tmp;
-        tmp = NULL;
+        this->myTree->changeAttributeSettings<fl::MomentsAttribute>(this->tmp.back(), false);
+        delete this->tmp.back();
+        this->tmp.pop_back();
     }
     TypedAttribute<double>::revertSettingsChanges();
 }

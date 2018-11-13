@@ -128,7 +128,7 @@ void fl::Node::printElementsWithAttribute(std::ostream &outStream, int depth) co
 
     AT* attr = ((AT *)this->getAttribute(AT::name));
 
-    outStream << " -> " << this->level() << " " << attr->value() << std::endl;
+    outStream << " -> " << this->level() << "? " << attr->value() << std::endl;
     for (int i=0, szi = (int)this->_children.size(); i < szi; ++i)
         this->_children[i]->printElementsWithAttribute<AT>(outStream, depth+1);
     return;

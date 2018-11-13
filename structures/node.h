@@ -173,7 +173,6 @@ namespace fl{
             bool visited;
 
             /// \brief The list of own elements.
-
             /// The list of the pixels not belonging to any of its children.
             std::vector<std::pair<int, int> > _S;
 

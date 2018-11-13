@@ -190,7 +190,7 @@ double fl::Binning::getUnscaledUpperLimit(int binIndex) const{
             return this->binUpperLimits[binIndex-1];
             break;
         case logarithmic:
-            return std::pow(this->b, binIndex);
+            return (std::pow(this->b, binIndex) - 1)/(this->referenceScaleRange - 1);
             break;
         case linear:
         default:

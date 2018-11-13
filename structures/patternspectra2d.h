@@ -167,6 +167,8 @@ namespace fl{
 
             /// \brief Reset the values stored in the pattern spectrum.
             void resetPatternSpectraMatrix(void);
+
+            PatternSpectra2DSettings *mySettings; ///< The `PatternSpectra2DSettings` associated to this spectrum. MOVE BACK TO PROTECTED
         protected:
             virtual const std::vector<std::vector<double> > &getPatternSpectraMatrix(bool userCall, PatternSpectra2DSettings *settings, std::vector<Node *> *pathDown = NULL);
             bool valueSet; ///< Indicator variable signifying if the pattern spectrum is calculated or not.
@@ -179,7 +181,7 @@ namespace fl{
             /// \brief Gets the reference to the filled out matrix. Handles internal recursive calls differently from
             /// user-made calls.
             virtual void calculatePatternSpectra2D(PatternSpectra2DSettings *baseSettings = NULL, std::vector<Node *> *pathDown = NULL) = 0;
-            PatternSpectra2DSettings *mySettings; ///< The `PatternSpectra2DSettings` associated to this spectrum.
+
         private:
     };
 

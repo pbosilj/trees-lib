@@ -163,7 +163,7 @@ class ImageTree {
         /// \brief Get the granulometric curve from the `ImageTree` for the given
         /// `Attribute`
         template<class ATT>
-        void calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root = NULL) const;
+        void calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root = NULL, int rule = 0) const;
 
         /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
         template <class AT>

@@ -23,21 +23,24 @@ fl::PatternSpectra2D<AT1,AT2>::PatternSpectra2D(Node *baseNode, const ImageTree 
                                     : AnyPatternSpectra2D(baseNode, baseTree, settings, deleteSettings){
     if (this->mySettings->cutOff && AT1::name == "area"){ // sets up the upper bin limits if Area is used for the increasing attribute and cutOff is set
         bool pass = false;
-        if (this->myNode->parent() != NULL){
+        if (this->myNode->parent() != NULL){ // if myNode is not root
             std::vector <double> &ulp = ((PatternSpectra2D<AT1,AT2> *)this->myNode->parent()->getPatternSpectra2D(AT1::name+AT2::name))->mySettings->upperLimits;
-            if (ulp[0] != 0){
+            if (ulp[0] != 0){ // copy upper limits from parent
                 this->mySettings->upperLimits = ulp;
                 pass = true;
             }
         }
-        if (!pass){
+        if (!pass){ // failing that, construct its own upper limit
             for (int i=0, szi = this->mySettings->firstAttBin.nBins; i < szi; ++i){
-                int upperArea = this->mySettings->firstAttBin.getUnscaledUpperLimit(i+1);
+                double percentageLimit = this->mySettings->firstAttBin.getUnscaledUpperLimit(i+1);
+                int upper = this->mySettings->firstAttBin.maxValue;
+                int lower = this->mySettings->firstAttBin.minValue;
+                int upperArea = percentageLimit * (upper-lower) + lower;
+
                 cv::Mat image = cv::Mat::zeros(upperArea, 1, CV_8U);
                 fl::Node *root =fl::maxTreeNister(image, std::greater<int>());
                 fl::ImageTree *tree = new fl::ImageTree(root,std::make_pair(image.rows, image.cols));
                 tree->addAttributeToTree<AT2>(this->myNode->getAttribute(AT2::name)->mySettings, false);
-
                 this->mySettings->upperLimits[i] = this->mySettings->secondAttBin.getBin(((AT2 *)root->getAttribute(AT2::name))->value());
 
                 tree->deleteAttributeFromTree<AT2>();
@@ -83,6 +86,8 @@ void fl::PatternSpectra2D<AT1,AT2>::calculatePatternSpectra2D(PatternSpectra2DSe
 
         for (int _i=0, _szi = cpsvec.size(); _i < _szi; ++_i){
             for (int _j=0, _szj = cpsvec.back().size(); _j < _szj; ++_j){
+                if (cpsvec[_i][_j] > 0){
+                }
                 (*curPSHolder)[_i][_j] += cpsvec[_i][_j];
             }
         }

@@ -205,15 +205,19 @@ void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, 
 
 
 /// TODO: check correctness, implement three different summation rules
+/// rule = 0 -> number of regions
+/// rule = 1 -> number of pixels
 template<class ATT>
-void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root) const{
+void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root, int rule) const{
     if (_root == NULL){
         this->calculateGranulometryHistogram<ATT>(GCF, this->root());
         return;
     }
 
-    if (_root == this->root())
-        GCF.clear();
+    GCF.clear();
+
+    if (rule == 1)
+        this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
 
     std::vector <const fl::Node *> toProcess(1, _root);
 
@@ -224,7 +228,16 @@ void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const
         double attributeValue = (double)((ATT*)cur->getAttribute(ATT::name))->value();
 
         // insert attributeValue in GCF
-        ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
+        switch (rule){
+            case 0: // number of regions -> sum 1 for every region
+                ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
+                break;
+            case 1: // number of pixels -> sum the area of the region
+            default:
+                // ok, since if value does not exist, it will be initialized to 0
+                GCF[attributeValue] += ((fl::AreaAttribute *)cur->getAttribute(fl::AreaAttribute::name))->value();
+                break;
+        }
 
         toProcess.pop_back();
 
@@ -232,6 +245,8 @@ void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, const
             toProcess.push_back(cur->_children[i]);
     }while(!toProcess.empty());
 
+    if (rule == 1)
+        this->deleteAttributeFromTree<fl::AreaAttribute>();
 
     //std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),
     //                 [](const std::pair<double, int>& x, const std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
@@ -608,9 +623,8 @@ void ImageTree::addAttributeToNode(Node *cur, AttributeSettings *settings) const
         {
             AT *nat = new AT(tmp, this, settings); // how is memory lost here???
             AT *oat = (AT *)(tmp->addAttribute(nat, AT::name));
-            if (oat != NULL){
+            if (oat != NULL)
                 delete oat;
-            }
         }
         toProcess.pop_back();
         for (int i=0, szi = tmp->_children.size(); i < szi; ++i){
@@ -631,8 +645,6 @@ void ImageTree::deleteAttributeFromNode(Node *cur) const{
             AT *oat = (AT *)(tmp->deleteAttribute(AT::name));
             if (oat != NULL)
                 delete oat;
-            else
-                return;
         }
         toProcess.pop_back();
         for (int i=0, szi = tmp->_children.size(); i < szi; ++i){

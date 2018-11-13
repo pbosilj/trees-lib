@@ -696,9 +696,19 @@ void Node::getAllDescendants(std::vector <Node *> &allNodes){
 /// \note Do I lose memory here when I forget the old attribute?
 Attribute *Node::addAttribute(Attribute *nat, const std::string &name){
     ++this->attributeCount[name];
-    Attribute *retval = this->attributes[name];
-    this->attributes[name] = nat;
-    return retval;
+
+    std::map <std::string, Attribute *>::iterator pos = this->attributes.find(name);
+    if (pos != this->attributes.end()){
+        Attribute *retval = pos->second;
+        pos->second = nat;
+        return retval;
+    }
+    this->attributes.emplace(name, nat);
+    return NULL;
+
+    //Attribute *retval = this->attributes[name];
+    //this->attributes[name] = nat;
+    //return retval;
 }
 
 /// The function will take care of multiple assigned
@@ -720,10 +730,11 @@ Attribute *Node::addAttribute(Attribute *nat, const std::string &name){
 /// the node, returns
 /// a pointer to that copy of the `Attribute`. `NULL` otherwise.
 Attribute *Node::deleteAttribute(const std::string &name){
+
     std::map<std::string, Attribute *>::iterator pos = this->attributes.find(name);
-    if (pos == this->attributes.end()){
+    if (pos == this->attributes.end())
         return NULL;
-    }
+
     --this->attributeCount[name];
     if (this->attributeCount[name] == 0){
         Attribute *oat = pos->second;

@@ -137,7 +137,7 @@ namespace fl{
             /// ensureDefaultSettings().
             ///
             /// \return `true` if there are stored `AttributeSettings`, `false` otherwise.
-            bool hasStoredSettnigs() {return storedSettings == 1; }
+            bool hasStoredSettnigs() {return storedSettings > 0; }
 
             /// \brief The value of this `TypedAttribute`.
             AttType attValue;
