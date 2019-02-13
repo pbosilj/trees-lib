@@ -335,7 +335,7 @@ void testRange(void){
 
 
 void outputMSERPointsAndPS(int delta, cv::Mat &image, std::ofstream &outPS, std::ofstream &outP, int salientNum);
-void outputGlobalPS(cv::Mat &image, std::ostream &outPS);
+void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2);
 
 std::string removeExtension(const std::string &filename) {
     size_t lastdot = filename.find_last_of(".");
@@ -861,7 +861,7 @@ void globalPSForAll(int argc, char** argv){
 //                        outputGlobalPS(channels[1], descOut);
 //                        outputGlobalPS(channels[2], descOut);
 //std::cerr << "before global " << std::endl;
-                        outputGlobalPS(patch, descOut);
+                        outputGlobalPS(patch, descOut, descOut);
 //std::cerr << "after global " << std::endl;
                         ++sum;
 
@@ -2324,11 +2324,43 @@ void testAlpha(int delta, cv::Mat &image1, cv::Mat &image2, cv::Mat &display, st
     }
 }
 
-
 void testSoil(){
-    cv::Mat image = cv::imread("/home/petra/Documents/Data/Soil/cuts/test_2.png", CV_LOAD_IMAGE_GRAYSCALE);
-    outputGlobalPS(image, std::cout);
-    std::cout << "getting out of the function " << std::endl;
+    cv::Mat image1 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs1_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs1_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image1, ofs1_count, ofs1_sum);
+
+    cv::Mat image2 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs2_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs2_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image2, ofs2_count, ofs2_sum);
+
+    cv::Mat image3 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs3_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs3_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image3, ofs3_count, ofs3_sum);
+
+    cv::Mat image4 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs4_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs4_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image4, ofs4_count, ofs4_sum);
+
+    cv::Mat image5 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs5_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs5_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image5, ofs5_count, ofs5_sum);
+
+    cv::Mat image6 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs6_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
+    std::ofstream ofs6_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image6, ofs6_count, ofs6_sum);
+}
+
+void calculateSE(cv::Mat &image, std::ostream &outPS){
+    int morph_elem = 0; // find "square"
+    int morph_operator = cv::MORPH_OPEN; // find opening and closing
+
+    std::vector <int> sizes = {4,34,53,84,159,417,834}; // initialize
 }
 
 void visualizePS(const std::vector<std::vector<double> > ps){
@@ -2362,11 +2394,11 @@ void visualizePS(const std::vector<std::vector<double> > ps){
                     output.at<uchar>(pi * cell + i, pj*cell + j) = (uchar)value;
 
             std::cout << "(";
-            std::cout << std::fixed << std::setw( 6 ) << std::setprecision( 4 )
+            std::cout << std::fixed << std::setw( 8 ) << std::setprecision( 4 )
                 << std::setfill( '0' ) << ps[pi][pj];
             std::cout <<  " " << std::fixed << std::setw( 3 ) << std::setfill(' ') << value << ") ";
         }
-        std::cout << std::fixed << std::setw( 5 ) << std::setprecision( 4 )
+        std::cout << std::fixed << std::setw( 8 ) << std::setprecision( 4 )
                 << std::setfill( '0' ) << sumRow;
         std::cout << std::endl;
 
@@ -2389,22 +2421,22 @@ void visualizePS(const std::vector<std::vector<double> > ps){
 }
 
 
-void outputGlobalPS(cv::Mat &image, std::ostream &outPS){
+void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
 
         //outPS << "200" << std::endl;
 
-        fl::ImageTree *maxTree = new fl::ImageTree(fl::maxTreeNister(image, std::greater<int>()),
-                                                    std::make_pair(image.rows, image.cols)); // am I sure this is the max-tree?
+        fl::ImageTree *maxTree = new fl::ImageTree(fl::maxTreeNister(image, std::greater<int>()), // max-tree
+                                                    std::make_pair(image.rows, image.cols));
 //        maxTree->setImage(image);
 
 //        fl::ImageTree *maxTree = new fl::ImageTree(fl::tosGeraud(image), std::make_pair(image.rows, image.cols));
 
 
         maxTree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-        maxTree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
-        maxTree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
-                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 1, image.rows*image.cols, fl::Binning::logarithmic),
-                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), false, true, true));
+//        maxTree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
+//        maxTree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
+//                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 60, 150000, fl::Binning::logarithmic),
+//                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), false, true, true));
 
 //        maxTree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
 //        maxTree->addAttributeToTree<fl::EntropyAttribute>(new fl::EntropySettings());
@@ -2412,81 +2444,98 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS){
 //                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 1, image.rows*image.cols, fl::Binning::logarithmic),
 //                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), true, true));
 
-        {
+        std::cout << "Max granulometric curve" << std::endl;
+        std::map<double, int> maxGCF0;
+        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF0, 0);
+        std::map<double, int> maxGCF1;
+        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF1, 1);
+//
+//
+//        if (0){
+//            if (0){
+//                std::cout << "Granulometric curve?" << std::endl;
+//                std::map<double, int> GCF;
+//                maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(GCF);
+//                //std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),[](std::pair<double, int>& x, std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
+//                int limit = 10;
+//                for(auto elem : GCF){
+//                    std::cout << "(" << elem.first << " " << elem.second << " ) ";
+//                    if (elem.first > limit){
+//                        std::cout << std::endl;
+//                        limit *= 10;
+//                    }
+//                }
+//                std::cout << std::endl;
+//                std::cout << "End curve?" << std::endl;
+//            }
+//
+//            //maxTree->printTreeWithAttribute<fl::AreaAttribute>();
+//
+//            const std::vector<std::vector<double> > &ps = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->getPatternSpectraMatrix();
+//    //        const std::vector<std::vector<double> > &ps = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::EntropyAttribute::name)->getPatternSpectraMatrix();
+//            int nbn = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.nBins;
+//            int lower = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.minValue;
+//            int upper = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.maxValue;
+//
+//            std::cout << "nbn:" << nbn << " lower: " << lower << " upper: " << upper << std::endl;
+//            std::vector <double> limits;
+//            for (int j=1; j <= GAREA; ++j){
+//                limits.push_back(maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.getUnscaledUpperLimit(j));
+//                limits.back() = limits.back() * (upper-lower) + lower;
+//                std::cout << limits.back() << " ";
+//            }
+//            std::cout << std::endl;
+//
+//            std::vector<std::vector<double> >pps;
+//
+//            for (int j=1; j < (int)ps.size()-1; ++j){
+//                pps.push_back(std::vector<double>());
+//                for (int k=1; k < (int)ps[j].size()-1; ++k){
+//                    //outPS << std::pow(ps[j][k], 0.2) << " ";
+//                    //pps.back().push_back(std::pow(ps[j][k], 0.2));
+//                    std::cout << ps[j][k] << " ";
+//                    pps.back().push_back(ps[j][k]);
+//                }
+//                std::cout << std::endl;
+//            }
+//
+//            visualizePS(pps);
+//
+//        }
+//
+////        maxTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::NonCompactnessAttribute>();
+////        maxTree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
+//        maxTree->deleteAttributeFromTree<fl::AreaAttribute>();
 
-        std::cout << "Granulometric curve?" << std::endl;
-        std::map<double, int> GCF;
-        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(GCF);
-        int limit = 10;
-        for(auto elem : GCF){
-            std::cout << "(" << elem.first << " " << elem.second << " ) ";
-            if (elem.first > limit){
-                std::cout << std::endl;
-                limit *= 10;
-            }
-        }
-        std::cout << std::endl;
-        std::cout << "End curve?" << std::endl;
 
-        //maxTree->printTreeWithAttribute<fl::AreaAttribute>();
-
-        const std::vector<std::vector<double> > &ps = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->getPatternSpectraMatrix();
-//        const std::vector<std::vector<double> > &ps = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::EntropyAttribute::name)->getPatternSpectraMatrix();
-        int nbn = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.nBins;
-        int lower = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.minValue;
-        int upper = maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.maxValue;
-
-        std::cout << "nbn:" << nbn << " lower: " << lower << " upper: " << upper << std::endl;
-        std::vector <double> limits;
-        for (int j=1; j <= GAREA; ++j){
-            limits.push_back(maxTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.getUnscaledUpperLimit(j));
-            limits.back() = limits.back() * (upper-lower) + lower;
-            std::cout << limits.back() << " ";
-        }
-        std::cout << std::endl;
-
-        std::vector<std::vector<double> >pps;
-
-        outPS << std::endl << ps.size() << " " << ps.back().size() << std::endl;
-
-        for (int j=1; j < (int)ps.size()-1; ++j){
-            pps.push_back(std::vector<double>());
-            for (int k=1; k < (int)ps[j].size()-1; ++k){
-                //outPS << std::pow(ps[j][k], 0.2) << " ";
-                //pps.back().push_back(std::pow(ps[j][k], 0.2));
-                outPS << ps[j][k] << " ";
-                pps.back().push_back(ps[j][k]);
-            }
-            outPS << std::endl;
-        }
-
-        //visualizePS(pps);
-
-        }
-
-        maxTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::NonCompactnessAttribute>();
-        maxTree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
-        maxTree->deleteAttributeFromTree<fl::AreaAttribute>();
 
 //        maxTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::EntropyAttribute>();
 //        maxTree->deleteAttributeFromTree<fl::EntropyAttribute>();
-//        maxTree->deleteAttributeFromTree<fl::AreaAttribute>();
+        maxTree->deleteAttributeFromTree<fl::AreaAttribute>();
 
 //        maxTree->unsetImage();
         delete maxTree;
 
-        outPS << std::endl;
+        //outPS << std::endl;
 
-        fl::ImageTree *minTree = new fl::ImageTree(fl::maxTreeNister(image, std::less<int>()),
+        fl::ImageTree *minTree = new fl::ImageTree(fl::maxTreeNister(image, std::less<int>()), // min-tree
                                                     std::make_pair(image.rows, image.cols));
+//
+//        fl::ImageTree *minTree = new fl::ImageTree(fl::maxTreeNister(image, std::greater<int>()), // max-tree
+//                                                    std::make_pair(image.rows, image.cols));
+//        fl::ImageTree *minTree = new fl::ImageTree(fl::omegaTreeAlphaFilter(image),
+//                                std::make_pair(image.rows, image.cols));
+//        fl::ImageTree *minTree = new fl::ImageTree(fl::alphaTreeDualMax(image),
+//                                std::make_pair(image.rows, image.cols));
+//        fl::ImageTree *minTree = new fl::ImageTree(fl::tosGeraud(image),
+//                                        std::make_pair(image.rows, image.cols));
+
 
         minTree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-        minTree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
-        minTree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
-                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 1, image.rows*image.cols, fl::Binning::logarithmic),
-                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), false, true, true));
-
-
+//        minTree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
+//        minTree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
+//                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 60, 150000, fl::Binning::logarithmic),
+//                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), false, true, true));
 
 //        minTree->setImage(image);
 //        minTree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
@@ -2495,61 +2544,160 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS){
 //                (new fl::PatternSpectra2DSettings(fl::Binning(GAREA, 1, image.cols*image.rows, fl::Binning::logarithmic),
 //                                                  fl::Binning(GSHAPE, 1, GNC, fl::Binning::logarithmic), true, true));
 
-        {
-        std::cout << "Granulometric curve?" << std::endl;
-        std::map<double, int> GCF;
-        minTree->calculateGranulometryHistogram<fl::AreaAttribute>(GCF);
-        int limit = 10;
-        for(auto elem : GCF){
-            std::cout << "(" << elem.first << " " << elem.second << " ) ";
-            if (elem.first > limit){
-                std::cout << std::endl;
-                limit *= 10;
-            }
-        }
-        std::cout << std::endl;
-        std::cout << "End curve?" << std::endl;
+        std::cout << "Min granulometric curve" << std::endl;
+        std::map<double, int> minGCF0;
+        minTree->calculateGranulometryHistogram<fl::AreaAttribute>(minGCF0, 0);
+        std::map<double, int> minGCF1;
+        minTree->calculateGranulometryHistogram<fl::AreaAttribute>(minGCF1, 1);
 
-        //minTree->printTreeWithAttribute<fl::AreaAttribute>();
+//        if (1){
+//            if (1){
+//                std::cout << "Granulometric curve? COUNT" << std::endl;
+//                std::map<double, int> GCF;
+//                minTree->calculateGranulometryHistogram<fl::AreaAttribute>(GCF, 0);
+////                int limit = 10;
+//                //int sum = 0;
+//                int same = 0;
+//                for(auto elem : GCF){
+//                    if (elem.first == elem.second)
+//                        ++same;
+//                    //outPS << "(" << elem.first << " " << elem.second << " ) ";
+//                    //sum += elem.second;
+//                    //elem.second = sum;
+//                    outPS << elem.first << " " << elem.second << std::endl;
+////                    if (elem.first > limit){
+////                        std::cout << std::endl;
+////                        limit *= 10;
+////                    }
+//                }
+//                outPS << std::endl;
+//                std::cout << "End curve?" << std::endl;
+//                std::cout << same << " entries same out of " << GCF.size() << std::endl;
+//
+//                std::cout << "Granulometric curve? SUM" << std::endl;
+//                std::map<double, int> GCF2;
+//                minTree->calculateGranulometryHistogram<fl::AreaAttribute>(GCF2, 1);
+////                int limit = 10;
+//                //int sum = 0;
+//                same = 0;
+//                for(auto elem : GCF2){
+//                    if (elem.first == elem.second)
+//                        ++same;
+//                    //outPS << "(" << elem.first << " " << elem.second << " ) ";
+//                    //sum += elem.second;
+//                    //elem.second = sum;
+//                    outPS2 << elem.first << " " << elem.second << std::endl;
+////                    if (elem.first > limit){
+////                        std::cout << std::endl;
+////                        limit *= 10;
+////                    }
+//                }
+//                outPS2 << std::endl;
+//                std::cout << "End curve?" << std::endl;
+//                std::cout << same << " entries same out of " << GCF.size() << std::endl;
+//            }
+            //minTree->printTreeWithAttribute<fl::AreaAttribute>();
 
-        const std::vector<std::vector<double> > &ps = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->getPatternSpectraMatrix();
-//        const std::vector<std::vector<double> > &ps = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::EntropyAttribute::name)->getPatternSpectraMatrix();
+//            const std::vector<std::vector<double> > &ps = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->getPatternSpectraMatrix();
+    //        const std::vector<std::vector<double> > &ps = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::EntropyAttribute::name)->getPatternSpectraMatrix();
 
 
-        int nbn = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.nBins;
-        int lower = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.minValue;
-        int upper = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.maxValue;
-        std::cout << "nbn:" << nbn << " lower: " << lower << " upper: " << upper << std::endl;
-        std::vector <double> limits;
-        for (int j=1; j <= GAREA; ++j){
-            limits.push_back(minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.getUnscaledUpperLimit(j));
-            limits.back() = limits.back() * (upper-lower) + lower;
-            std::cout << limits.back() << " ";
-        }
-        std::cout << std::endl;
+//            int nbn = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.nBins;
+//            int lower = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.minValue;
+//            int upper = minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.maxValue;
+//            std::cout << "nbn:" << nbn << " lower: " << lower << " upper: " << upper << std::endl;
+//            std::vector <double> limits;
+//            for (int j=1; j <= GAREA; ++j){
+//                limits.push_back(minTree->root()->getPatternSpectra2D(fl::AreaAttribute::name+fl::NonCompactnessAttribute::name)->mySettings->firstAttBin.getUnscaledUpperLimit(j));
+//                limits.back() = limits.back() * (upper-lower) + lower;
+//                std::cout << limits.back() << " ";
+//            }
+//            std::cout << std::endl;
+//
+//
+//            std::vector<std::vector<double> >pps;
+//
+//            for (int j=1; j < (int)ps.size()-1; ++j){
+//                pps.push_back(std::vector<double>());
+//                for (int k=1; k < (int)ps[j].size()-1; ++k){
+//                    //outPS << std::pow(ps[j][k], 0.2) << " ";
+//                    //pps.back().push_back(std::pow(ps[j][k], 0.2));
+//                    std::cout << ps[j][k] << " ";
+//                    pps.back().push_back(ps[j][k]);
+//                }
+//                std::cout << std::endl;
+//            }
 
+            //visualizePS(pps);
 
-        std::vector<std::vector<double> >pps;
+//        }
 
-        for (int j=1; j < (int)ps.size()-1; ++j){
-            pps.push_back(std::vector<double>());
-            for (int k=1; k < (int)ps[j].size()-1; ++k){
-                //outPS << std::pow(ps[j][k], 0.2) << " ";
-                //pps.back().push_back(std::pow(ps[j][k], 0.2));
-                outPS << ps[j][k] << " ";
-                pps.back().push_back(ps[j][k]);
-            }
-            outPS << std::endl;
-        }
-
-        outPS << std::endl << ps.size() << " " << ps.back().size() << std::endl;
-
-        //visualizePS(pps);
-
-        }
-
-        minTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::NonCompactnessAttribute>();
-        minTree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
+//        minTree->displayTree();
+////        cv::Mat testImg1, testImg2, diff;
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(10000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_10k.png");
+////        testImg1 = cv::Mat::zeros(image.rows, image.cols, CV_8U);
+////        minTree->root()->colorMe(testImg1);
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(20000));
+//        minTree->displayTree();
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(50000));
+//        minTree->displayTree();
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(40000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_40k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(50000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_50k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(60000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_60k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(70000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_70k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(80000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_80k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(90000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_90k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(100000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_100k.png");
+////        testImg2 = cv::Mat::zeros(image.rows, image.cols, CV_8U);
+////        minTree->root()->colorMe(testImg2);
+////        cv::absdiff(testImg1, testImg2, diff);
+////
+////        {
+////            cv::namedWindow("DiffImage", cv::WINDOW_NORMAL);
+////            cv::imshow("DiffImage", diff);
+////            int maxWidth = 1200;
+////            int maxHeight = 1000;
+////
+////            int dispHeight = diff.size().height;
+////            int dispWidth = diff.size().width;
+////
+////            if (!(dispWidth < maxWidth && dispHeight < maxHeight)){
+////                if ((double)dispWidth / maxWidth > (double)dispHeight / maxHeight){
+////                    dispHeight = dispHeight * maxWidth / dispWidth;
+////                    dispWidth = maxWidth;
+////                }
+////                else{
+////                    dispWidth = dispWidth * maxHeight / dispHeight;
+////                    dispHeight = maxHeight;
+////                }
+////            }
+////
+////            cv::resizeWindow("DiffImage", dispHeight, dispWidth);
+////            cv::waitKey(0);
+////            cv::destroyWindow("DiffImage");
+////        }
+//
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(2000000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_2000k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(3000000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_3000k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(4000000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_4000k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(5000000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_5000k.png");
+//        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(6000000));
+//        minTree->displayTree("/home/petra/Programming/Trees/alpha_6000k.png");
+//
+//        minTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::NonCompactnessAttribute>();
+//        minTree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
         minTree->deleteAttributeFromTree<fl::AreaAttribute>();
 
 //        minTree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::EntropyAttribute>();
@@ -2558,7 +2706,31 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS){
 //        minTree->unsetImage();
         delete minTree;
 
-        outPS << "\n";
+        std::map<double, int> GCF0 = maxGCF0;
+        GCF0 = std::accumulate( minGCF0.begin(), minGCF0.end(), GCF0,
+            []( std::map<double, int> &m, const std::pair<const double, int> &p )
+            {
+                return ( m[p.first] +=p.second, m );
+            } );
+
+        for(auto elem : GCF0){
+            outPS << elem.first << " " << elem.second << std::endl;
+        }
+        outPS << std::endl;
+
+        std::map<double, int> GCF1 = maxGCF1;
+        GCF1 = std::accumulate( minGCF1.begin(), minGCF1.end(), GCF1,
+            []( std::map<double, int> &m, const std::pair<const double, int> &p )
+            {
+                return ( m[p.first] +=p.second, m );
+            } );
+
+        for(auto elem : GCF1){
+            outPS2 << elem.first << " " << elem.second << std::endl;
+        }
+        outPS2 << std::endl;
+
+//        outPS << "\n";
 
         std::cout << "arriving to here " << std::endl;
 }

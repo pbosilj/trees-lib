@@ -840,9 +840,9 @@ void Node::printElements(std::ostream &outStream, int depth) const{
         outStream << "empty ";
     else{
         outStream << this->_S.size() << " ";
-        //for (int i=0; i < (int)this->_S.size(); ++i){
-        //    outStream << "(" << this->_S[i].first << " " << this->_S[i].second << ") ";
-        //}
+//        for (int i=0; i < (int)this->_S.size(); ++i){
+//            outStream << "(" << this->_S[i].first << " " << this->_S[i].second << ") ";
+//        }
     }
     outStream << " -> " << this->level() << " " << this->grayLevel() << std::endl;
     for (int i=0, szi = (int)this->_children.size(); i < szi; ++i)

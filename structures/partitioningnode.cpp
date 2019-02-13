@@ -70,14 +70,14 @@ bool PartitioningNode::deleteChild(int childIndex){
 /// - connectedness of the whole region (complexity reasons)
 void PartitioningNode::checkConstraints(void) const
 {
-    if (this->_S.empty() && this->_children.empty()){
-        throw std::string("constraints wrong in partitioning: nothing there");
+    if (this->_S.empty() && this->_children.size() < 2){
+        throw std::string("constraints wrong in partitioning: empty node or inner node with less than 2 child nodes");
     }
     else if (!this->_S.empty() && !this->_children.empty()){
         std::cout << "S.size() " << this->_S.size() << " children.size() " << this->_children.size() << std::endl;
         throw std::string("constraints wrong in partitioning: pixels and children together");
     }
-    else if (!this->_children.size() < 2){
-        throw std::string("constraints wrong in partitioning: must have at least 2 child nodes");
-    }
+    //else if (this->_S.empty() && !this->_children.size() < 2){
+    //    throw std::string("constraints wrong in partitioning: must have at least 2 child nodes");
+    //}
 }

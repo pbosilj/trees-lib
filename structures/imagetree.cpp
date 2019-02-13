@@ -234,10 +234,40 @@ void ImageTree::printTree(std::ostream &outStream) const{
 void ImageTree::displayTree(const std::string &outPath) const{
     cv::Mat img = cv::Mat::zeros(this->height, this->width, CV_8U);
 
+    if (outPath != "")
+        std::cout << "Displaying tree with outPath " << outPath << std::endl;
+
     this->_root->colorMe(img);
 
-    cv::namedWindow("TreeReconstruction", 1);
+    cv::namedWindow("TreeReconstruction", cv::WINDOW_NORMAL);
     cv::imshow("TreeReconstruction", img);
+    int maxWidth = 1200;
+    int maxHeight = 1000;
+
+    int dispHeight = img.size().height;
+    int dispWidth = img.size().width;
+
+    if (!(dispWidth < maxWidth && dispHeight < maxHeight)){
+        if ((double)dispWidth / maxWidth > (double)dispHeight / maxHeight){
+            dispHeight = dispHeight * maxWidth / dispWidth;
+            dispWidth = maxWidth;
+        }
+        else{
+            dispWidth = dispWidth * maxHeight / dispHeight;
+            dispHeight = maxHeight;
+        }
+    }
+    else if (dispWidth || dispHeight < 300){
+        if (dispWidth < dispHeight){
+            dispHeight = dispHeight * 300 / dispWidth;
+            dispWidth = 300;
+        }
+        else{
+            dispWidth = dispWidth * 300 / dispHeight;
+            dispHeight = 300;
+        }
+    }
+    cv::resizeWindow("TreeReconstruction", dispHeight, dispWidth);
     if (outPath != "")
         cv::imwrite(outPath, img);
     cv::waitKey(0);

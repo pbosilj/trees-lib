@@ -88,7 +88,8 @@ class ImageTree {
         void printTree(std::ostream &outStream = std::cout) const;
 
         /// \brief Displays the image obtained by reconstruction from `ImageTree`.
-        void displayTree(const std::string &outPath = "/home/pbosilj/Programming/Trees/filtest.png") const;
+        //void displayTree(const std::string &outPath = "/home/petra/Programming/Trees/filtest.png") const;
+        void displayTree(const std::string &outPath = "") const;
 
         /// \brief Get a list of all the leaf `Node`s from the `ImageTree`.
         void getLeaves(std::vector <fl::Node *> &leaves) const;
@@ -163,7 +164,7 @@ class ImageTree {
         /// \brief Get the granulometric curve from the `ImageTree` for the given
         /// `Attribute`
         template<class ATT>
-        void calculateGranulometryHistogram(std::map<double, int> &GCF, const fl::Node *_root = NULL, int rule = 0) const;
+        void calculateGranulometryHistogram(std::map<double, int> &GCF, int rule = 0, const fl::Node *_root = NULL) const;
 
         /// \brief Output the value of a selected `Attribute` for the given vector of `Node`s.
         template <class AT>

@@ -99,8 +99,9 @@ namespace fl{
     ///
     /// \return A `PartitioningNode *` (as `Node *) to the root of the alpha-tree.
     Node *alphaTreeDualMax(const cv::Mat &img){
+
         cv::Mat imgDual(img.rows*2-1, img.cols*2-1, CV_8U, detail::getCvMatMax(img));
-        
+
         //TODO the uchar pointers -- their type should depend on the image type
         for(int row = 0, szrow = img.rows; row < szrow; ++row) {;
             const uchar* pU = img.ptr(row);
@@ -129,10 +130,11 @@ namespace fl{
         }
 
         Node *dualRoot = maxTreeNister(imgDual, std::less<int>(), dual);
+
         std::vector <std::vector <char> > seen(img.cols, std::vector <char>(img.rows, false));
         Node *alphaRoot = constructRecursively(dualRoot, seen);
-        ImageTree *dualTree = new ImageTree(dualRoot, std::make_pair(img.rows, img.cols)); // <- why this line?
 
+        ImageTree *dualTree = new ImageTree(dualRoot, std::make_pair(img.rows, img.cols)); // <- why this line?
         delete dualTree;
 
         return alphaRoot->assignGrayLevelRec(detail::alphaTreeGrayLvlAssign(img));
