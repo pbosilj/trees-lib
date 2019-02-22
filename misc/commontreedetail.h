@@ -103,6 +103,98 @@ namespace fl{
 //        }
 
         void histogramToGCF(std::map <double, int> &data);
+
+
+        /// \class RMQ
+        ///
+        /// \brief An abstract `RMQ` Functor which is the basis to implement
+        /// Range Minimum Query (used in solving Least Common Ancestor) lookup
+        /// on a sequence
+        ///
+        /// \tparam T The type of elements in the sequence.
+        template <typename T>
+        class RMQ{
+            public:
+                /// \brief The RMQ constructor.
+                /// \param sequence The sequence on which we will do RMQ.
+                RMQ(const std::vector<T> &sequence) : sequence(sequence) {}
+                /// \brief The desctructor.
+                virtual ~RMQ();
+                /// \brief Operator which returns RMQ(sequence)[start, end], that
+                /// is the index of the minimal element between the given indices.
+                /// \param iStart Index of the start of the range.
+                /// \param iEnd Index of the end of the range.
+                virtual unsigned int operator() (unsigned int iStart, unsigned int iEnd) const = 0;
+            protected:
+                const std::vector<T> &sequence;
+                std::vector <std::vector<T> > mem;
+        };
+
+        /// \class RMQNaive
+        ///
+        /// \brief The naive implementation of RMQ, requires O(n^2) preprocessing time
+        /// and O(1) query time for a sequence of the length n.
+        template <typename T>
+        class RMQNaive : RMQ<T>{
+            public:
+                /// \copydoc RMQ::RMQ()
+                RMQNaive(const std::vector<T> &sequence);
+                /// \copydoc RMQ::~RMQ()
+                virtual ~RMQNaive() {}
+                /// \copydoc RMQ::operator()
+                /// \note add array-out-of-bounds check.
+                unsigned int operator() (unsigned int iStart, unsigned int iEnd) const {return this->mem[iStart][iEnd];}
+        };
+
+        /// \class RMQSparseTable
+        ///
+        /// \brief The sparse table implementation of RMQ, requires O(n logn) preprocessing time
+        /// and O(1) query time for a sequence of the length n.
+        template <typename T>
+        class RMQSparseTable : RMQ<T>{
+            public:
+                /// \copydoc RMQ::RMQ()
+                RMQSparseTable(const std::vector<T> &sequence);
+                /// \copydoc RMQ::~RMQ()
+                virtual ~RMQSparseTable() {}
+                /// \copydoc RMQ::operator()
+                /// \note add array-out-of-bounds check.
+                unsigned int operator() (unsigned int iStart, unsigned int iEnd) const;
+        };
+
+
+        /// \class RMQSparseTable
+        ///
+        /// \brief The implementation of RMQ specialized for +-1 sequences, that is
+        /// sequences where the difference between any two neighbouring elements is
+        /// exactly plus or minus one.
+        /// This implementation enables O(n) preprocessing time and O(1) query time
+        /// for such sequences.
+        template <typename T>
+        class RMQPlusMinusOne : RMQ<T>{
+            public:
+                /// \copydoc RMQ::RMQ()
+                /// \note add plus-minus-one-check
+                RMQPlusMinusOne(const std::vector<T> &sequence);
+                /// \copydoc RMQ::~RMQ()
+                virtual ~RMQPlusMinusOne();
+                /// \copydoc RMQ::operator()
+                /// \note add array-out-of-bounds check.
+                unsigned int operator() (unsigned int iStart, unsigned int iEnd) const;
+            private:
+                unsigned int blockSize;
+                std::vector <T> reducedSequence;
+                std::vector <unsigned int> reducedIndices;
+                std::vector <unsigned int> reducedCodes;
+
+                std::vector <RMQNaive<T>> normalizedBlocks;
+                RMQSparseTable<T> *helperRMQ;
+
+                static void codeToSequence(const unsigned int code, const unsigned int len, std::vector<T> &sequence);
+        };
+
+
+
     }
 }
 

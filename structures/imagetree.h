@@ -121,6 +121,15 @@ class ImageTree {
         /// \brief \copybrief markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark)
         void markSelectedNodes(cv::Mat &image, const std::vector <Node *> &toMark, const cv::Scalar &value) const;
 
+        /// \brief Preprocess the tree to be able to query Least Common Ancestor of any two `Node`s in O(1)
+        void LCAPreprocess(void);
+
+        /// \brief Free the structures used to calculate LCA
+        void LCAFree(void);
+
+        /// \brief Return the Least Common Ancestor of two `Node`s
+        const Node* LCA(Node *first, Node *second);
+
         /// \brief Perform a filtering on `ImageTree` by evaluating a
         /// predicate on the values of `Node::level()`.
         /// TODO check for correctnes
@@ -228,6 +237,12 @@ class ImageTree {
 
 
     private:
+        bool LCAPreprocessed;
+        std::vector <Node *> E;
+        std::vector <double> level;
+        std::map <Node *, unsigned int> representative;
+        std::vector <std::vector <Node * > > pixelNode;
+
 #if 1
 
         template<class AT> // where AT is Attribute

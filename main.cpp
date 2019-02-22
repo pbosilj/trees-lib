@@ -986,6 +986,34 @@ void testSoil(void);
 
 int main(int argc, char** argv ){
 
+    std::vector <int> test_sequence = {3,7,9,2,1,5,7,9,4,5,3,7,4,6};
+
+    fl::detail::RMQSparseTable<int> rmq_tester_sparse(test_sequence);
+    fl::detail::RMQNaive<int> rmq_tester_naive(test_sequence);
+
+
+    std::cout << "Test(6,6) = " << rmq_tester_sparse(6-1, 6-1) + 1 << " " << rmq_tester_naive(6-1, 6-1) + 1 <<std::endl;
+    std::cout << "Test(6,7) = " << rmq_tester_sparse(6-1, 7-1) + 1 << " " << rmq_tester_naive(6-1, 7-1) + 1 <<std::endl;
+    std::cout << "Test(1,5) = " << rmq_tester_sparse(1-1, 5-1) + 1 << " " << rmq_tester_naive(1-1, 5-1) + 1 <<std::endl;
+    std::cout << "Test(3,12) = " << rmq_tester_sparse(3-1, 12-1) + 1 << " " << rmq_tester_naive(3-1, 12-1) + 1 <<std::endl;
+    std::cout << "Test(7,11) = " << rmq_tester_sparse(7-1, 11-1) + 1 << " " << rmq_tester_naive(7-1, 11-1) + 1 <<std::endl;
+    //                                    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33}
+    std::vector <int> test_pmo_sequence = { 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 5, 6, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 5, 4, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4};
+    fl::detail::RMQPlusMinusOne<int> rmq_pmo_tester(test_pmo_sequence);
+
+    std::cout << "Test(1,1) = " << rmq_pmo_tester(1-1, 1-1) + 1 << std::endl;
+    std::cout << "Test(3,3) = " << rmq_pmo_tester(3-1, 3-1) + 1 << std::endl;
+    std::cout << "Test(24,24) = " << rmq_pmo_tester(24-1, 24-1) + 1 << std::endl;
+    std::cout << "Test(3,12) = " << rmq_pmo_tester(3-1, 12-1) + 1 << std::endl;
+    std::cout << "Test(7,20) = " << rmq_pmo_tester(7-1, 20-1) + 1 << std::endl;
+
+    std::cout << "Test(21,28) = " << rmq_pmo_tester(21-1, 28-1) + 1 << std::endl;
+    std::cout << "Test(24,26) = " << rmq_pmo_tester(24-1, 26-1) + 1 << std::endl;
+    std::cout << "Test(25,25) = " << rmq_pmo_tester(25-1, 25-1) + 1 << std::endl;
+    std::cout << "Test(2,34) = " << rmq_pmo_tester(2-1, 34-1) + 1 << std::endl;
+    std::cout << "Test(4,34) = " << rmq_pmo_tester(4-1, 34-1) + 1 << std::endl;
+
+    return 0;
     testSoil();
     return 0;
 

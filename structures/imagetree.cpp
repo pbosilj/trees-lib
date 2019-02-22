@@ -45,7 +45,7 @@ using namespace fl;
 ///     - `enableDelNodesOnDestruct()`
 ///     - `disableDelNodesOnDestruct()`
 ImageTree::ImageTree(Node* root, std::pair< int, int > imDim)
-    : _root(root), width(imDim.second), height(imDim.first) {
+    : _root(root), width(imDim.second), height(imDim.first), LCAPreprocessed(false) {
     this->img = NULL;
     this->delOnDest = true;
     this->randomInit = false;
@@ -56,6 +56,7 @@ ImageTree::ImageTree(Node* root, std::pair< int, int > imDim)
 /// destructor for every `Node` in the hierarchy if the appropriate
 /// option is enabled.
 ImageTree::~ImageTree(){
+    LCAFree();
     if (this->_root != NULL && this->delOnDest){
         this->deallocateRoot(this->_root);
     }
@@ -472,6 +473,22 @@ void ImageTree::markSelectedNodes(cv::Mat &image,
         if (toMark[i] != NULL){
             toMark[i]->colorSolid(image, value);
         }
+}
+
+/// Preprocess the tree to be able to query Least Common Ancestor of any two `Node`s in O(1)
+void ImageTree::LCAPreprocess(void){
+    // here continue
+}
+
+/// Free the structures used to calculate LCA
+void ImageTree::LCAFree(void){
+    if (this->LCAPreprocessed){
+        this->E.clear();
+        this->level.clear();
+        this->representative.clear();
+        this->pixelNode.clear();
+        this->LCAPreprocessed = false;
+    }
 }
 
 // private methods start here
