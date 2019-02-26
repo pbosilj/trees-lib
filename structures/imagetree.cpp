@@ -14,6 +14,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <string>
 #include <cstdlib>
@@ -477,21 +478,122 @@ void ImageTree::markSelectedNodes(cv::Mat &image,
 
 /// Preprocess the tree to be able to query Least Common Ancestor of any two `Node`s in O(1)
 void ImageTree::LCAPreprocess(void){
-    // here continue
+    if (this->LCAPreprocessed)
+        return;
+
+    // fill the invLevel and representative matrix
+    this->representatives = new cv::Mat(cv::Mat::zeros(this->height, this->width, CV_32SC1));
+    eulersTour(this->root());
+//    std::cout << "SIZE OF TOUR:" << this->rootDistTour.size() << std::endl;
+//    std::cout << "ROOT DIST: " << std::endl;
+//    for (int i=0; i < this->rootDistTour.size(); ++i)
+//        std::cout << this->rootDistTour[i] << " ";
+//    std::cout << std::endl;
+//    std::cout << "LEVEL: " << std::endl;
+//    for (int i=0; i < this->rootDistTour.size(); ++i)
+//        std::cout << this->levelTour[i] << " ";
+//    std::cout << std::endl;
+
+
+//    for (int y = 0; y < this->height; ++y){
+//        for (int x=0; x < this->width; ++x)
+//            std::cout << detail::getCvMatElem(*(this->representatives), x, y) << " ";
+//        std::cout << std::endl;
+//    }
+
+
+    this->rmq = new detail::RMQPlusMinusOne<int>(this->rootDistTour);
+
+    this->LCAPreprocessed = true;
 }
 
 /// Free the structures used to calculate LCA
 void ImageTree::LCAFree(void){
     if (this->LCAPreprocessed){
-        this->E.clear();
-        this->level.clear();
-        this->representative.clear();
-        this->pixelNode.clear();
+        this->rootDistTour.clear();
+        this->levelTour.clear();
+        delete this->representatives;
+        delete this->rmq;
         this->LCAPreprocessed = false;
     }
 }
 
+void ImageTree::makeSaliencyMap(cv::Mat &saliency_map) const{
+    if (!this->LCAPreprocessed)
+        return;
+
+    saliency_map = cv::Mat::zeros(this->height * 2 + 1, this->width * 2 + 1, CV_8U); // see if image type needs changing
+
+//    std::cout << "Constructing saliency map" << std::endl;
+
+    for (int y=0; y < this->height; ++y){
+        for (int x=0; x < this->width ; ++x){
+            int firstIndex = detail::getCvMatElem(*(this->representatives), x, y) - 1;
+//            std::cout << "(x,y): (" << x << " " << y << ") ";
+
+            int secondIndex;
+            if (x < (this->width - 1)){
+                secondIndex = detail::getCvMatElem(*(this->representatives), x+1, y) - 1;
+//                std::cout << " -- (" << x+1 << " " << y << ") ";
+//                std::cout << "(f-s) " << firstIndex << "-" << secondIndex << " " << (*(this->rmq))(firstIndex, secondIndex) << " ";
+//                std::cout << " (" << x*2+1+1 << " " << y*2+1 << ") = " << this->levelTour[(*(this->rmq))(firstIndex, secondIndex)] << " ";
+                saliency_map.at<uchar>(y*2+1,x*2+1+1) = this->levelTour[(*(this->rmq))(firstIndex, secondIndex)];
+                if (y == 0){
+                    saliency_map.at<uchar>(0, x*2+1+1) = saliency_map.at<uchar>(y*2+1,x*2+1+1);
+                }
+                else{
+                    uchar up, down, left, right;
+                    up = detail::getCvMatElem(saliency_map,    x*2+1+1,  y*2-1);
+                    down = detail::getCvMatElem(saliency_map,  x*2+1+1,  y*2+1);
+                    left = detail::getCvMatElem(saliency_map,  x*2+1+1-1,y*2);
+                    right = detail::getCvMatElem(saliency_map, x*2+1+1+1,y*2);
+
+                    saliency_map.at<uchar>(y*2, x*2+1+1) = std::max(std::max(up, down), std::max(left, right));
+                    if (y == (this->height-1))
+                        saliency_map.at<uchar>(y*2+1+1, x*2+1+1) = saliency_map.at<uchar>(y*2+1,x*2+1+1);
+                }
+            }
+
+
+
+            if (y < (this->height - 1)){
+                secondIndex = detail::getCvMatElem(*(this->representatives), x, y+1) - 1;
+//                std::cout << " -- (" << x << " " << y+1 << ") ";
+//                std::cout << "(f-s) " << firstIndex << "-" << secondIndex << " " << (*(this->rmq))(firstIndex, secondIndex) << " ";
+//                std::cout << " (" << x*2+1 << " " << y*2+1+1 << ") = " << this->levelTour[(*(this->rmq))(firstIndex, secondIndex)] << " ";
+                saliency_map.at<uchar>(y*2+1+1,x*2+1) = this->levelTour[(*(this->rmq))(firstIndex, secondIndex)];
+                if (x == 0){
+                    saliency_map.at<uchar>(y*2+1+1, 0) = saliency_map.at<uchar>(y*2+1+1,x*2+1);
+                }
+                else if (x == (this->width-1)){
+                    saliency_map.at<uchar>(y*2+1+1, x*2+1+1) = saliency_map.at<uchar>(y*2+1+1,x*2+1);
+                }
+            }
+
+
+//            std::cout << "   " << std::endl;
+        }
+//        std::cout << std::endl;
+    }
+
+//    std::cout << "Constructed saliency map" << std::endl;
+}
+
 // private methods start here
+
+void ImageTree::eulersTour(const Node *current, int depth){
+    this->rootDistTour.emplace_back(depth);
+    this->levelTour.emplace_back(current->level());
+    const std::vector <std::pair <int, int> > &pixels = current->getOwnElements();
+    for (int i=0, szi = pixels.size(); i < szi; ++i){
+        representatives->at<int>(pixels[i].Y, pixels[i].X) = this->levelTour.size();
+    }
+    for (int i=0, szi = current->_children.size(); i < szi; ++i){
+        eulersTour(current->_children[i], depth+1);
+        this->rootDistTour.emplace_back(depth);
+        this->levelTour.emplace_back(current->level());
+    }
+}
 
 void ImageTree::reconstructUO(const std::vector< int > &res,
                               const std::vector<int> &scl,

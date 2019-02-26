@@ -15,6 +15,8 @@
 #include <map>
 #include <set>
 
+#include <functional>
+
 #include <cmath>
 
 /// \namespace fl
@@ -162,7 +164,7 @@ namespace fl{
             friend Node *constructRecursively(Node *root, std::vector <std::vector <char> > &seen);
 
             template <typename Compare>
-            friend Node *maxTreeNister(const cv::Mat &img, Compare pxOrder = std::less<int>(), pxType curType = regular);
+            friend Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType);
             friend std::pair <int, bool> areaDiff(Node *root, const int deltaLvl);
 
             friend class ImageTree;

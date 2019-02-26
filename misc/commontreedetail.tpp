@@ -95,6 +95,9 @@ namespace fl{
     unsigned int detail::RMQSparseTable<T>::operator ()(unsigned int iStart, unsigned int iEnd) const{
         if (iStart == iEnd)
             return iStart;
+        if (iEnd < iStart){
+            std::swap(iEnd, iStart);
+        }
         if (iEnd - iStart == 1)
             return this->mem[iStart][0];
         int k = std::floor(std::log2(iEnd - iStart));
@@ -155,6 +158,10 @@ namespace fl{
 
     template<typename T>
     unsigned int detail::RMQPlusMinusOne<T>::operator ()(unsigned int iStart, unsigned int iEnd) const{
+
+        if (iEnd < iStart){
+            std::swap(iEnd, iStart);
+        }
 
         int wholeBottomBlock = std::ceil((float)iStart/this->blockSize);
         int wholeTopBlock = std::floor((float)(iEnd+1)/this->blockSize) -1;

@@ -9,6 +9,7 @@
 #include "node.h"
 
 #include "../algorithms/predicate.h"
+#include "../misc/commontreedetail.h"
 
 #include <set>
 
@@ -127,6 +128,10 @@ class ImageTree {
         /// \brief Free the structures used to calculate LCA
         void LCAFree(void);
 
+        /// \brief Construct a saliency map image from the tree.
+        void makeSaliencyMap(cv::Mat &saliency_map) const;
+
+
         /// \brief Return the Least Common Ancestor of two `Node`s
         const Node* LCA(Node *first, Node *second);
 
@@ -238,10 +243,12 @@ class ImageTree {
 
     private:
         bool LCAPreprocessed;
-        std::vector <Node *> E;
-        std::vector <double> level;
-        std::map <Node *, unsigned int> representative;
-        std::vector <std::vector <Node * > > pixelNode;
+        std::vector <int> rootDistTour;
+        std::vector <double> levelTour;
+        cv::Mat *representatives;
+        detail::RMQPlusMinusOne<int> *rmq;
+
+        void eulersTour(const Node *current, int depth = 0);
 
 #if 1
 

@@ -17,9 +17,6 @@
 					<Add option="`pkg-config opencv --cflags`" />
 					<Add directory="structures" />
 				</Compiler>
-				<Linker>
-					<Add option="`pkg-config opencv --libs`" />
-				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/Trees" prefix_auto="1" extension_auto="1" />
@@ -34,15 +31,17 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="`pkg-config opencv --libs`" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-std=c++11" />
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Linker>
+			<Add option="`pkg-config --cflags --libs opencv`" />
+		</Linker>
 		<Unit filename="algorithms/alphatreedualmax.cpp" />
 		<Unit filename="algorithms/alphatreedualmax.h" />
 		<Unit filename="algorithms/alphatreedualmax.tpp" />

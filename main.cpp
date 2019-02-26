@@ -61,6 +61,7 @@
 
 #include <functional>
 #include <algorithm>
+#include <numeric>
 
 #include <iostream>
 #include <cstdio>
@@ -1012,6 +1013,57 @@ int main(int argc, char** argv ){
     std::cout << "Test(25,25) = " << rmq_pmo_tester(25-1, 25-1) + 1 << std::endl;
     std::cout << "Test(2,34) = " << rmq_pmo_tester(2-1, 34-1) + 1 << std::endl;
     std::cout << "Test(4,34) = " << rmq_pmo_tester(4-1, 34-1) + 1 << std::endl;
+
+
+    try
+    {
+    //cv::Mat &image = testImage13();
+    cv::Mat image = cv::imread("/home/krezubica/Programming/trees-lib/test.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+
+    cv::namedWindow("Window",cv::WINDOW_NORMAL);
+
+    cv::resizeWindow("Window", 600,600);
+
+    cv::imshow("Window", image);
+
+    cv::waitKey(0);
+
+    cv::destroyWindow("Window");
+
+    fl::ImageTree *alpha = new fl::ImageTree(fl::omegaTreeAlphaFilter(image), std::make_pair(image.rows, image.cols));
+
+    //alpha->printTree();
+    cv::waitKey();
+
+    cv::Mat saliencyMap;
+
+    std::cout << "Confusion starts " << std::endl;
+
+    alpha->LCAPreprocess();
+
+    std::cout << "Preprocessing done " << std::endl;
+
+    alpha->makeSaliencyMap(saliencyMap);
+    alpha->LCAFree();
+
+    cv::imwrite("/home/krezubica/Programming/trees-lib/output.jpg", saliencyMap);
+
+    std::cout << "Confusion ends " << std::endl;
+
+    cv::namedWindow("Window",cv::WINDOW_NORMAL);
+
+    cv::resizeWindow("Window", 600,600);
+
+    cv::imshow("Window", saliencyMap);
+
+    cv::waitKey(0);
+
+    cv::destroyWindow("Window");
+    }
+    catch (char const *bla)
+    {
+        std::cout << bla << std::endl;
+    }
 
     return 0;
     testSoil();

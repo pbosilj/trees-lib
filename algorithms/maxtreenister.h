@@ -25,7 +25,11 @@ namespace fl{
 
     /// \brief \copybrief maxTreeNister(const cv::Mat &img)
     template <typename Compare>
-    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType = regular);
+    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder);
+
+    /// \brief \copybrief maxTreeNister(const cv::Mat &img)
+    template <typename Compare>
+    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType);
 
 
 }
