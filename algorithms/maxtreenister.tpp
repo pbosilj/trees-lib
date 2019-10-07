@@ -32,9 +32,17 @@ namespace fl{
         };
     }
 
-    /// \details \copydetails fl::maxTreeNister()
+    /// \details \copydetails maxTreeNister(const cv::Mat &img)
+    ///
     /// \param pxOrder the comparison operator used to determine the order of the pixels.
-    /// \param curType the `pyType` type of the current pixel (fl::pxType::regular, fl::pxType::dual).
+    template <typename Compare>
+    Node *maxTreeNister(const cv::Mat &img, Compare pxOrder){
+        return maxTreeNister(img, pxOrder, pxType::regular);
+    }
+
+    /// \details \copydetails fl::maxTreeNister(const cv::Mat &img, Compare pxOrder)
+    ///
+    /// \param curType the `pxType` type of the current pixel (fl::pxType::regular, fl::pxType::dual).
     template <typename Compare>
     Node *maxTreeNister(const cv::Mat &img, Compare pxOrder, pxType curType){
 

@@ -112,8 +112,8 @@ namespace fl{
     template<typename T>
     detail::RMQPlusMinusOne<T>::RMQPlusMinusOne(const std::vector<T> &sequence) : RMQ<T>(sequence) {
         this->blockSize = std::ceil(std::log2(sequence.size())/2);
-        std::cout << "Input length " << sequence.size() << std::endl;
-        std::cout << "Block size : " << this->blockSize << " A' length: " << std::ceil((double)sequence.size()/this->blockSize) << std::endl;
+        //std::cout << "Input length " << sequence.size() << std::endl;
+        //std::cout << "Block size : " << this->blockSize << " A' length: " << std::ceil((double)sequence.size()/this->blockSize) << std::endl;
         unsigned int code = 0;
 
 

@@ -37,6 +37,9 @@
 
 #include "structures/imagetree.h"
 
+#include "examples/soilpatternspectra.h"
+#include "examples/cropweedspipeline.h"
+
 #include "algorithms/predicate.h"
 
 #include "structures/patternspectra2d.h"
@@ -44,6 +47,7 @@
 #include "misc/pixels.h"
 #include "misc/ellipse.h"
 #include "misc/distance.h"
+#include "misc/misc.h"
 
 #include "algorithms/maxtreenister.h"
 #include "algorithms/msernister.h"
@@ -91,7 +95,6 @@ static const cv::Vec3b bcolors[] =
     cv::Vec3b(128,255,0),
     cv::Vec3b(0,255,128)
 };
-
 
 /************** TEST IMPLEMENTATIONS *************/
 
@@ -337,12 +340,6 @@ void testRange(void){
 
 void outputMSERPointsAndPS(int delta, cv::Mat &image, std::ofstream &outPS, std::ofstream &outP, int salientNum);
 void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2);
-
-std::string removeExtension(const std::string &filename) {
-    size_t lastdot = filename.find_last_of(".");
-    if (lastdot == std::string::npos) return filename;
-    return filename.substr(0, lastdot);
-}
 
 void testMser(int argc, char **argv){
     cv::Mat inputImage;
@@ -711,17 +708,6 @@ void simplifyImageWithTreeByArea(int argc, char **argv){
     delete tree;
 }
 
-void forYanwei(int delta, cv::Mat &image, bool minTree, int salientNum = -1);
-
-inline bool fileExists (const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }
-}
-
 void getRanks(const std::vector<char> &response, int NG, int K, std::vector <double> &ranks){
     ranks.clear();
     for (int i=0; i < K && (int)ranks.size() < NG; ++i){
@@ -967,58 +953,101 @@ void testObjectDetection(int argc, char **argv);
 void testUltimateOpening(int argc, char **argv);
 //void savedObjectAnalysis(int argc, char **argv);
 
-void runPipeline(int argc, char **argv);
-void runObjectAnalysis(int argc, char **argv);
-void runManualClassification(int argc, char **argv);
-void runObjectDetectionAndSegmentation(int argc, char **argv);
-void manualClassification(const fl::ImageTree *tree, std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb);
-void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, const std::string &classPath = "");
-void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath = "");
-void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, std::vector <fl::Node *> *source = NULL);
-void loadNodes(const fl::ImageTree *tree, std::vector <fl::Node *> &selection, const std::string &detFile);
-void saveNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &detFile);
-void saveClassifiedNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string classFile);
-void loadClassifiedNodes(const fl::ImageTree *tree, std::vector <fl::Node *> *npc, std::string classFile);
-void objectAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string prefix = "");
-void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes);
-bool doesFileExist(const std::string &fileName);
 
 void testSoil(void);
 
 int main(int argc, char** argv ){
+    //testSoil();
+    rTestSoil(argc, argv);
+    return 0;
+    {
 
-    std::vector <int> test_sequence = {3,7,9,2,1,5,7,9,4,5,3,7,4,6};
 
-    fl::detail::RMQSparseTable<int> rmq_tester_sparse(test_sequence);
-    fl::detail::RMQNaive<int> rmq_tester_naive(test_sequence);
+    cv::Mat image = cv::imread("/home/petra/Documents/Data/Soil/main_data/11_30/camera/A1/A1_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
 
 
-    std::cout << "Test(6,6) = " << rmq_tester_sparse(6-1, 6-1) + 1 << " " << rmq_tester_naive(6-1, 6-1) + 1 <<std::endl;
-    std::cout << "Test(6,7) = " << rmq_tester_sparse(6-1, 7-1) + 1 << " " << rmq_tester_naive(6-1, 7-1) + 1 <<std::endl;
-    std::cout << "Test(1,5) = " << rmq_tester_sparse(1-1, 5-1) + 1 << " " << rmq_tester_naive(1-1, 5-1) + 1 <<std::endl;
-    std::cout << "Test(3,12) = " << rmq_tester_sparse(3-1, 12-1) + 1 << " " << rmq_tester_naive(3-1, 12-1) + 1 <<std::endl;
-    std::cout << "Test(7,11) = " << rmq_tester_sparse(7-1, 11-1) + 1 << " " << rmq_tester_naive(7-1, 11-1) + 1 <<std::endl;
-    //                                    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33}
-    std::vector <int> test_pmo_sequence = { 3, 2, 1, 2, 3, 4, 5, 6, 5, 4, 5, 6, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 5, 4, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4};
-    fl::detail::RMQPlusMinusOne<int> rmq_pmo_tester(test_pmo_sequence);
+    fl::ImageTree *tree = new fl::ImageTree(fl::tosGeraud(image), std::make_pair(image.rows, image.cols));
 
-    std::cout << "Test(1,1) = " << rmq_pmo_tester(1-1, 1-1) + 1 << std::endl;
-    std::cout << "Test(3,3) = " << rmq_pmo_tester(3-1, 3-1) + 1 << std::endl;
-    std::cout << "Test(24,24) = " << rmq_pmo_tester(24-1, 24-1) + 1 << std::endl;
-    std::cout << "Test(3,12) = " << rmq_pmo_tester(3-1, 12-1) + 1 << std::endl;
-    std::cout << "Test(7,20) = " << rmq_pmo_tester(7-1, 20-1) + 1 << std::endl;
+    tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(100000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_100k.png");
 
-    std::cout << "Test(21,28) = " << rmq_pmo_tester(21-1, 28-1) + 1 << std::endl;
-    std::cout << "Test(24,26) = " << rmq_pmo_tester(24-1, 26-1) + 1 << std::endl;
-    std::cout << "Test(25,25) = " << rmq_pmo_tester(25-1, 25-1) + 1 << std::endl;
-    std::cout << "Test(2,34) = " << rmq_pmo_tester(2-1, 34-1) + 1 << std::endl;
-    std::cout << "Test(4,34) = " << rmq_pmo_tester(4-1, 34-1) + 1 << std::endl;
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(200000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_200k.png");
 
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(300000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_300k.png");
+
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(400000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_400k.png");
+
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(500000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_500k.png");
+
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(600000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_600k.png");
+
+    tree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(700000));
+    tree->displayTree("/home/petra/Programming/Trees/A1_700k.png");
+    tree->deleteAttributeFromTree<fl::AreaAttribute>();
+    delete tree;
+
+    return 0;
+    }
+
+    if (argc < 1){
+        std::cout << "Expecting filepath to the image. Exiting" << std::endl;
+    }
+
+
+    std::string imagePath(argv[1]);
+
+    std::string::size_type idx = imagePath.rfind('.');
+    std::string baseName = imagePath.substr(0, idx);
+    std::string extension = imagePath.substr(idx);
+
+
+    //cv::Mat image = cv::imread("/home/petra/Documents/Data/CA17/carrots_testing/rgb/rgb_30_0_0.png", CV_LOAD_IMAGE_UNCHANGED);
+    cv::Mat image = cv::imread(imagePath, CV_LOAD_IMAGE_UNCHANGED);
+
+    std::vector<cv::Mat> channels;
+
+    std::vector <std::string> names;
+
+    if (image.channels() == 1){
+        channels.emplace_back(image);
+        names.emplace_back("gray");
+    }
+    else{
+        cv::split(image,channels);
+        names.emplace_back("blue");
+        names.emplace_back("green");
+        names.emplace_back("red");
+    }
+
+    std::cout << "Processing: " << imagePath << std::endl;
+    cv::Mat saliencyMap;
+
+    for (int i=0, szi = channels.size(); i < szi; ++i){
+        fl::ImageTree *alpha = new fl::ImageTree(fl::alphaTreeDualMax(channels[i]), std::make_pair(image.rows, image.cols));
+
+        alpha->LCAPreprocess();
+        alpha->makeSaliencyMap(saliencyMap);
+        alpha->LCAFree();
+
+        std::cout << "Processing " << names[i] << " channel, saving as: " << baseName + "_saliency_alpha_" + names[i] + extension << std::endl;
+
+        cv::imwrite(baseName + "_saliency_alpha_" + names[i] + extension, saliencyMap);
+
+        delete alpha;
+    }
+
+    return 0;
 
     try
     {
     //cv::Mat &image = testImage13();
-    cv::Mat image = cv::imread("/home/krezubica/Programming/trees-lib/test.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat image = cv::imread("/home/petra/Programming/Trees/A1_700k.png", CV_LOAD_IMAGE_GRAYSCALE);
 
     cv::namedWindow("Window",cv::WINDOW_NORMAL);
 
@@ -1030,7 +1059,7 @@ int main(int argc, char** argv ){
 
     cv::destroyWindow("Window");
 
-    fl::ImageTree *alpha = new fl::ImageTree(fl::omegaTreeAlphaFilter(image), std::make_pair(image.rows, image.cols));
+    fl::ImageTree *alpha = new fl::ImageTree(fl::alphaTreeDualMax(image), std::make_pair(image.rows, image.cols));
 
     //alpha->printTree();
     cv::waitKey();
@@ -1046,7 +1075,7 @@ int main(int argc, char** argv ){
     alpha->makeSaliencyMap(saliencyMap);
     alpha->LCAFree();
 
-    cv::imwrite("/home/krezubica/Programming/trees-lib/output.jpg", saliencyMap);
+    cv::imwrite("/home/petra/Programming/Trees/output.jpg", saliencyMap);
 
     std::cout << "Confusion ends " << std::endl;
 
@@ -1064,6 +1093,9 @@ int main(int argc, char** argv ){
     {
         std::cout << bla << std::endl;
     }
+
+
+    std::cout << "bla bla " << std::endl;
 
     return 0;
     testSoil();
@@ -1202,23 +1234,6 @@ int main(int argc, char** argv ){
         testMser(argc, argv);
 
         return 0;
-
-        {
-        std::string dbFile(argv[1]);
-        cv::Mat img = cv::imread(dbFile, CV_LOAD_IMAGE_GRAYSCALE);
-
-        int minMax;
-        std::sscanf(argv[argc-1], "%d", &minMax);
-
-        if (minMax == 1){
-            forYanwei(10, img, true);
-        }
-        else{
-            forYanwei(10, img, false);
-        }
-
-        return 0;
-        }
 
 
         int feats;
@@ -1474,541 +1489,6 @@ void testUltimateOpening(int argc, char **argv){
 
 }
 
-bool doesFileExist(const std::string &fileName){
-    std::ifstream infile(fileName);
-    return infile.good();
-}
-
-void branchAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *>nodes){
-    tree->addAttributeToTree<fl::AreaAttribute>(new::AreaSettings());
-    std::vector <std::pair<int, double> > areaValues;
-    for (int i=0, szi = nodes.size(); i < szi; ++i){
-        std::stringstream ss;
-        ss << "branch_" << std::setfill('0') << std::setw(6) << i << ".txt";
-        std::ofstream outF;
-        outF.open(ss.str(), std::ios::out);
-        std::cout << "BRANCH ANALYSIS OUTPUT" << std::endl;
-        tree->analyseBranch<fl::AreaAttribute>(nodes[i], areaValues);
-        for (int j=0, szj = areaValues.size(); j < szj; ++j)
-            outF << areaValues[j].first << " " << (int)areaValues[j].second << std::endl;
-        areaValues.clear();
-        outF.close();
-    }
-    tree->deleteAttributeFromTree<fl::AreaAttribute>();
-}
-
-void objectAnalysis(fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string prefix){
-
-    std::cout << "OUTPUT ATTRIBUTE VALUES " << std::endl;
-
-    tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
-
-    std::cout << "Area" << std::endl;
-
-    std::ofstream outF;
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_ar.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::AreaAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_ar.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::AreaAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_ar.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::AreaAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::AreaAttribute>();
-
-    tree->addAttributeToTree<fl::NonCompactnessAttribute>(new NonCompactnessSettings());
-
-    std::cout << "Non-compactness" << std::endl;
-
-    //std::ofstream outF;
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_nc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_nc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_nc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::NonCompactnessAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
-
-    tree->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::roundness));
-
-    std::cout << "Roundness" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_rnd.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_rnd.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_rnd.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::kurtosis));
-
-    std::cout << "Kurtosis" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_kur.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_kur.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_kur.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::eccentricity));
-
-    std::cout << "Eccentricity" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_ecc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_ecc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_ecc.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->changeAttributeSettings<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::triangularity));
-
-    std::cout << "Triangularity" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_tri.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_tri.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_tri.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MomentsAttribute>(npc[2], outF);
-    outF.close();
-
-
-    tree->deleteAttributeFromTree<fl::MomentsAttribute>();
-
-    tree->addAttributeToTree<fl::SparsityAttribute>(new fl::SparsitySettings());
-    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
-
-    std::cout << "Sparsity" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_spa.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_spa.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_spa.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::SparsityAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::SparsityAttribute>();
-
-    tree->addAttributeToTree<fl::RegionDynamicsAttribute>(new fl::RegionDynamicsSettings());
-    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
-
-    std::cout << "Region Dynamics " << std::endl;
-
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_rdy.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_rdy.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_rdy.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::RegionDynamicsAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::RegionDynamicsAttribute>();
-
-    tree->addAttributeToTree<fl::MeanAttribute>(new fl::MeanSettings());
-    //tree->addAttributeToTree<fl::AreaAttribute>(new AreaSettings());
-
-    std::cout << "Mean" << std::endl;
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_mea.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MeanAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_mea.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MeanAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_mea.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::MeanAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::MeanAttribute>();
-
-    std::cout << "Value Deviation " << std::endl;
-
-    tree->addAttributeToTree<fl::ValueDeviationAttribute>(new fl::ValueDeviationSettings());
-
-    std::cout << "Writing attributes for weed patches" << std::endl;
-    outF.open(prefix+"weed_vde.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[0], outF);
-    outF.close();
-    std::cout << "Writing attributes for crop patches" << std::endl;
-    outF.open(prefix+"crop_vde.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[1], outF);
-    outF.close();
-    std::cout << "Writing attributes for mixed patches" << std::endl;
-    outF.open(prefix+"mixed_vde.txt", std::ios::out);
-    tree->writeAttributesToFile<fl::ValueDeviationAttribute>(npc[2], outF);
-    outF.close();
-
-    tree->deleteAttributeFromTree<fl::ValueDeviationAttribute>();
-
-
-}
-
-
-
-void loadClassifiedNodes(const fl::ImageTree *tree, std::vector <fl::Node *> *npc, std::string classFile){
-
-    std::cout << "LOADING NODES PER CLASS" << std::endl;
-
-    std::ifstream inF;
-    std::string::size_type idx = classFile.rfind('.');
-    std::string baseName = classFile.substr(0, idx);
-    std::string extension = classFile.substr(idx);
-
-    std::cout << "Reading weed patches from " << baseName + "_weed" + extension << std::endl;
-
-    inF.open(baseName + "_weed" + extension, std::ios::in);
-    tree->loadNodesFromIDFile(npc[0], inF);
-    inF.close();
-
-    std::cout << "Reading crop patches from " << baseName + "_crop" + extension << std::endl;
-
-    inF.open(baseName + "_crop" + extension, std::ios::in);
-    tree->loadNodesFromIDFile(npc[1], inF);
-    inF.close();
-
-    std::cout << "Reading mixed patches from " << baseName + "_mixed" + extension << std::endl;
-
-    inF.open(baseName + "_mixed" + extension, std::ios::in);
-    tree->loadNodesFromIDFile(npc[2], inF);
-    inF.close();
-
-
-}
-
-void saveClassifiedNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, std::string classFile){
-
-    std::cout << "SAVING NODES PER CLASS" << std::endl;
-
-    std::ofstream outF;
-    std::string::size_type idx = classFile.rfind('.');
-    std::string baseName = classFile.substr(0, idx);
-    std::string extension = classFile.substr(idx);
-
-    std::cout << "Writing weed patches into " << baseName + "_weed" + extension << std::endl;
-
-    outF.open(baseName + "_weed" + extension, std::ios::out);
-    tree->writeNodeIDToFile(npc[0], outF);
-    outF.close();
-
-    std::cout << "Writing crop patches into " << baseName + "_crop" + extension << std::endl;
-
-    outF.open(baseName + "_crop" + extension, std::ios::out);
-    tree->writeNodeIDToFile(npc[1], outF);
-    outF.close();
-
-    std::cout << "Writing mixed patches into " << baseName + "_mixed" + extension << std::endl;
-
-    outF.open(baseName + "_mixed" + extension, std::ios::out);
-    tree->writeNodeIDToFile(npc[2], outF);
-    outF.close();
-}
-
-void saveNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &detFile){
-    std::cout << "SAVING DETECTED NODES" << std::endl;
-
-    std::ofstream outF;
-
-    std::cout << "Writing object patches into " << detFile << std::endl;
-
-    outF.open(detFile, std::ios::out);
-    tree->writeNodeIDToFile(selection, outF);
-    outF.close();
-}
-
-void loadNodes(const fl::ImageTree *tree, std::vector <fl::Node *> &selection, const std::string &detFile){
-    std::cout << "LOADING DETECTED NODES" << std::endl;
-
-    std::cout << "Reading object patches from " << detFile << std::endl;
-
-    std::ifstream inF;
-    inF.open(detFile, std::ios::in);
-    tree->loadNodesFromIDFile(selection, inF);
-    inF.close();
-
-}
-
-void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, std::vector <fl::Node *> *source){
-
-    std::cout << "OBJECT DETECTION" << std::endl;
-
-    fl::treeObjectDetection(*tree, selection, source);
-}
-
-
-void outputSegmentation(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &segPath){
-    std::cout << "OUTPUT SEGMENTATION" << std::endl;
-
-    std::cout << "outputing " << selection.size() << " nodes" << std::endl;
-
-    cv::Mat display(tree->treeHeight(), tree->treeWidth(),
-                    CV_8UC3, cv::Vec3b(0,0,0));
-
-    //cv::Mat display(tree->image().size(), tree->image().type());
-    //cv::Mat display;
-    //cv::cvtColor(tree->image(), display, cv::COLOR_GRAY2BGR);
-
-    std::cout << "channels: " << display.channels() << std::endl;
-
-    //std::cout << "channels: " << tree->image().channels() << std::endl;
-
-    //tree->image().copyTo(display);
-    tree->markSelectedNodes(display, selection, cv::Vec3b(255, 255, 255));
-    if (!segPath.empty())
-        cv::imwrite(segPath, display);
-    else{
-        cv::namedWindow("Segmentation", cv::WINDOW_NORMAL);
-        cv::resizeWindow("Segmentation", display.cols/2, display.rows/2);
-        cv::imshow("Segmentation", display);
-        cv::waitKey(0);
-        cv::destroyWindow("Segmentation");
-    }
-}
-
-void outputClassification(const fl::ImageTree *tree, const std::vector <fl::Node *> *npc, const std::string &classPath){
-
-    std::cout << "OUTPUT CLASSIFICATION" << std::endl;
-
-    cv::Mat display(tree->treeHeight(), tree->treeWidth(),
-                    CV_8UC3, cv::Vec3b(0,0,0));
-    tree->markSelectedNodes(display, npc[2], cv::Vec3b(200, 80, 80));
-    tree->markSelectedNodes(display, npc[0], cv::Vec3b(80, 80, 200));
-    tree->markSelectedNodes(display, npc[1], cv::Vec3b(80, 200, 80));
-
-    if (!classPath.empty())
-        cv::imwrite(classPath, display);
-    else{
-        cv::namedWindow("Classification", cv::WINDOW_NORMAL);
-        cv::resizeWindow("Classification", display.cols/2, display.rows/2);
-        cv::imshow("Classification", display);
-        cv::waitKey(0);
-        cv::destroyWindow("Classification");
-    }
-}
-
-void manualClassification(const fl::ImageTree *tree, std::vector <fl::Node *> selection, std::vector <fl::Node *> *npc, const cv::Mat &rgb){
-    std::cout << "MANUAL CLASSIFICATION" << std::endl;
-
-    std::vector <int> classSizes;
-    fl::manualRegionClassification(selection, tree->image(), rgb, classSizes);
-
-    int sizeSoFar = 0;
-    for (int i=0, szi = classSizes.size(); i < szi; ++i)
-        npc[i].insert(npc[i].end(), selection.begin()+sizeSoFar, selection.begin()+sizeSoFar+classSizes[i]);
-}
-
-void runObjectDetectionAndSegmentation(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-    fl::Node *root;
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
-                                    std::make_pair(image.rows, image.cols)); // min-tree creation
-
-    std::vector <fl::Node *> selection;
-    objectDetection(tree, selection);
-
-    if (argc > 2)
-        saveNodes(tree, selection, argv[2]);
-
-    if (argc > 3){
-        tree->setImage(image);
-        outputSegmentation(tree, selection, argv[3]);
-        tree->unsetImage();
-    }
-    //else
-    //    outputSegmentation(tree, selection);
-    delete tree;
-}
-
-void runManualClassification(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-    fl::Node *root;
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
-                                    std::make_pair(image.rows, image.cols)); // min-tree creation
-
-    std::vector <fl::Node *> selection;
-
-    if (argc > 2)
-        loadNodes(tree, selection, argv[2]);
-    else
-        objectDetection(tree, selection);
-
-    std::vector <fl::Node *> npc[3];
-
-    tree->setImage(image);
-    manualClassification(tree, selection, npc, image);
-    tree->unsetImage();
-
-    if (argc > 3)
-        saveClassifiedNodes(tree, npc, argv[3]);
-
-    delete tree;
-}
-
-void runObjectAnalysis(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-    fl::Node *root;
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
-                                    std::make_pair(image.rows, image.cols)); // min-tree creation
-
-    std::vector <fl::Node *> selection;
-
-    if (argc > 2)
-        loadNodes(tree, selection, argv[2]);
-    else
-        objectDetection(tree, selection);
-
-    std::vector <fl::Node *> npc[3];
-
-    if (argc > 3){
-        loadClassifiedNodes(tree, npc, argv[3]);
-        objectAnalysis(tree, npc);
-    }
-
-
-    delete tree;
-}
-
-void runPipeline(int argc, char **argv){
-
-    std::cout << "Load image " << argv[1] << std::endl;
-    std::cout << "And the RGB for visualization: " << argv[2] << std::endl;
-
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-    cv::Mat rgb = cv::imread(argv[2], CV_LOAD_IMAGE_COLOR);
-    fl::Node *root;
-
-    std::cout << "Constructing image tree " << std::endl;
-
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
-                                    std::make_pair(image.rows, image.cols)); // min-tree creation
-
-    std::vector <fl::Node *> selection;
-    std::vector <fl::Node *> source;
-    std::vector <fl::Node *> npc[3];
-
-    bool curDet = false;
-    if (argc > 3 && doesFileExist(argv[3]))
-        loadNodes(tree, selection, argv[3]);
-    else{
-
-        objectDetection(tree, selection, &source); // new implementation
-
-        curDet = true;
-        if (argc == 3)
-            return;
-        else{
-            saveNodes(tree, selection, argv[3]);
-            //saveNodes(tree, source, std::string(argv[3])+"_source");
-            //branchAnalysis(tree, source);
-        }
-    }
-
-    if (argc < 5){
-        tree->setImage(image);
-        outputSegmentation(tree, selection);
-        tree->unsetImage();
-        return;
-    }
-
-    if (!doesFileExist(argv[4]) || curDet){
-
-//        for (int i=0, szi = selection.size(); i < szi; ++i){
-//            std::stringstream ss;
-//            ss << "segment_" << std::setfill('0') << std::setw(6) << i << ".png";
-//            outputSegmentation(tree, std::vector<Node*>(1,selection[i]), ss.str());
-//        }
-        tree->setImage(image);
-        outputSegmentation(tree, selection, argv[4]);
-        tree->unsetImage();
-    }
-    if (argc < 6)
-        return;
-
-    std::string classBase(argv[5]);
-    std::string::size_type idx = classBase.rfind('.');
-    std::string baseName = classBase.substr(0, idx);
-    std::string extension = classBase.substr(idx);
-
-    bool curClass = false;
-    if (!doesFileExist(baseName + "_weed" + extension) ||
-        !doesFileExist(baseName + "_crop" + extension) ||
-        !doesFileExist(baseName + "_mixed" + extension)){
-
-        tree->setImage(image);
-        curClass = true;
-        manualClassification(tree, selection, npc, rgb); // new implementation
-        tree->unsetImage();
-        saveClassifiedNodes(tree, npc, argv[5]);
-    }
-    else{
-        loadClassifiedNodes(tree, npc, argv[5]);
-    }
-
-    if (argc >= 7 && (!doesFileExist(argv[6]) || curClass))
-        outputClassification(tree, npc, argv[6]);
-
-    tree->setImage(image);
-
-    if (argc >= 8)
-        objectAnalysis(tree, npc, argv[7]);
-    else
-        objectAnalysis(tree, npc);
-
-    tree->unsetImage();
-
-    delete tree;
-}
 
 void testObjectDetection(int argc, char **argv){
 
@@ -2405,35 +1885,35 @@ void testAlpha(int delta, cv::Mat &image1, cv::Mat &image2, cv::Mat &display, st
 }
 
 void testSoil(){
-    cv::Mat image1 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs1_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs1_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D1/D1_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image1, ofs1_count, ofs1_sum);
+    cv::Mat image1 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D1/D1_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+    std::ofstream ofs1_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D1/D1_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+    //std::ofstream ofs1_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D1/D1_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+    outputGlobalPS(image1, ofs1_count, ofs1_count);
 
-    cv::Mat image2 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs2_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs2_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D2/D2_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image2, ofs2_count, ofs2_sum);
-
-    cv::Mat image3 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs3_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs3_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D3/D3_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image3, ofs3_count, ofs3_sum);
-
-    cv::Mat image4 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs4_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs4_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D4/D4_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image4, ofs4_count, ofs4_sum);
-
-    cv::Mat image5 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs5_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs5_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D5/D5_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image5, ofs5_count, ofs5_sum);
-
-    cv::Mat image6 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
-    std::ofstream ofs6_count ("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified_GCF_count_minmax.txt", std::ofstream::out);
-    std::ofstream ofs6_sum ("/home/petra/Documents/Data/Soil/main_data/12_07/D6/D6_camera_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
-    outputGlobalPS(image6, ofs6_count, ofs6_sum);
+//    cv::Mat image2 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D2/D2_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+//    std::ofstream ofs2_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D2/D2_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+//    //std::ofstream ofs2_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D2/D2_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+//    outputGlobalPS(image2, ofs2_count, ofs2_count);
+//
+//    cv::Mat image3 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D3/D3_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+//    std::ofstream ofs3_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D3/D3_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+//    //std::ofstream ofs3_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D3/D3_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+//    outputGlobalPS(image3, ofs3_count, ofs3_count);
+//
+//    cv::Mat image4 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D4/D4_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+//    std::ofstream ofs4_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D4/D4_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+//    //std::ofstream ofs4_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D4/D4_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+//    outputGlobalPS(image4, ofs4_count, ofs4_count);
+//
+//    cv::Mat image5 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D5/D5_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+//    std::ofstream ofs5_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D5/D5_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+//    //std::ofstream ofs5_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D5/D5_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+//    outputGlobalPS(image5, ofs5_count, ofs5_count);
+//
+//    cv::Mat image6 = cv::imread("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D6/D6_phone_1_rectified.JPG", CV_LOAD_IMAGE_GRAYSCALE);
+//    std::ofstream ofs6_count ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D6/D6_phone_1_rectified_GCF_minmax.txt", std::ofstream::out);
+//    //std::ofstream ofs6_sum ("/home/petra/Documents/Data/Soil/main_data/12_05/phone/D6/D6_phone_1_rectified_GCF_sum_minmax.txt", std::ofstream::out);
+//    outputGlobalPS(image6, ofs6_count, ofs6_count);
 }
 
 void calculateSE(cv::Mat &image, std::ostream &outPS){
@@ -2500,7 +1980,6 @@ void visualizePS(const std::vector<std::vector<double> > ps){
 
 }
 
-
 void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
 
         //outPS << "200" << std::endl;
@@ -2509,9 +1988,11 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
                                                     std::make_pair(image.rows, image.cols));
 //        maxTree->setImage(image);
 
-//        fl::ImageTree *maxTree = new fl::ImageTree(fl::tosGeraud(image), std::make_pair(image.rows, image.cols));
+        //fl::ImageTree *maxTree = new fl::ImageTree(fl::tosGeraud(image), std::make_pair(image.rows, image.cols));
+        //fl::ImageTree *maxTree = new fl::ImageTree(fl::alphaTreeDualMax(image), std::make_pair(image.rows, image.cols));
+        //fl::ImageTree *maxTree = new fl::ImageTree(fl::omegaTreeAlphaFilter(image), std::make_pair(image.rows, image.cols));
 
-
+        std::cout << maxTree->countNodes() << std::endl;
         maxTree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
 //        maxTree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
 //        maxTree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
@@ -2526,11 +2007,11 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
 
         std::cout << "Max granulometric curve" << std::endl;
         std::map<double, int> maxGCF0;
-        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF0, 0);
-        std::map<double, int> maxGCF1;
-        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF1, 1);
-//
-//
+        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF0, 2);
+//        std::map<double, int> maxGCF1;
+//        maxTree->calculateGranulometryHistogram<fl::AreaAttribute>(maxGCF1, 1);
+
+
 //        if (0){
 //            if (0){
 //                std::cout << "Granulometric curve?" << std::endl;
@@ -2597,7 +2078,7 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
         delete maxTree;
 
         //outPS << std::endl;
-
+//if (0){
         fl::ImageTree *minTree = new fl::ImageTree(fl::maxTreeNister(image, std::less<int>()), // min-tree
                                                     std::make_pair(image.rows, image.cols));
 //
@@ -2712,12 +2193,12 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
 
 //        }
 
-//        minTree->displayTree();
-////        cv::Mat testImg1, testImg2, diff;
+        //minTree->displayTree();
+//        cv::Mat testImg1, testImg2, diff;
 //        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(10000));
 //        minTree->displayTree("/home/petra/Programming/Trees/alpha_10k.png");
-////        testImg1 = cv::Mat::zeros(image.rows, image.cols, CV_8U);
-////        minTree->root()->colorMe(testImg1);
+//        testImg1 = cv::Mat::zeros(image.rows, image.cols, CV_8U);
+//        minTree->root()->colorMe(testImg1);
 //        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(20000));
 //        minTree->displayTree();
 //        minTree->filterTreeByAttributePredicate<fl::AreaAttribute>(fl::GreaterThanX<double>(50000));
@@ -2785,8 +2266,10 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
 //        minTree->deleteAttributeFromTree<fl::AreaAttribute>();
 //        minTree->unsetImage();
         delete minTree;
+//}
 
         std::map<double, int> GCF0 = maxGCF0;
+
         GCF0 = std::accumulate( minGCF0.begin(), minGCF0.end(), GCF0,
             []( std::map<double, int> &m, const std::pair<const double, int> &p )
             {
@@ -2798,95 +2281,23 @@ void outputGlobalPS(cv::Mat &image, std::ostream &outPS, std::ostream &outPS2){
         }
         outPS << std::endl;
 
-        std::map<double, int> GCF1 = maxGCF1;
-        GCF1 = std::accumulate( minGCF1.begin(), minGCF1.end(), GCF1,
-            []( std::map<double, int> &m, const std::pair<const double, int> &p )
-            {
-                return ( m[p.first] +=p.second, m );
-            } );
 
-        for(auto elem : GCF1){
-            outPS2 << elem.first << " " << elem.second << std::endl;
-        }
-        outPS2 << std::endl;
+
+//        std::map<double, int> GCF1 = maxGCF1;
+////        GCF1 = std::accumulate( minGCF1.begin(), minGCF1.end(), GCF1,
+////            []( std::map<double, int> &m, const std::pair<const double, int> &p )
+////            {
+////                return ( m[p.first] +=p.second, m );
+////            } );
+//
+//        for(auto elem : GCF1){
+//            outPS2 << elem.first << " " << elem.second << std::endl;
+//        }
+//        outPS2 << std::endl;
 
 //        outPS << "\n";
 
         std::cout << "arriving to here " << std::endl;
-}
-
-/* yanwei code */
-
-void forYanwei(int delta, cv::Mat &image, bool minTree, int salientNum){
-    try{
-        int matchesWanted;
-        std::vector <fl::Node *> mser;
-        std::vector <std::pair<double, int> > div;
-
-        std::vector <std::vector<cv::Point> > points;
-        std::set <fl::Node *> salientMser;
-        std::vector <std::pair<std::pair<double, int >, int> > salientDiv;
-
-        fl::ImageTree *tree;
-        fl::Node *myRoot;
-
-        if (minTree){
-            tree = new fl::ImageTree(myRoot=fl::maxTreeBerger(image, std::less<int>()),
-                                    std::make_pair(image.rows, image.cols));
-        }
-        else{
-            tree = new fl::ImageTree(myRoot=fl::maxTreeBerger(image, std::greater<int>()),
-                                    std::make_pair(image.rows, image.cols));
-        }
-
-        fl::markMserInTree(*tree, delta, mser, div, 0.2, 50, 0.45, 0.2);
-
-        fl::fillMserPoints(points, mser);
-
-        std::sort(div.begin(), div.end(), std::less<std::pair <double, int> >());
-
-        int added=0;
-        for (int i=0, szi = div.size(); i < szi; ++i){
-            fl::ellipse current(points[div[i].second], image.cols, image.rows);
-            if (current.isOK()){
-                salientMser.insert(mser[div[i].second]);
-                ++added;
-            }
-        }
-
-        if (salientMser.find(myRoot) == salientMser.end())
-            ++added;
-
-        std::cerr << "1.0" << std::endl;
-        std::cerr << added << std::endl;
-
-        tree->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
-        tree->addAttributeToTree<fl::NonCompactnessAttribute>(new fl::NonCompactnessSettings());
-        tree->addAttributeToTree<fl::MomentsAttribute>(new fl::MomentsSettings(5, fl::MomentType::bnormal, 1, 1));
-        tree->addPatternSpectra2DToTree<fl::AreaAttribute, fl::NonCompactnessAttribute>
-                (new fl::PatternSpectra2DSettings(fl::Binning(10, 1, NODE_VAL, fl::Binning::logarithmic, 1000),
-                                                  fl::Binning(6, 1, 53, fl::Binning::logarithmic), false, true, true));
-
-
-        //tree->printPartialTreeWithSpectrum<fl::AreaAttribute, fl::NonCompactnessAttribute>(salientMser, image.cols, image.rows);
-
-        points.clear();
-        mser.clear();
-        div.clear();
-        salientDiv.clear();
-        salientMser.clear();
-
-        tree->deletePatternSpectra2DFromTree<fl::AreaAttribute, fl::NonCompactnessAttribute>();
-        tree->deleteAttributeFromTree<fl::NonCompactnessAttribute>();
-        tree->deleteAttributeFromTree<fl::MomentsAttribute>();
-        tree->deleteAttributeFromTree<fl::AreaAttribute>();
-
-        delete tree;
-    }
-    catch (std::string i){
-        std::cout << i << " error " << std::endl;
-    }
-
 }
 
 
