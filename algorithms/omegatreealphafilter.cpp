@@ -1,3 +1,6 @@
+/// \file algorithms/omegatreealphafilter.cpp
+/// \author Petra Bosilj
+
 #include "omegatreealphafilter.h"
 
 #include "alphatreedualmax.h"
@@ -19,7 +22,7 @@
 namespace fl{
 
 
-/**
+/*
     void filterSubtreeByRange(Node *subRoot){
         int myRange = ((fl::RangeAttribute *)subRoot->getAttribute(fl::RangeAttribute::name))->value();
         bool deletion;
@@ -40,8 +43,8 @@ namespace fl{
             filterSubtreeByRange(chi[i]);
     }
 
-**/
-/**
+*/
+/*
     void assignRangeAsAttribute(Node *root){
         root->assignAttribute(((fl::RangeAttribute *)root->getAttribute(fl::RangeAttribute::name))->value());
 
@@ -52,7 +55,7 @@ namespace fl{
 
         return;
     }
-**/
+*/
 
     Node *omegaTreeAlphaFilter(const cv::Mat &img){
         Node *alphaRoot = alphaTreeDualMax(img);

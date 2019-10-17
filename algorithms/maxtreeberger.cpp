@@ -13,7 +13,7 @@
 namespace fl{
     /// \details \copydetails fl::maxTreeNister()
     Node *maxTreeBerger(const cv::Mat &img){
-        return maxTreeBerger(img, std::less<int>(), regular);
+        return maxTreeBerger(img, std::less<int>(), fl::pxType::regular);
     }
 
     namespace detail{

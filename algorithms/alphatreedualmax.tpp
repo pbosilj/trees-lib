@@ -65,7 +65,7 @@ namespace fl{
             }
         }
 
-        Node *dualRoot = maxTreeNister(imgDual, std::less<float>(), dual);
+        Node *dualRoot = maxTreeNister(imgDual, std::less<float>(), fl::pxType::dual);
         std::vector <std::vector <char> > seen(img[0].cols, std::vector <char>(img[0].rows, false));
         Node *alphaRoot = constructRecursively(dualRoot, seen);
         ImageTree *dualTree = new ImageTree(dualRoot, std::make_pair(img[0].rows, img[0].cols)); // <- to delete it

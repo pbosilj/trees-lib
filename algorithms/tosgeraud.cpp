@@ -60,7 +60,7 @@ namespace fl{
 
         detail::interpolateImg(img, intImg);
         detail::sortImgElemsToS(intImg, sorted, ub);
-        detail::maxTreeCore(sorted, regular, parentInt);
+        detail::maxTreeCore(sorted, fl::pxType::regular, parentInt);
         detail::canonizeTree(sorted, parentInt, ub);
         detail::unInterpolateParent(parentInt, ub, parent);
 
@@ -253,7 +253,7 @@ namespace fl{
                 eimg.at<uchar>(cur.Y, cur.X) = level;
                 order.push_back(cur);
 
-                pxDirected curDir = make_pxDirected(cur, 1, regular);
+                pxDirected curDir = make_pxDirected(cur, 1, fl::pxType::regular);
                 for (pxCoord ngb = nextCoord(curDir); ; ngb = nextCoord(curDir)){
                     if (!coordOk(ngb, iimg.size(), iimg.back().size()) || seen[ngb.X][ngb.Y]){
                         if (nextDir(curDir))

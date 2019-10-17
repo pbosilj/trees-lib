@@ -1,3 +1,6 @@
+/// \file algorithms/omegatreealphafilter.tpp
+/// \author Petra Bosilj
+
 #ifndef TPP_OMEGATREEALPHAFILTER
 #define TPP_OMEGATREEALPHAFILTER
 

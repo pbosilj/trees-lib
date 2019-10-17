@@ -1,3 +1,7 @@
+/// \file structures/cropweedspipeline.cpp
+/// \author Petra Bosilj
+/// \date 07/10/2019
+
 #include "cropweedspipeline.h"
 
 #include "../algorithms/maxtreeberger.h"
@@ -19,9 +23,52 @@
 
 /// \brief Runs the pipeline that segments and classifies the
 /// vegetation regions in an NDVI image
-void runPipeline(int argc, char **argv){
+///
+/// Arguments are positional:
+/// 1 - path to the image to process (NDVI image)
+/// 2 - path to the registered RGB for visualisation
+/// 3 - path to the output of segmentation (list of nodes).
+///     If the file exists, the nodes are loaded for the image
+///     and the segmentation process is not run.
+///     If the file does not exist, the segmentation is run and
+///     the output saved to the provided text file.
+/// [4] - path to the output of segmentation (image).
+///     Can be omitted (call with 3 arguments only).
+///     If the file (3) exists, and this file exists,
+///     no changes are made to the file (4).
+///     If the file (3) does not exist, or this file
+///     does not exist, the segementation output is saved
+///     as an image in the provided file.
+/// [5] - template path to the output of classification (list
+///     of nodes).
+///     Can be omitted (call with 3 or 4 arguments only).
+///     If the path provided is 'XYZ.txt', the files 'XYZ_mixed.txt',
+///     'XYZ_crop.txt' and 'XYZ_weed.txt' are required.
+///     If the above files exist, the nodes are loaded for the
+///     image and the classification is not run.
+///     If any of the above files does not exist, the (manual)
+///     classification process is ran on the image and the
+///     output saved in three files with names as above.
+/// [6] - path to the output of classification (image).
+///     Can be omitted (call with 3-5 arguments only).
+///     If the files (5) exist, and this file exists,
+///     no changes are made to the file (6).
+///     If the files (5) do not exist, or this file
+///     does not exist, the classifcation output is saved
+///     as an image in the provided file.
+/// [7] - template path for the output of attributes per
+///     classified `Node`.
+///     Can be omitted (call with 3-6 arguments only).
+///     The attributes are as follows: area, non-compactness,
+///     roundness, kurtosis, eccentricity, triangularity,
+///     sparsity, region dynamics, mean, and value deviation.
+///     A separate files is created for each of the three
+///     vegetation classes (weeds, crops, mixed) for each attribute,
+///     with the order of `Node`s per file corresponding to the
+///     order in files of (5).
+void rCropWeedsPipeline(int argc, char **argv){
 
-    std::cout << "Load image " << argv[1] << std::endl;
+    std::cout << "Loading the image " << argv[1] << std::endl;
     std::cout << "And the RGB for visualization: " << argv[2] << std::endl;
 
     cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
@@ -30,7 +77,7 @@ void runPipeline(int argc, char **argv){
 
     std::cout << "Constructing image tree " << std::endl;
 
-    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
+    fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::greater<int>()),
                                     std::make_pair(image.rows, image.cols)); // min-tree creation
 
     std::vector <fl::Node *> selection;

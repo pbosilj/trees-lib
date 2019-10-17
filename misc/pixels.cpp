@@ -3,7 +3,7 @@
 namespace fl{
     pxCoord nextCoord (pxDirected &dpx){
         pxCoord rValue = dpx.coord;
-        if (dpx.pxtype == regular){
+        if (dpx.pxtype == fl::pxType::regular){
             if (dpx.pxdir <= 1){
                 --rValue.X;
             }
@@ -17,7 +17,7 @@ namespace fl{
                 --rValue.Y;
             }
         }
-        else if (dpx.pxtype == dual){
+        else if (dpx.pxtype == fl::pxType::dual){
 
             if (! ((dpx.coord.X %2)-(dpx.coord.Y%2)) ) // (odd,odd) or (even,even) -- error
                 return dpx.coord;
@@ -75,9 +75,9 @@ namespace fl{
         return true;
     }
     bool nextDir(const pxDirected &dpx){
-        if (dpx.pxtype == regular)
+        if (dpx.pxtype == fl::pxType::regular)
             return (dpx.pxdir <= 1<<3);
-        else if (dpx.pxtype == dual)
+        else if (dpx.pxtype == fl::pxType::dual)
             return (dpx.pxdir <= 1<<5);
         else
             return false;

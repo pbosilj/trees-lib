@@ -64,6 +64,10 @@
 		<Unit filename="algorithms/regionclassification.h" />
 		<Unit filename="algorithms/tosgeraud.cpp" />
 		<Unit filename="algorithms/tosgeraud.h" />
+		<Unit filename="algorithms/treeconstruction.cpp" />
+		<Unit filename="algorithms/treeconstruction.h" />
+		<Unit filename="examples/soilpatternspectra.cpp" />
+		<Unit filename="examples/soilpatternspectra.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="misc/commontreedetail.cpp" />
 		<Unit filename="misc/commontreedetail.h" />
@@ -72,6 +76,8 @@
 		<Unit filename="misc/distance.tpp" />
 		<Unit filename="misc/ellipse.cpp" />
 		<Unit filename="misc/ellipse.h" />
+		<Unit filename="misc/misc.cpp" />
+		<Unit filename="misc/misc.h" />
 		<Unit filename="misc/pixels.cpp" />
 		<Unit filename="misc/pixels.h" />
 		<Unit filename="structures/areaattribute.cpp" />

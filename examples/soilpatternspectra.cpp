@@ -1,3 +1,7 @@
+/// \file structures/soilpatternspectra.cpp
+/// \author Petra Bosilj
+/// \date 07/10/2019
+
 #include "soilpatternspectra.h"
 
 #include "../misc/misc.h"
@@ -67,7 +71,7 @@ void rTestSoil(int argc, char **argv){
         treeTypes.push_back(fl::treeType::alphaTree);
     else if (tt == "omega")
         treeTypes.push_back(fl::treeType::omegaTree);
-    else if (tt == "omega")
+    else if (tt == "minmax")
         treeTypes.push_back(fl::treeType::minMax);
     else if (tt == "all"){
         treeTypes.push_back(fl::treeType::minTree);
@@ -132,7 +136,7 @@ void outputGranulometryCurve(const cv::Mat &image, fl::treeType t, const std::ve
 
     fl::ImageTree *mainTree;
     fl::ImageTree *secondaryTree;
-    if (t == minMax){
+    if (t == fl::treeType::minMax){
         mainTree = fl::createTree(fl::treeType::minTree, image);
         secondaryTree = fl::createTree(fl::treeType::maxTree, image);
     }
@@ -147,7 +151,7 @@ void outputGranulometryCurve(const cv::Mat &image, fl::treeType t, const std::ve
 
         calculateGranulometry(mainTree, hist[i], rule[i]);
 
-        if (t == minMax){
+        if (t == fl::treeType::minMax){
             std::map<double, int> secondaryHist;
             calculateGranulometry(secondaryTree, secondaryHist, rule[i]);
 

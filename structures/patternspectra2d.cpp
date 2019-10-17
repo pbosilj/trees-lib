@@ -27,11 +27,11 @@ fl::Binning::Binning(int nBins, int minValue, int maxValue, Scale sc)
         std::exit(-3);
     }
     this->range = maxValue - minValue;
-    if (sc == logarithmic){
+    if (sc == Scale::logarithmic){
         this->referenceScaleRange = this->range +1;
         this->calcLogB();
     }
-    else if (sc == arbitrary) {
+    else if (sc == Scale::arbitrary) {
         std::cerr << "Initializing arbitrairy binning without limit values. Releasing raptors" << std::endl;
         std::exit(-1);
     }
@@ -48,12 +48,12 @@ fl::Binning::Binning(int nBins, int minValue, int maxValue, Scale sc)
 fl::Binning::Binning(int nBins, int minValue, int maxValue, Scale sc, int referenceScaleRange)
     : nBins(nBins), minValue(minValue), maxValue(maxValue), scale(sc), relativeScale(false), referenceScaleRange(referenceScaleRange){
     if (maxValue != NODE_VAL && minValue >= maxValue){
-        std::cerr << "Mainimal value larger or equal to the maximal value. Releasing raptors" << std::endl;
+        std::cerr << "Minimal value larger or equal to the maximal value. Releasing raptors" << std::endl;
         std::exit(-3);
     }
     this->range = maxValue - minValue;
     this->calcLogB();
-    if (sc != logarithmic){
+    if (sc != Scale::logarithmic){
         std::cerr << "referenceScaleRange argument used only in initialization of logarithmic binning. Releasing raptors" << std::endl;
         std::exit(-7);
     }
@@ -77,7 +77,7 @@ fl::Binning::Binning(int nBins, int minValue, int maxValue, Scale sc, const std:
         std::exit(-3);
     }
     this->range = maxValue - minValue;
-    if (sc != arbitrary) {
+    if (sc != Scale::arbitrary) {
         std::cerr << "Initializing non arbitrairy binning with limit values. Releasing raptors" << std::endl;
         std::exit(-2);
     }
@@ -107,13 +107,13 @@ int fl::Binning::getBin(double value) const{
         return 0;
     value -= this->minValue;
     switch(this->scale) {
-        case arbitrary:
+        case Scale::arbitrary:
             return getArbitraryBinning(value)+1;
             break;
-        case logarithmic:
+        case Scale::logarithmic:
             return getLogarithmicBinning(value)+1;
             break;
-        case linear:
+        case Scale::linear:
         default:
             return getLinearBinning(value)+1;
             break;
@@ -186,13 +186,13 @@ void fl::Binning::calcLogB(){
 /// \return The upper limit of the bin (in percentage form)
 double fl::Binning::getUnscaledUpperLimit(int binIndex) const{
     switch(this->scale) {
-        case arbitrary:
+        case Scale::arbitrary:
             return this->binUpperLimits[binIndex-1];
             break;
-        case logarithmic:
+        case Scale::logarithmic:
             return (std::pow(this->b, binIndex) - 1)/(this->referenceScaleRange - 1);
             break;
-        case linear:
+        case Scale::linear:
         default:
             return binIndex / this->nBins;
             break;
@@ -212,7 +212,7 @@ void fl::Binning::addLocalInformation(Node *myNode){
     if (this->maxValue == NODE_VAL){
         this->maxValue = ((AreaAttribute *)(myNode->getAttribute(AreaAttribute::name)))->value();
         this->range = this->maxValue - this->minValue;
-        if (this->scale == logarithmic && this->referenceScaleRange <= 0){
+        if (this->scale == Scale::logarithmic && this->referenceScaleRange <= 0){
             this->referenceScaleRange = this->range + 1;
             this->calcLogB();
         }

@@ -1,4 +1,4 @@
-/// \file structures/msernister.h
+/// \file algorithms/msernister.h
 /// \author Petra Bosilj
 
 #ifndef MSERNISTER_H_INCLUDED

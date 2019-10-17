@@ -39,7 +39,7 @@ namespace fl{
 
     /// \brief \copybrief maxTreeBerger().
     template <typename Compare>
-    Node *maxTreeBerger(const cv::Mat &img, Compare pxOrder, const cv::Mat &mask = cv::Mat(), pxType curType = regular);
+    Node *maxTreeBerger(const cv::Mat &img, Compare pxOrder, const cv::Mat &mask = cv::Mat(), fl::pxType curType = fl::pxType::regular);
 }
 
 #include "maxtreeberger.tpp"

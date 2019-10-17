@@ -1,3 +1,6 @@
+/// \file misc/distance.h
+/// \author Petra Bosilj
+
 #ifndef DISTANCE_H
 #define DISTANCE_H
 
@@ -24,7 +27,7 @@ namespace fl{
             distance() {}
 
             /// \brief A distance destructor.
-            virtual ~distance();
+            virtual ~distance() {};
 
             /// \brief The operator calculating the distance between two elements of a multispectral image.
             ///

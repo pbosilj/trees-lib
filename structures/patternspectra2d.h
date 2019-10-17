@@ -43,7 +43,7 @@ namespace fl{
     class Binning{
         public:
             /// Possible `Scale`s to use in a `Binning`.
-            enum Scale {
+            enum class Scale {
                 linear, ///< Linear scale, all bins of the same width.
                 logarithmic, ///< Logarithmic scale, smaller bins for smaller values.
                 arbitrary, ///< Arbitrary user-determined bins.

@@ -15,7 +15,7 @@
 namespace fl{
 
     /// \brief Type of pixel. Regular -- 4 connected image graph, Dual -- Inverted edges and nodes of the image graph.
-    enum pxType {regular, dual};
+    enum class pxType {regular, dual};
 
     /// \brief Pixel coordinates. A pair of integer coordinates.
     typedef std::pair <int, int> pxCoord;

@@ -42,7 +42,7 @@ void fl::MeanAttribute::calculateAttribute(){
     const cv::Mat &img = this->myTree->image();
 
     const std::vector <std::pair<int, int> > &ownElems = this->myNode->getOwnElements();
-    double sum;
+    double sum = 0;
     for (int i=0, szi = ownElems.size(); i < szi; ++i){
         double curEl = detail::getCvMatElem(img, ownElems[i].X, ownElems[i].Y);
         sum += curEl;

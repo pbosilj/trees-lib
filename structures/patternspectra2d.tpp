@@ -40,9 +40,9 @@ fl::PatternSpectra2D<AT1,AT2>::PatternSpectra2D(Node *baseNode, const ImageTree 
                 cv::Mat image = cv::Mat::zeros(upperArea, 1, CV_8U);
                 fl::Node *root =fl::maxTreeNister(image, std::greater<int>());
                 fl::ImageTree *tree = new fl::ImageTree(root,std::make_pair(image.rows, image.cols));
+                tree->setImage(image);
                 tree->addAttributeToTree<AT2>(this->myNode->getAttribute(AT2::name)->mySettings, false);
                 this->mySettings->upperLimits[i] = this->mySettings->secondAttBin.getBin(((AT2 *)root->getAttribute(AT2::name))->value());
-
                 tree->deleteAttributeFromTree<AT2>();
                 delete tree;
             }

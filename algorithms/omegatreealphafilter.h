@@ -1,3 +1,6 @@
+/// \file examples/omegatreealphafilter.h
+/// \author Petra Bosilj
+
 #ifndef OMEGATREEALPHAFILTER_H_INCLUDED
 #define OMEGATREEALPHAFILTER_H_INCLUDED
 

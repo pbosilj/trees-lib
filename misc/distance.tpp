@@ -1,3 +1,6 @@
+/// \file misc/distance.tpp
+/// \author Petra Bosilj
+
 #ifndef TPP_DISTANCE
 #define TPP_DISTANCE
 

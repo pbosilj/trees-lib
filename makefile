@@ -12,37 +12,37 @@ LD = g++
 WINDRES = windres
 
 INC = 
-CFLAGS = -Wall -fexceptions
+CFLAGS = -Wall -std=c++11 -fexceptions
 RESINC = 
 LIBDIR = 
 LIB = 
-LDFLAGS = 
+LDFLAGS = `pkg-config --cflags --libs opencv`
 
-INC_DEBUG = $(INC)
+INC_DEBUG = $(INC) -Istructures
 CFLAGS_DEBUG = $(CFLAGS) -g `pkg-config opencv --cflags`
 RESINC_DEBUG = $(RESINC)
 RCFLAGS_DEBUG = $(RCFLAGS)
 LIBDIR_DEBUG = $(LIBDIR)
 LIB_DEBUG = $(LIB)
-LDFLAGS_DEBUG = $(LDFLAGS) `pkg-config opencv --libs`
+LDFLAGS_DEBUG = $(LDFLAGS)
 OBJDIR_DEBUG = obj/Debug
 DEP_DEBUG = 
 OUT_DEBUG = bin/Debug/Trees
 
-INC_RELEASE = $(INC)
+INC_RELEASE = $(INC) -Istructures
 CFLAGS_RELEASE = $(CFLAGS) -O2 `pkg-config opencv --cflags`
 RESINC_RELEASE = $(RESINC)
 RCFLAGS_RELEASE = $(RCFLAGS)
 LIBDIR_RELEASE = $(LIBDIR)
 LIB_RELEASE = $(LIB)
-LDFLAGS_RELEASE = $(LDFLAGS) -s `pkg-config opencv --libs`
+LDFLAGS_RELEASE = $(LDFLAGS) -s
 OBJDIR_RELEASE = obj/Release
 DEP_RELEASE = 
 OUT_RELEASE = bin/Release/Trees
 
-OBJ_DEBUG = $(OBJDIR_DEBUG)/structures/attribute.o $(OBJDIR_DEBUG)/structures/imagetree.o $(OBJDIR_DEBUG)/structures/inclusionnode.o $(OBJDIR_DEBUG)/structures/momentsattribute.o $(OBJDIR_DEBUG)/structures/momentsholder.o $(OBJDIR_DEBUG)/structures/node.o $(OBJDIR_DEBUG)/structures/noncompactnessattribute.o $(OBJDIR_DEBUG)/structures/partitioningnode.o $(OBJDIR_DEBUG)/structures/patternspectra2d.o $(OBJDIR_DEBUG)/structures/rangeattribute.o $(OBJDIR_DEBUG)/structures/regiondynamicsattribute.o $(OBJDIR_DEBUG)/algorithms/maxtreeberger.o $(OBJDIR_DEBUG)/algorithms/maxtreenister.o $(OBJDIR_DEBUG)/algorithms/msernister.o $(OBJDIR_DEBUG)/algorithms/omegatreealphafilter.o $(OBJDIR_DEBUG)/algorithms/predicate.o $(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o $(OBJDIR_DEBUG)/algorithms/tosgeraud.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/misc/commontreedetail.o $(OBJDIR_DEBUG)/misc/ellipse.o $(OBJDIR_DEBUG)/misc/pixels.o $(OBJDIR_DEBUG)/structures/areaattribute.o
+OBJ_DEBUG = $(OBJDIR_DEBUG)/structures/momentsholder.o $(OBJDIR_DEBUG)/structures/momentsattribute.o $(OBJDIR_DEBUG)/structures/meanattribute.o $(OBJDIR_DEBUG)/structures/inclusionnode.o $(OBJDIR_DEBUG)/structures/node.o $(OBJDIR_DEBUG)/structures/imagetree.o $(OBJDIR_DEBUG)/structures/entropyattribute.o $(OBJDIR_DEBUG)/structures/diagonalminimumattribute.o $(OBJDIR_DEBUG)/structures/boundingspherediameterapprox.o $(OBJDIR_DEBUG)/structures/rangeattribute.o $(OBJDIR_DEBUG)/structures/yextentattribute.o $(OBJDIR_DEBUG)/structures/valuedeviationattribute.o $(OBJDIR_DEBUG)/structures/sparsityattribute.o $(OBJDIR_DEBUG)/structures/regiondynamicsattribute.o $(OBJDIR_DEBUG)/structures/attribute.o $(OBJDIR_DEBUG)/structures/patternspectra2d.o $(OBJDIR_DEBUG)/structures/partitioningnode.o $(OBJDIR_DEBUG)/structures/noncompactnessattribute.o $(OBJDIR_DEBUG)/algorithms/regionclassification.o $(OBJDIR_DEBUG)/algorithms/omegatreealphafilter.o $(OBJDIR_DEBUG)/algorithms/objectdetection.o $(OBJDIR_DEBUG)/algorithms/tosgeraud.o $(OBJDIR_DEBUG)/algorithms/msernister.o $(OBJDIR_DEBUG)/algorithms/maxtreenister.o $(OBJDIR_DEBUG)/algorithms/maxtreeberger.o $(OBJDIR_DEBUG)/structures/areaattribute.o $(OBJDIR_DEBUG)/misc/pixels.o $(OBJDIR_DEBUG)/misc/misc.o $(OBJDIR_DEBUG)/misc/ellipse.o $(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o $(OBJDIR_DEBUG)/misc/commontreedetail.o $(OBJDIR_DEBUG)/main.o $(OBJDIR_DEBUG)/examples/soilpatternspectra.o $(OBJDIR_DEBUG)/algorithms/treeconstruction.o
 
-OBJ_RELEASE = $(OBJDIR_RELEASE)/structures/attribute.o $(OBJDIR_RELEASE)/structures/imagetree.o $(OBJDIR_RELEASE)/structures/inclusionnode.o $(OBJDIR_RELEASE)/structures/momentsattribute.o $(OBJDIR_RELEASE)/structures/momentsholder.o $(OBJDIR_RELEASE)/structures/node.o $(OBJDIR_RELEASE)/structures/noncompactnessattribute.o $(OBJDIR_RELEASE)/structures/partitioningnode.o $(OBJDIR_RELEASE)/structures/patternspectra2d.o $(OBJDIR_RELEASE)/structures/rangeattribute.o $(OBJDIR_RELEASE)/structures/regiondynamicsattribute.o $(OBJDIR_RELEASE)/algorithms/maxtreeberger.o $(OBJDIR_RELEASE)/algorithms/maxtreenister.o $(OBJDIR_RELEASE)/algorithms/msernister.o $(OBJDIR_RELEASE)/algorithms/omegatreealphafilter.o $(OBJDIR_RELEASE)/algorithms/predicate.o $(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o $(OBJDIR_RELEASE)/algorithms/tosgeraud.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/misc/commontreedetail.o $(OBJDIR_RELEASE)/misc/ellipse.o $(OBJDIR_RELEASE)/misc/pixels.o $(OBJDIR_RELEASE)/structures/areaattribute.o
+OBJ_RELEASE = $(OBJDIR_RELEASE)/structures/momentsholder.o $(OBJDIR_RELEASE)/structures/momentsattribute.o $(OBJDIR_RELEASE)/structures/meanattribute.o $(OBJDIR_RELEASE)/structures/inclusionnode.o $(OBJDIR_RELEASE)/structures/node.o $(OBJDIR_RELEASE)/structures/imagetree.o $(OBJDIR_RELEASE)/structures/entropyattribute.o $(OBJDIR_RELEASE)/structures/diagonalminimumattribute.o $(OBJDIR_RELEASE)/structures/boundingspherediameterapprox.o $(OBJDIR_RELEASE)/structures/rangeattribute.o $(OBJDIR_RELEASE)/structures/yextentattribute.o $(OBJDIR_RELEASE)/structures/valuedeviationattribute.o $(OBJDIR_RELEASE)/structures/sparsityattribute.o $(OBJDIR_RELEASE)/structures/regiondynamicsattribute.o $(OBJDIR_RELEASE)/structures/attribute.o $(OBJDIR_RELEASE)/structures/patternspectra2d.o $(OBJDIR_RELEASE)/structures/partitioningnode.o $(OBJDIR_RELEASE)/structures/noncompactnessattribute.o $(OBJDIR_RELEASE)/algorithms/regionclassification.o $(OBJDIR_RELEASE)/algorithms/omegatreealphafilter.o $(OBJDIR_RELEASE)/algorithms/objectdetection.o $(OBJDIR_RELEASE)/algorithms/tosgeraud.o $(OBJDIR_RELEASE)/algorithms/msernister.o $(OBJDIR_RELEASE)/algorithms/maxtreenister.o $(OBJDIR_RELEASE)/algorithms/maxtreeberger.o $(OBJDIR_RELEASE)/structures/areaattribute.o $(OBJDIR_RELEASE)/misc/pixels.o $(OBJDIR_RELEASE)/misc/misc.o $(OBJDIR_RELEASE)/misc/ellipse.o $(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o $(OBJDIR_RELEASE)/misc/commontreedetail.o $(OBJDIR_RELEASE)/main.o $(OBJDIR_RELEASE)/examples/soilpatternspectra.o $(OBJDIR_RELEASE)/algorithms/treeconstruction.o
 
 all: debug release
 
@@ -52,8 +52,9 @@ before_debug:
 	test -d bin/Debug || mkdir -p bin/Debug
 	test -d $(OBJDIR_DEBUG)/structures || mkdir -p $(OBJDIR_DEBUG)/structures
 	test -d $(OBJDIR_DEBUG)/algorithms || mkdir -p $(OBJDIR_DEBUG)/algorithms
-	test -d $(OBJDIR_DEBUG) || mkdir -p $(OBJDIR_DEBUG)
 	test -d $(OBJDIR_DEBUG)/misc || mkdir -p $(OBJDIR_DEBUG)/misc
+	test -d $(OBJDIR_DEBUG) || mkdir -p $(OBJDIR_DEBUG)
+	test -d $(OBJDIR_DEBUG)/examples || mkdir -p $(OBJDIR_DEBUG)/examples
 
 after_debug: 
 
@@ -62,89 +63,124 @@ debug: before_debug out_debug after_debug
 out_debug: before_debug $(OBJ_DEBUG) $(DEP_DEBUG)
 	$(LD) $(LIBDIR_DEBUG) -o $(OUT_DEBUG) $(OBJ_DEBUG)  $(LDFLAGS_DEBUG) $(LIB_DEBUG)
 
-$(OBJDIR_DEBUG)/structures/attribute.o: structures/attribute.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/attribute.cpp -o $(OBJDIR_DEBUG)/structures/attribute.o
-
-$(OBJDIR_DEBUG)/structures/imagetree.o: structures/imagetree.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/imagetree.cpp -o $(OBJDIR_DEBUG)/structures/imagetree.o
-
-$(OBJDIR_DEBUG)/structures/inclusionnode.o: structures/inclusionnode.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/inclusionnode.cpp -o $(OBJDIR_DEBUG)/structures/inclusionnode.o
+$(OBJDIR_DEBUG)/structures/momentsholder.o: structures/momentsholder.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/momentsholder.cpp -o $(OBJDIR_DEBUG)/structures/momentsholder.o
 
 $(OBJDIR_DEBUG)/structures/momentsattribute.o: structures/momentsattribute.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/momentsattribute.cpp -o $(OBJDIR_DEBUG)/structures/momentsattribute.o
 
-$(OBJDIR_DEBUG)/structures/momentsholder.o: structures/momentsholder.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/momentsholder.cpp -o $(OBJDIR_DEBUG)/structures/momentsholder.o
+$(OBJDIR_DEBUG)/structures/meanattribute.o: structures/meanattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/meanattribute.cpp -o $(OBJDIR_DEBUG)/structures/meanattribute.o
+
+$(OBJDIR_DEBUG)/structures/inclusionnode.o: structures/inclusionnode.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/inclusionnode.cpp -o $(OBJDIR_DEBUG)/structures/inclusionnode.o
 
 $(OBJDIR_DEBUG)/structures/node.o: structures/node.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/node.cpp -o $(OBJDIR_DEBUG)/structures/node.o
 
-$(OBJDIR_DEBUG)/structures/noncompactnessattribute.o: structures/noncompactnessattribute.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/noncompactnessattribute.cpp -o $(OBJDIR_DEBUG)/structures/noncompactnessattribute.o
+$(OBJDIR_DEBUG)/structures/imagetree.o: structures/imagetree.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/imagetree.cpp -o $(OBJDIR_DEBUG)/structures/imagetree.o
 
-$(OBJDIR_DEBUG)/structures/partitioningnode.o: structures/partitioningnode.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/partitioningnode.cpp -o $(OBJDIR_DEBUG)/structures/partitioningnode.o
+$(OBJDIR_DEBUG)/structures/entropyattribute.o: structures/entropyattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/entropyattribute.cpp -o $(OBJDIR_DEBUG)/structures/entropyattribute.o
 
-$(OBJDIR_DEBUG)/structures/patternspectra2d.o: structures/patternspectra2d.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/patternspectra2d.cpp -o $(OBJDIR_DEBUG)/structures/patternspectra2d.o
+$(OBJDIR_DEBUG)/structures/diagonalminimumattribute.o: structures/diagonalminimumattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/diagonalminimumattribute.cpp -o $(OBJDIR_DEBUG)/structures/diagonalminimumattribute.o
+
+$(OBJDIR_DEBUG)/structures/boundingspherediameterapprox.o: structures/boundingspherediameterapprox.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/boundingspherediameterapprox.cpp -o $(OBJDIR_DEBUG)/structures/boundingspherediameterapprox.o
 
 $(OBJDIR_DEBUG)/structures/rangeattribute.o: structures/rangeattribute.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/rangeattribute.cpp -o $(OBJDIR_DEBUG)/structures/rangeattribute.o
 
+$(OBJDIR_DEBUG)/structures/yextentattribute.o: structures/yextentattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/yextentattribute.cpp -o $(OBJDIR_DEBUG)/structures/yextentattribute.o
+
+$(OBJDIR_DEBUG)/structures/valuedeviationattribute.o: structures/valuedeviationattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/valuedeviationattribute.cpp -o $(OBJDIR_DEBUG)/structures/valuedeviationattribute.o
+
+$(OBJDIR_DEBUG)/structures/sparsityattribute.o: structures/sparsityattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/sparsityattribute.cpp -o $(OBJDIR_DEBUG)/structures/sparsityattribute.o
+
 $(OBJDIR_DEBUG)/structures/regiondynamicsattribute.o: structures/regiondynamicsattribute.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/regiondynamicsattribute.cpp -o $(OBJDIR_DEBUG)/structures/regiondynamicsattribute.o
 
-$(OBJDIR_DEBUG)/algorithms/maxtreeberger.o: algorithms/maxtreeberger.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/maxtreeberger.cpp -o $(OBJDIR_DEBUG)/algorithms/maxtreeberger.o
+$(OBJDIR_DEBUG)/structures/attribute.o: structures/attribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/attribute.cpp -o $(OBJDIR_DEBUG)/structures/attribute.o
 
-$(OBJDIR_DEBUG)/algorithms/maxtreenister.o: algorithms/maxtreenister.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/maxtreenister.cpp -o $(OBJDIR_DEBUG)/algorithms/maxtreenister.o
+$(OBJDIR_DEBUG)/structures/patternspectra2d.o: structures/patternspectra2d.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/patternspectra2d.cpp -o $(OBJDIR_DEBUG)/structures/patternspectra2d.o
 
-$(OBJDIR_DEBUG)/algorithms/msernister.o: algorithms/msernister.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/msernister.cpp -o $(OBJDIR_DEBUG)/algorithms/msernister.o
+$(OBJDIR_DEBUG)/structures/partitioningnode.o: structures/partitioningnode.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/partitioningnode.cpp -o $(OBJDIR_DEBUG)/structures/partitioningnode.o
+
+$(OBJDIR_DEBUG)/structures/noncompactnessattribute.o: structures/noncompactnessattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/noncompactnessattribute.cpp -o $(OBJDIR_DEBUG)/structures/noncompactnessattribute.o
+
+$(OBJDIR_DEBUG)/algorithms/regionclassification.o: algorithms/regionclassification.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/regionclassification.cpp -o $(OBJDIR_DEBUG)/algorithms/regionclassification.o
 
 $(OBJDIR_DEBUG)/algorithms/omegatreealphafilter.o: algorithms/omegatreealphafilter.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/omegatreealphafilter.cpp -o $(OBJDIR_DEBUG)/algorithms/omegatreealphafilter.o
 
-$(OBJDIR_DEBUG)/algorithms/predicate.o: algorithms/predicate.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/predicate.cpp -o $(OBJDIR_DEBUG)/algorithms/predicate.o
-
-$(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o: algorithms/alphatreedualmax.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/alphatreedualmax.cpp -o $(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o
+$(OBJDIR_DEBUG)/algorithms/objectdetection.o: algorithms/objectdetection.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/objectdetection.cpp -o $(OBJDIR_DEBUG)/algorithms/objectdetection.o
 
 $(OBJDIR_DEBUG)/algorithms/tosgeraud.o: algorithms/tosgeraud.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/tosgeraud.cpp -o $(OBJDIR_DEBUG)/algorithms/tosgeraud.o
 
-$(OBJDIR_DEBUG)/main.o: main.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c main.cpp -o $(OBJDIR_DEBUG)/main.o
+$(OBJDIR_DEBUG)/algorithms/msernister.o: algorithms/msernister.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/msernister.cpp -o $(OBJDIR_DEBUG)/algorithms/msernister.o
 
-$(OBJDIR_DEBUG)/misc/commontreedetail.o: misc/commontreedetail.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/commontreedetail.cpp -o $(OBJDIR_DEBUG)/misc/commontreedetail.o
+$(OBJDIR_DEBUG)/algorithms/maxtreenister.o: algorithms/maxtreenister.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/maxtreenister.cpp -o $(OBJDIR_DEBUG)/algorithms/maxtreenister.o
 
-$(OBJDIR_DEBUG)/misc/ellipse.o: misc/ellipse.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/ellipse.cpp -o $(OBJDIR_DEBUG)/misc/ellipse.o
+$(OBJDIR_DEBUG)/algorithms/maxtreeberger.o: algorithms/maxtreeberger.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/maxtreeberger.cpp -o $(OBJDIR_DEBUG)/algorithms/maxtreeberger.o
+
+$(OBJDIR_DEBUG)/structures/areaattribute.o: structures/areaattribute.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/areaattribute.cpp -o $(OBJDIR_DEBUG)/structures/areaattribute.o
 
 $(OBJDIR_DEBUG)/misc/pixels.o: misc/pixels.cpp
 	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/pixels.cpp -o $(OBJDIR_DEBUG)/misc/pixels.o
 
-$(OBJDIR_DEBUG)/structures/areaattribute.o: structures/areaattribute.cpp
-	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c structures/areaattribute.cpp -o $(OBJDIR_DEBUG)/structures/areaattribute.o
+$(OBJDIR_DEBUG)/misc/misc.o: misc/misc.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/misc.cpp -o $(OBJDIR_DEBUG)/misc/misc.o
+
+$(OBJDIR_DEBUG)/misc/ellipse.o: misc/ellipse.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/ellipse.cpp -o $(OBJDIR_DEBUG)/misc/ellipse.o
+
+$(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o: algorithms/alphatreedualmax.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/alphatreedualmax.cpp -o $(OBJDIR_DEBUG)/algorithms/alphatreedualmax.o
+
+$(OBJDIR_DEBUG)/misc/commontreedetail.o: misc/commontreedetail.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c misc/commontreedetail.cpp -o $(OBJDIR_DEBUG)/misc/commontreedetail.o
+
+$(OBJDIR_DEBUG)/main.o: main.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c main.cpp -o $(OBJDIR_DEBUG)/main.o
+
+$(OBJDIR_DEBUG)/examples/soilpatternspectra.o: examples/soilpatternspectra.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c examples/soilpatternspectra.cpp -o $(OBJDIR_DEBUG)/examples/soilpatternspectra.o
+
+$(OBJDIR_DEBUG)/algorithms/treeconstruction.o: algorithms/treeconstruction.cpp
+	$(CXX) $(CFLAGS_DEBUG) $(INC_DEBUG) -c algorithms/treeconstruction.cpp -o $(OBJDIR_DEBUG)/algorithms/treeconstruction.o
 
 clean_debug: 
 	rm -f $(OBJ_DEBUG) $(OUT_DEBUG)
 	rm -rf bin/Debug
 	rm -rf $(OBJDIR_DEBUG)/structures
 	rm -rf $(OBJDIR_DEBUG)/algorithms
-	rm -rf $(OBJDIR_DEBUG)
 	rm -rf $(OBJDIR_DEBUG)/misc
+	rm -rf $(OBJDIR_DEBUG)
+	rm -rf $(OBJDIR_DEBUG)/examples
 
 before_release: 
 	test -d bin/Release || mkdir -p bin/Release
 	test -d $(OBJDIR_RELEASE)/structures || mkdir -p $(OBJDIR_RELEASE)/structures
 	test -d $(OBJDIR_RELEASE)/algorithms || mkdir -p $(OBJDIR_RELEASE)/algorithms
-	test -d $(OBJDIR_RELEASE) || mkdir -p $(OBJDIR_RELEASE)
 	test -d $(OBJDIR_RELEASE)/misc || mkdir -p $(OBJDIR_RELEASE)/misc
+	test -d $(OBJDIR_RELEASE) || mkdir -p $(OBJDIR_RELEASE)
+	test -d $(OBJDIR_RELEASE)/examples || mkdir -p $(OBJDIR_RELEASE)/examples
 
 after_release: 
 
@@ -153,82 +189,116 @@ release: before_release out_release after_release
 out_release: before_release $(OBJ_RELEASE) $(DEP_RELEASE)
 	$(LD) $(LIBDIR_RELEASE) -o $(OUT_RELEASE) $(OBJ_RELEASE)  $(LDFLAGS_RELEASE) $(LIB_RELEASE)
 
-$(OBJDIR_RELEASE)/structures/attribute.o: structures/attribute.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/attribute.cpp -o $(OBJDIR_RELEASE)/structures/attribute.o
-
-$(OBJDIR_RELEASE)/structures/imagetree.o: structures/imagetree.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/imagetree.cpp -o $(OBJDIR_RELEASE)/structures/imagetree.o
-
-$(OBJDIR_RELEASE)/structures/inclusionnode.o: structures/inclusionnode.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/inclusionnode.cpp -o $(OBJDIR_RELEASE)/structures/inclusionnode.o
+$(OBJDIR_RELEASE)/structures/momentsholder.o: structures/momentsholder.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/momentsholder.cpp -o $(OBJDIR_RELEASE)/structures/momentsholder.o
 
 $(OBJDIR_RELEASE)/structures/momentsattribute.o: structures/momentsattribute.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/momentsattribute.cpp -o $(OBJDIR_RELEASE)/structures/momentsattribute.o
 
-$(OBJDIR_RELEASE)/structures/momentsholder.o: structures/momentsholder.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/momentsholder.cpp -o $(OBJDIR_RELEASE)/structures/momentsholder.o
+$(OBJDIR_RELEASE)/structures/meanattribute.o: structures/meanattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/meanattribute.cpp -o $(OBJDIR_RELEASE)/structures/meanattribute.o
+
+$(OBJDIR_RELEASE)/structures/inclusionnode.o: structures/inclusionnode.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/inclusionnode.cpp -o $(OBJDIR_RELEASE)/structures/inclusionnode.o
 
 $(OBJDIR_RELEASE)/structures/node.o: structures/node.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/node.cpp -o $(OBJDIR_RELEASE)/structures/node.o
 
-$(OBJDIR_RELEASE)/structures/noncompactnessattribute.o: structures/noncompactnessattribute.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/noncompactnessattribute.cpp -o $(OBJDIR_RELEASE)/structures/noncompactnessattribute.o
+$(OBJDIR_RELEASE)/structures/imagetree.o: structures/imagetree.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/imagetree.cpp -o $(OBJDIR_RELEASE)/structures/imagetree.o
 
-$(OBJDIR_RELEASE)/structures/partitioningnode.o: structures/partitioningnode.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/partitioningnode.cpp -o $(OBJDIR_RELEASE)/structures/partitioningnode.o
+$(OBJDIR_RELEASE)/structures/entropyattribute.o: structures/entropyattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/entropyattribute.cpp -o $(OBJDIR_RELEASE)/structures/entropyattribute.o
 
-$(OBJDIR_RELEASE)/structures/patternspectra2d.o: structures/patternspectra2d.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/patternspectra2d.cpp -o $(OBJDIR_RELEASE)/structures/patternspectra2d.o
+$(OBJDIR_RELEASE)/structures/diagonalminimumattribute.o: structures/diagonalminimumattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/diagonalminimumattribute.cpp -o $(OBJDIR_RELEASE)/structures/diagonalminimumattribute.o
+
+$(OBJDIR_RELEASE)/structures/boundingspherediameterapprox.o: structures/boundingspherediameterapprox.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/boundingspherediameterapprox.cpp -o $(OBJDIR_RELEASE)/structures/boundingspherediameterapprox.o
 
 $(OBJDIR_RELEASE)/structures/rangeattribute.o: structures/rangeattribute.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/rangeattribute.cpp -o $(OBJDIR_RELEASE)/structures/rangeattribute.o
 
+$(OBJDIR_RELEASE)/structures/yextentattribute.o: structures/yextentattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/yextentattribute.cpp -o $(OBJDIR_RELEASE)/structures/yextentattribute.o
+
+$(OBJDIR_RELEASE)/structures/valuedeviationattribute.o: structures/valuedeviationattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/valuedeviationattribute.cpp -o $(OBJDIR_RELEASE)/structures/valuedeviationattribute.o
+
+$(OBJDIR_RELEASE)/structures/sparsityattribute.o: structures/sparsityattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/sparsityattribute.cpp -o $(OBJDIR_RELEASE)/structures/sparsityattribute.o
+
 $(OBJDIR_RELEASE)/structures/regiondynamicsattribute.o: structures/regiondynamicsattribute.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/regiondynamicsattribute.cpp -o $(OBJDIR_RELEASE)/structures/regiondynamicsattribute.o
 
-$(OBJDIR_RELEASE)/algorithms/maxtreeberger.o: algorithms/maxtreeberger.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/maxtreeberger.cpp -o $(OBJDIR_RELEASE)/algorithms/maxtreeberger.o
+$(OBJDIR_RELEASE)/structures/attribute.o: structures/attribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/attribute.cpp -o $(OBJDIR_RELEASE)/structures/attribute.o
 
-$(OBJDIR_RELEASE)/algorithms/maxtreenister.o: algorithms/maxtreenister.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/maxtreenister.cpp -o $(OBJDIR_RELEASE)/algorithms/maxtreenister.o
+$(OBJDIR_RELEASE)/structures/patternspectra2d.o: structures/patternspectra2d.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/patternspectra2d.cpp -o $(OBJDIR_RELEASE)/structures/patternspectra2d.o
 
-$(OBJDIR_RELEASE)/algorithms/msernister.o: algorithms/msernister.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/msernister.cpp -o $(OBJDIR_RELEASE)/algorithms/msernister.o
+$(OBJDIR_RELEASE)/structures/partitioningnode.o: structures/partitioningnode.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/partitioningnode.cpp -o $(OBJDIR_RELEASE)/structures/partitioningnode.o
+
+$(OBJDIR_RELEASE)/structures/noncompactnessattribute.o: structures/noncompactnessattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/noncompactnessattribute.cpp -o $(OBJDIR_RELEASE)/structures/noncompactnessattribute.o
+
+$(OBJDIR_RELEASE)/algorithms/regionclassification.o: algorithms/regionclassification.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/regionclassification.cpp -o $(OBJDIR_RELEASE)/algorithms/regionclassification.o
 
 $(OBJDIR_RELEASE)/algorithms/omegatreealphafilter.o: algorithms/omegatreealphafilter.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/omegatreealphafilter.cpp -o $(OBJDIR_RELEASE)/algorithms/omegatreealphafilter.o
 
-$(OBJDIR_RELEASE)/algorithms/predicate.o: algorithms/predicate.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/predicate.cpp -o $(OBJDIR_RELEASE)/algorithms/predicate.o
-
-$(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o: algorithms/alphatreedualmax.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/alphatreedualmax.cpp -o $(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o
+$(OBJDIR_RELEASE)/algorithms/objectdetection.o: algorithms/objectdetection.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/objectdetection.cpp -o $(OBJDIR_RELEASE)/algorithms/objectdetection.o
 
 $(OBJDIR_RELEASE)/algorithms/tosgeraud.o: algorithms/tosgeraud.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/tosgeraud.cpp -o $(OBJDIR_RELEASE)/algorithms/tosgeraud.o
 
-$(OBJDIR_RELEASE)/main.o: main.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c main.cpp -o $(OBJDIR_RELEASE)/main.o
+$(OBJDIR_RELEASE)/algorithms/msernister.o: algorithms/msernister.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/msernister.cpp -o $(OBJDIR_RELEASE)/algorithms/msernister.o
 
-$(OBJDIR_RELEASE)/misc/commontreedetail.o: misc/commontreedetail.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/commontreedetail.cpp -o $(OBJDIR_RELEASE)/misc/commontreedetail.o
+$(OBJDIR_RELEASE)/algorithms/maxtreenister.o: algorithms/maxtreenister.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/maxtreenister.cpp -o $(OBJDIR_RELEASE)/algorithms/maxtreenister.o
 
-$(OBJDIR_RELEASE)/misc/ellipse.o: misc/ellipse.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/ellipse.cpp -o $(OBJDIR_RELEASE)/misc/ellipse.o
+$(OBJDIR_RELEASE)/algorithms/maxtreeberger.o: algorithms/maxtreeberger.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/maxtreeberger.cpp -o $(OBJDIR_RELEASE)/algorithms/maxtreeberger.o
+
+$(OBJDIR_RELEASE)/structures/areaattribute.o: structures/areaattribute.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/areaattribute.cpp -o $(OBJDIR_RELEASE)/structures/areaattribute.o
 
 $(OBJDIR_RELEASE)/misc/pixels.o: misc/pixels.cpp
 	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/pixels.cpp -o $(OBJDIR_RELEASE)/misc/pixels.o
 
-$(OBJDIR_RELEASE)/structures/areaattribute.o: structures/areaattribute.cpp
-	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c structures/areaattribute.cpp -o $(OBJDIR_RELEASE)/structures/areaattribute.o
+$(OBJDIR_RELEASE)/misc/misc.o: misc/misc.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/misc.cpp -o $(OBJDIR_RELEASE)/misc/misc.o
+
+$(OBJDIR_RELEASE)/misc/ellipse.o: misc/ellipse.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/ellipse.cpp -o $(OBJDIR_RELEASE)/misc/ellipse.o
+
+$(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o: algorithms/alphatreedualmax.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/alphatreedualmax.cpp -o $(OBJDIR_RELEASE)/algorithms/alphatreedualmax.o
+
+$(OBJDIR_RELEASE)/misc/commontreedetail.o: misc/commontreedetail.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c misc/commontreedetail.cpp -o $(OBJDIR_RELEASE)/misc/commontreedetail.o
+
+$(OBJDIR_RELEASE)/main.o: main.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c main.cpp -o $(OBJDIR_RELEASE)/main.o
+
+$(OBJDIR_RELEASE)/examples/soilpatternspectra.o: examples/soilpatternspectra.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c examples/soilpatternspectra.cpp -o $(OBJDIR_RELEASE)/examples/soilpatternspectra.o
+
+$(OBJDIR_RELEASE)/algorithms/treeconstruction.o: algorithms/treeconstruction.cpp
+	$(CXX) $(CFLAGS_RELEASE) $(INC_RELEASE) -c algorithms/treeconstruction.cpp -o $(OBJDIR_RELEASE)/algorithms/treeconstruction.o
 
 clean_release: 
 	rm -f $(OBJ_RELEASE) $(OUT_RELEASE)
 	rm -rf bin/Release
 	rm -rf $(OBJDIR_RELEASE)/structures
 	rm -rf $(OBJDIR_RELEASE)/algorithms
-	rm -rf $(OBJDIR_RELEASE)
 	rm -rf $(OBJDIR_RELEASE)/misc
+	rm -rf $(OBJDIR_RELEASE)
+	rm -rf $(OBJDIR_RELEASE)/examples
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release
 

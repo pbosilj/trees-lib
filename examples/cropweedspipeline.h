@@ -1,3 +1,7 @@
+/// \file structures/cropweedspipeline.h
+/// \author Petra Bosilj
+/// \date 07/10/2019
+
 #ifndef CROPWEEDSPIPELINE_H
 #define CROPWEEDSPIPELINE_H
 
@@ -9,7 +13,7 @@
 
 /// \brief Runs the pipeline that segments and classifies the
 /// vegetation regions in an NDVI image
-void runPipeline(int argc, char **argv);
+void rCropWeedsPipeline(int argc, char **argv);
 
 
 void runObjectAnalysis(int argc, char **argv);

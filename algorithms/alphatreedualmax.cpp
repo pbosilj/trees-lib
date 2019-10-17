@@ -129,7 +129,7 @@ namespace fl{
             }
         }
 
-        Node *dualRoot = maxTreeNister(imgDual, std::less<int>(), dual);
+        Node *dualRoot = maxTreeNister(imgDual, std::less<int>(), fl::pxType::dual);
 
         std::vector <std::vector <char> > seen(img.cols, std::vector <char>(img.rows, false));
         Node *alphaRoot = constructRecursively(dualRoot, seen);

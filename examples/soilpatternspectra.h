@@ -1,3 +1,7 @@
+/// \file structures/soilpatternspectra.h
+/// \author Petra Bosilj
+/// \date 07/10/2019
+
 #ifndef SOILPATTERNSPECTRA_H
 #define SOILPATTERNSPECTRA_H
 
