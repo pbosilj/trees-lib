@@ -129,7 +129,7 @@ void fl::generatePSMerced(int argc, char** argv){
 
             descOut << descriptorLength << std::endl;
 
-            cv::Mat img1 = cv::imread(line, CV_LOAD_IMAGE_GRAYSCALE);
+            cv::Mat img1 = cv::imread(line, cv::IMREAD_GRAYSCALE);
             cv::Mat img;
             cv::equalizeHist(img1, img);
 

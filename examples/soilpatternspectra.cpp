@@ -55,7 +55,7 @@ void rTestSoil(int argc, char **argv){
         std::cerr << "Please provide a correct [image_path]." << std::endl;
         exit(1);
     }
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE); // error catching for image input?
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE); // error catching for image input?
 
 
     std::vector <fl::treeType> treeTypes;

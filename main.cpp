@@ -1,10 +1,9 @@
-#include "examples/mercedpatternspectra.h"
+//#include "examples/mercedpatternspectra.h"
+#include "examples/soilpatternspectra.h"
 
 int main(int argc, char** argv ){
 
-    generatePSMerced(argc, argv);
-
-    //evaluateMerced(argc, argv);
+    rTestSoil(argc, argv);
 
     return 0;
 }

@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <map>
+#include <numeric>
 
 #include "../algorithms/treeconstruction.h"
 

@@ -71,8 +71,8 @@ void rCropWeedsPipeline(int argc, char **argv){
     std::cout << "Loading the image " << argv[1] << std::endl;
     std::cout << "And the RGB for visualization: " << argv[2] << std::endl;
 
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
-    cv::Mat rgb = cv::imread(argv[2], CV_LOAD_IMAGE_COLOR);
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_ANYDEPTH);
+    cv::Mat rgb = cv::imread(argv[2], cv::IMREAD_COLOR);
     fl::Node *root;
 
     std::cout << "Constructing image tree " << std::endl;
@@ -158,7 +158,7 @@ void rCropWeedsPipeline(int argc, char **argv){
 }
 
 void runObjectAnalysis(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_ANYDEPTH);
     fl::Node *root;
     fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
                                     std::make_pair(image.rows, image.cols)); // min-tree creation
@@ -182,7 +182,7 @@ void runObjectAnalysis(int argc, char **argv){
 }
 
 void runManualClassification(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_ANYDEPTH);
     fl::Node *root;
     fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
                                     std::make_pair(image.rows, image.cols)); // min-tree creation
@@ -206,7 +206,7 @@ void runManualClassification(int argc, char **argv){
     delete tree;
 }
 void runObjectDetectionAndSegmentation(int argc, char **argv){
-    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_ANYDEPTH);
+    cv::Mat image = cv::imread(argv[1], cv::IMREAD_ANYDEPTH);
     fl::Node *root;
     fl::ImageTree *tree = new fl::ImageTree(root = fl::maxTreeBerger(image, std::less<int>()),
                                     std::make_pair(image.rows, image.cols)); // min-tree creation

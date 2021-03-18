@@ -179,7 +179,7 @@ namespace fl{
 
         cv::Mat newImg;
         img.copyTo(newImg);
-        cv::cvtColor(img, newImg, CV_GRAY2RGB);
+        cv::cvtColor(img, newImg, cv::COLOR_GRAY2RGB);
         std::vector <cv::Point> component;
 
         std::vector <std::pair <int, int> > px;
