@@ -82,6 +82,10 @@ namespace fl{
         template <class Compare>
         double getCvMatMin(const cv::Mat &img, Compare cmp);
 
+        int getImageVolume(const cv::Mat &img);
+
+        int getNumberOfDifferences(const cv::Mat &img1, const cv::Mat &img2);
+
         void histogramToGCF(std::map <double, int> &data);
 
 

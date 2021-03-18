@@ -206,8 +206,9 @@ void ImageTree::analyseBranch(const fl::Node *node, std::vector <std::pair<int, 
 
 /// TODO: check correctness, implement three different summation rules
 /// rule = 0 -> number of regions
-/// rule = 1 -> number of pixels
-/// rule = 2 -> difference with parent * number of pixels
+/// rule = 1 -> difference with parent * number of pixels
+
+/// rule = 1 -> number of pixels  : OLD RULE, DEPRECATED, REFACTORING
 template<class ATT>
 void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, int rule, const fl::Node *_root) const{
     if (_root == NULL){
@@ -217,7 +218,7 @@ void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, int r
 
     GCF.clear();
 
-    if (rule > 1)
+    if (rule > 0)
         this->addAttributeToTree<fl::AreaAttribute>(new fl::AreaSettings());
 
     std::vector <const fl::Node *> toProcess(1, _root);
@@ -233,11 +234,15 @@ void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, int r
             case 0: // number of regions -> sum 1 for every region
                 ++GCF[attributeValue]; // ok, since if value does not exist, it will be initialized to 0
                 break;
-            case 1: // number of pixels -> sum the area of the region
+            // "area" not a real content metric; it's a difference metric
+            //case 1: // number of pixels -> sum the area of the region
                 // ok, since if value does not exist, it will be initialized to 0
-                GCF[attributeValue] += ((fl::AreaAttribute *)cur->getAttribute(fl::AreaAttribute::name))->value();
-                break;
-            case 2:
+                // this might not work as a measure at all
+                // double parentValue = (double)((ATT*)(cur->parent())->getAttribute(ATT::name))->value();
+                //GCF[attributeValue] += ((fl::AreaAttribute *)cur->getAttribute(fl::AreaAttribute::name))->value();
+                //break;
+            //case 2:
+            case 1:
             default:
                 if (! cur->isRoot()){
                     int nodeLvl = cur->grayLevel();
@@ -252,7 +257,7 @@ void ImageTree::calculateGranulometryHistogram(std::map<double, int> &GCF, int r
             toProcess.push_back(cur->_children[i]);
     }while(!toProcess.empty());
 
-    if (rule > 1)
+    if (rule > 0)
         this->deleteAttributeFromTree<fl::AreaAttribute>();
 
     //std::partial_sum(GCF.begin(), GCF.end(), GCF.begin(),

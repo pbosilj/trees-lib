@@ -4,11 +4,14 @@
 #include <string>
 #include <fstream>
 
-inline bool fileExists (const std::string& name) {
-    std::ifstream infile(name);
-    return infile.good();
-}
+namespace fl{
 
-std::string removeExtension(const std::string &filename);
+    inline bool fileExists (const std::string& name) {
+        std::ifstream infile(name);
+        return infile.good();
+    }
+
+    std::string removeExtension(const std::string &filename);
+}
 
 #endif
