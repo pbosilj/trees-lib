@@ -66,8 +66,15 @@
 		<Unit filename="algorithms/tosgeraud.h" />
 		<Unit filename="algorithms/treeconstruction.cpp" />
 		<Unit filename="algorithms/treeconstruction.h" />
+		<Unit filename="examples/cropweedspipeline.cpp" />
+		<Unit filename="examples/cropweedspipeline.h" />
+		<Unit filename="examples/mercedpatternspectra.cpp" />
+		<Unit filename="examples/mercedpatternspectra.h" />
+		<Unit filename="examples/mercedpatternspectra.tpp" />
 		<Unit filename="examples/soilpatternspectra.cpp" />
 		<Unit filename="examples/soilpatternspectra.h" />
+		<Unit filename="examples/testimages.cpp" />
+		<Unit filename="examples/testimages.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="misc/commontreedetail.cpp" />
 		<Unit filename="misc/commontreedetail.h" />

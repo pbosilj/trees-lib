@@ -31,4 +31,6 @@ void calculateGranulometry(const fl::ImageTree *tree, std::map<double, int> &his
 /// \brief Determine the output path for the granulometry based on the original image path, the filtering rule and the tree type used.
 std::string outputFilePath(const std::string& imagePath, const int rule, const fl::treeType tt);
 
+void rClassicalMorphology(int argc, char **argv);
+
 #endif

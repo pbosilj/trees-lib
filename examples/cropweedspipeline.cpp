@@ -293,6 +293,7 @@ void objectDetection(fl::ImageTree *tree, std::vector <fl::Node *> &selection, s
     std::cout << "OBJECT DETECTION" << std::endl;
 
     fl::treeObjectDetection(*tree, selection, source);
+    //fl::treeObjectDetection(*tree, selection, source, 30, 150, 5e4, 40, 30, 50);
 }
 
 void saveNodes(const fl::ImageTree *tree, const std::vector <fl::Node *> &selection, const std::string &detFile){

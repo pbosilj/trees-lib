@@ -8,6 +8,8 @@
 #include "../algorithms/treeconstruction.h"
 
 #include <fstream>
+#include <numeric>
+#include <iostream>
 
 /// \brief Determine the output path for the granulometry based on
 /// the original image path, the filtering rule and the tree type used.
@@ -21,8 +23,8 @@ std::string outputFilePath(const std::string& imagePath, const int rule, const f
     std::string outputPath = removeExtension(imagePath) + "_GCF_";
     switch (rule){
         case 0: outputPath += "count_"; break;
-        case 1: outputPath += "sum_"; break;
-        case 2: outputPath += "volume_"; break;
+        //case 1: outputPath += "sum_"; break; // case 1: deprecated; replaced
+        case 1: outputPath += "volume_"; break;
         default: break;
     }
     switch (tt){
@@ -37,6 +39,189 @@ std::string outputFilePath(const std::string& imagePath, const int rule, const f
     return outputPath;
 }
 
+void rClassicalMorphology(int argc, char **argv){
+    std::string correctCall = "Call with following arguments: ./Trees [image_path] [operation: opening, closing, both] [filtering_rule: count, volume, both] [binning: log, arbitrary] [bins: [if log: number_of_bins upper_limit] [if arbitrary: bin limits]].";
+    if (argc < 6){
+        std::cerr << "Not enough arguments" << std::endl;
+        std::cerr << correctCall << std::endl;
+        exit(1);
+    }
+
+    if (!fileExists(std::string(argv[1]))){
+        std::cerr << "Please provide a correct [image_path]." << std::endl;
+        exit(1);
+    }
+    cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE); // error catching for image input?
+    std::vector <int> limits;
+    std::string binning;
+    if (std::string(argv[4]) == "log"){
+        int numBins, upperLimit;
+        if (argc < 7){
+            std::cerr << "Not enough arguments for log" << std::endl;
+            std::cerr << correctCall << std::endl;
+            exit(1);
+        }
+        sscanf(argv[5], "%d", &numBins);
+        sscanf(argv[6], "%d", &upperLimit);
+        double base = std::pow(upperLimit, 1.0/numBins);
+        double limit = 1.0;
+        for (int i=0; i < numBins; ++i){
+            limit *= base;
+            limits.push_back(std::ceil(std::sqrt(limit)));
+        }
+        binning = "log_b" + std::to_string(numBins);
+    }
+    else if (std::string(argv[4]) == "arbitrary"){
+        limits.resize(argc-5);
+        for (int i=5; i < argc; ++i){
+            sscanf(argv[i], "%d", &limits[i-5]);
+            limits[i-5] = std::ceil(std::sqrt(limits[i-5]));
+        }
+        binning = "arbitrary";
+    }
+
+
+    std::cout << "Number of bins: " << limits.size() << " for binning: " << argv[4] << std::endl;
+    for (int i=0, szi = limits.size(); i < szi; ++i)
+        std::cout << limits[i] << " ";
+    std::cout  << std::endl;
+
+    //int volumeOriginal = detail::getImageVolume(image);
+    //std::cout << "Original image volume: " << volumeOriginal << std::endl;
+
+    cv::Mat filtered;
+    cv::Mat previous = image.clone();
+    int volumePrevious = detail::getImageVolume(previous);
+    std::vector <int> volume;
+    std::vector <int> ccount;
+
+
+    if (std::string(argv[2]) == "opening" || std::string(argv[2]) == "both"){
+        fl::ImageTree *originalTree = fl::createTree(fl::treeType::minTree, image);
+        int originalNodes = originalTree->countNodes();
+        delete originalTree;
+        for (int i=0, szi = limits.size(); i < szi; ++i){
+            cv::morphologyEx(image, filtered, cv::MORPH_OPEN, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(limits[i], limits[i])));
+            fl::ImageTree *filteredTree = fl::createTree(fl::treeType::minTree, filtered);
+            int filteredNodes = filteredTree->countNodes();
+            delete filteredTree;
+            //cv::erode(image, filtered, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(limits[i], limits[i])));
+
+            //std::cout << "\t" << "volume previous: " << volumePrevious << " volume filtered: " << volumeFiltered << " volume original: " << volumeOriginal << std::endl;
+
+            if (std::string(argv[3]) == "volume" || std::string(argv[3]) == "both"){
+                int volumeFiltered = detail::getImageVolume(filtered);
+                volume.push_back(volumePrevious - volumeFiltered);
+
+//                std::cout << "Volume diff erosion ( " << limits[i] << " x " << limits[i] << " = " << limits[i]*limits[i] << "): " << volumePrevious-volumeFiltered << std::endl;
+                volumePrevious = volumeFiltered;
+            }
+            if (std::string(argv[3]) == "count" || std::string(argv[3]) == "both"){
+                ccount.push_back(originalNodes-filteredNodes);
+
+//                std::cout << "Sum    diff erosion ( " << limits[i] << " x " << limits[i] << " = " << limits[i]*limits[i] << "): " << differencesFiltered << std::endl;
+            }
+            previous = filtered.clone();
+        }
+
+        if (std::string(argv[3]) == "volume" || std::string(argv[3]) == "both"){
+            int volumeSum = std::accumulate(volume.begin(), volume.end(), 0);
+            std::string output = removeExtension(argv[1]) + "_volume_opening_" + binning + "_text.txt";
+            std::ofstream openingVolume(output);
+
+            openingVolume << removeExtension(argv[1]) + "_volume_opening_" + std::string(argv[4]) << " " << limits.size() << " ";
+            for (int i=0, szi = limits.size(); i < szi; ++i){
+//                std::cout << volume[i] << " ";
+                openingVolume << (double)volume[i]/volumeSum << " ";
+            }
+            openingVolume << 1.0/volumeSum << std::endl;
+//            std::cout << volumeSum << std::endl;
+
+            openingVolume.close();
+
+            volume.clear();
+            volumePrevious = detail::getImageVolume(previous);
+        }
+
+        if (std::string(argv[3]) == "count" || std::string(argv[3]) == "both"){
+            int countSum = std::accumulate(ccount.begin(), ccount.end(), 0);
+            std::string output = removeExtension(argv[1]) + "_count_opening_" + binning + "_text.txt";
+
+            std::ofstream openingCount(output);
+
+            openingCount << removeExtension(argv[1]) + "_count_opening_" + std::string(argv[4]) << " " << limits.size() << " ";
+            for (int i=0, szi = limits.size(); i < szi; ++i)
+                openingCount << (double)ccount[i]/countSum << " ";
+            openingCount << 1.0/countSum << std::endl;
+
+            openingCount.close();
+
+            ccount.clear();
+        }
+        // clean-up for next one if needed
+        previous = image.clone();
+    }
+
+    if (std::string(argv[2]) == "closing" || std::string(argv[2]) == "both"){
+        fl::ImageTree *originalTree = fl::createTree(fl::treeType::maxTree, image);
+        int originalNodes = originalTree->countNodes();
+        delete originalTree;
+        for (int i=0, szi = limits.size(); i < szi; ++i){
+            cv::dilate(image, filtered, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(limits[i], limits[i])));
+            fl::ImageTree *filteredTree = fl::createTree(fl::treeType::maxTree, filtered);
+            int filteredNodes = filteredTree->countNodes();
+            delete filteredTree;
+            //std::cout << "\t" << "volume previous: " << volumePrevious << " volume filtered: " << volumeFiltered << " volume original: " << volumeOriginal << std::endl;
+
+            if (std::string(argv[3]) == "volume" || std::string(argv[3]) == "both"){
+                int volumeFiltered = detail::getImageVolume(filtered);
+                volume.push_back(volumeFiltered - volumePrevious);
+
+//                std::cout << "Volume diff dilation ( " << limits[i] << " x " << limits[i] << " = " << limits[i]*limits[i] << "): " << volumeFiltered-volumePrevious << std::endl;
+                volumePrevious = volumeFiltered;
+            }
+            if (std::string(argv[3]) == "count" || std::string(argv[3]) == "both"){
+                ccount.push_back(originalNodes-filteredNodes);
+
+//                std::cout << "Sum    diff dilation ( " << limits[i] << " x " << limits[i] << " = " << limits[i]*limits[i] << "): " << differencesFiltered << std::endl;
+            }
+            previous = filtered.clone();
+        }
+
+        if (std::string(argv[3]) == "volume" || std::string(argv[3]) == "both"){
+            int volumeSum = std::accumulate(volume.begin(), volume.end(), 0);
+            std::string output = removeExtension(argv[1]) + "_volume_closing_" + binning + "_text.txt";
+            std::ofstream closingVolume(output);
+
+            closingVolume << removeExtension(argv[1]) + "_volume_closing_" + std::string(argv[4]) << " " << limits.size() << " ";
+            for (int i=0, szi = limits.size(); i < szi; ++i)
+                closingVolume << (double)volume[i]/volumeSum << " ";
+            closingVolume << 1.0/volumeSum << std::endl;
+
+            closingVolume.close();
+
+            volume.clear();
+            volumePrevious = detail::getImageVolume(previous);
+        }
+
+        if (std::string(argv[3]) == "count" || std::string(argv[3]) == "both"){
+            int countSum = std::accumulate(ccount.begin(), ccount.end(), 0);
+            std::string output = removeExtension(argv[1]) + "_count_closing_" + binning + "_text.txt";
+
+            std::ofstream closingCount(output);
+
+            closingCount << removeExtension(argv[1]) + "_count_closing_" + std::string(argv[4]) << " " << limits.size() << " ";
+            for (int i=0, szi = limits.size(); i < szi; ++i)
+                closingCount << (double)ccount[i]/countSum << " ";
+            closingCount << 1.0/countSum << std::endl;
+
+            closingCount.close();
+
+            ccount.clear();
+        }
+    }
+}
+
 /// \brief Function to use for calculation of global (area) pattern spectra of a single image.
 ///
 /// Usage: call as the only function from `main`, passing the input arguments from `main`.
@@ -44,10 +229,10 @@ std::string outputFilePath(const std::string& imagePath, const int rule, const f
 /// input arguments are positional:
 ///     1 - path to image
 ///     2 - tree option: "min, max, tos, alpha, omega, minmax, all"
-///     3 - filtering rule: "count, sum, volume, all", count = number of regions, sum = number of pixels (area), volume = number of pixels * contrast
+///     3 - filtering rule / content measure: "count, volume, both", count = number of regions, volume = number of pixels * contrast
 void rTestSoil(int argc, char **argv){
     if (argc < 4){
-        std::cerr << "Call with three arguments: granulometry [image_path] [tree_option:min, max, alpha, omega, minmax, all] [filtering_rule: count, summ, volume, all]." << std::endl;
+        std::cerr << "Call with three arguments: ./Trees [image_path] [tree_option:min, max, alpha, omega, minmax, all] [filtering_rule: count, volume, both]." << std::endl;
         exit(1);
     }
 
@@ -92,23 +277,22 @@ void rTestSoil(int argc, char **argv){
 
     if (rule == "count")
         rules.push_back(0);
-    else if (rule == "sum")
-        rules.push_back(1);
     else if (rule == "volume")
-        rules.push_back(2);
-    else if (rule == "all"){
+        rules.push_back(1);
+    else if (rule == "both"){
         rules.push_back(0);
         rules.push_back(1);
-        rules.push_back(2);
     }
     else{
-        std::cerr << "The third argument [filtering_rule] has to be one of the following: [filtering_rule: count, sum, volume, all]." << std::endl;
+        std::cerr << "The third argument [filtering_rule] has to be one of the following: [filtering_rule: count, volume, both]." << std::endl;
         exit(1);
     }
 
     for (int i=0, szi = treeTypes.size(); i < szi; ++i){
         std::vector<std::map<double, int> > histograms;
+
         outputGranulometryCurve(image, treeTypes[i], rules, histograms);
+
         for (int j=0, szj = rules.size(); j < szj; ++j){
             std::string outputPath = outputFilePath(std::string(argv[1]), rules[j], treeTypes[i]);
 
@@ -141,7 +325,7 @@ void outputGranulometryCurve(const cv::Mat &image, fl::treeType t, const std::ve
         secondaryTree = fl::createTree(fl::treeType::maxTree, image);
     }
     else{
-        mainTree = createTree(t, image);
+        mainTree = fl::createTree(t, image);
     }
 
     for (int i=0, szi = rule.size(); i < szi; ++i){

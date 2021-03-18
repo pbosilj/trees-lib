@@ -185,8 +185,25 @@ namespace fl{
         return (double)(*(uchar *)(*it));
     }
 
+    int detail::getImageVolume(const cv::Mat &img){
+        int volume = 0;
+        for(cv::MatConstIterator it = detail::getCvMatBegin(img), iend = detail::getCvMatEnd(img); it != iend; ++it){
+            const int &curValue = detail::getDerefCvMatConstIterator(it, img.type());
+            volume += curValue;
+        }
+        return volume;
+    }
+
+    int detail::getNumberOfDifferences(const cv::Mat &img1, const cv::Mat &img2){
+        int differences = 0;
+        for(cv::MatConstIterator it1 = detail::getCvMatBegin(img1), iend1 = detail::getCvMatEnd(img1), it2 = detail::getCvMatBegin(img2); it1 != iend1; ++it1){
+            differences += (detail::getDerefCvMatConstIterator(it1, img1.type()) != detail::getDerefCvMatConstIterator(it2, img2.type()));
+        }
+        return differences;
+    }
+
     void detail::histogramToGCF(std::map <double, int> &data){
-        //std::partial_sum(data.begin(), data.end(), data.begin(),
-        //    [](std::pair<double, int>& x, std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
+//        std::partial_sum(data.begin(), data.end(), data.begin(),
+//            [](std::pair<double, int>& x, std::pair<double, int>& y){return std::make_pair(y.first, x.second + y.second);});
     }
 }
